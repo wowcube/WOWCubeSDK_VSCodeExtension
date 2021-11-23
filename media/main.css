@@ -1,0 +1,138 @@
+body {
+	background-color: transparent;
+}
+
+.color-list {
+	list-style: none;
+	padding: 0;
+}
+
+.color-entry {
+	width: 100%;
+	display: flex;
+	margin-bottom: 0.4em;
+	border: 1px solid var(--vscode-input-border);
+}
+
+.color-preview {
+	width: 2em;
+	height: 2em;
+}
+
+.color-preview:hover {
+	outline: inset white;
+}
+
+.color-input {
+	display: block;
+	flex: 1;
+	width: 100%;
+	color: var(--vscode-input-foreground);
+	background-color: var(--vscode-input-background);
+	border: none;
+	padding: 0 0.6em;
+}
+
+.add-color-button {
+	display: block;
+	border: none;
+	margin: 0 auto;
+}
+
+.open-wizard-button
+{
+	display: block;
+	max-width: 300px;
+	border: none;
+	margin: 0 auto;
+}
+
+.bt-scan-button
+{
+	display: block;
+	max-width: 300px;
+	border: none;
+	margin: 0 auto;
+}
+
+#t1
+{
+	color: var(--vscode-foreground);
+}
+
+#t2
+{
+	color: var(--vscode-descriptionForeground);
+}
+
+.separator
+{
+	background-color: var(--vscode-editorIndentGuide-background);
+	height: 1px;
+}
+
+.items
+{
+	background-color: var(--vscode-editor-foldBackground);
+	position:absolute; 
+	left:20px; 
+	right:20px; 
+	bottom:80px; 
+	top:310px; 
+	padding: 10px;
+	overflow: auto;
+}
+
+.item
+{
+	width: calc(100% - 50px);
+	min-height: 60px;
+	margin: 10px;
+	padding: 15px;
+	background-color: var(--vscode-input-background);
+	border-width: 1px;
+	border-style: solid;
+	border-color: var(--vscode-widget-shadow);
+}
+
+.item.selected
+{
+	border-width: 1px;
+	background-color: var(--vscode-inputValidation-infoBackground);
+	border-color: var(--vscode-focusBorder);
+}
+
+.item:hover
+{
+	border-width: 1px;
+	border-color: var(--vscode-focusBorder);
+	cursor: pointer;
+}
+
+.item:active
+{
+	border-width: 1px;
+	border-color: var(--vscode-focusBorder);
+	background-color: var(--vscode-inputValidation-infoBackground);
+	cursor: pointer;
+}
+
+.itemdesc
+{
+	color: var(--vscode-descriptionForeground);
+	margin-left: 7px;
+	margin-top: 5px;
+}
+
+#sdkpath
+{
+	width:calc(100% - 70px);
+	display:inline-block;
+}
+
+.sdk-path-button
+{
+	width:35px;
+	display:inline-block;
+	margin-left: 10px;
+}

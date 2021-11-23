@@ -1,0 +1,143 @@
+{
+  "name": "WOWCubeSDK",
+	"displayName": "WOWCubeSDK",
+	"description": "WOWCube SDK extension for developing Pawn applications for WOWCube device",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.62.0"
+	},
+	"extensionKind": [
+		"ui",
+		"workspace"
+	],	
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onView:WOWCubeSDK.wizardView",
+		"onView:WOWCubeSDK.btdeviceView",
+		"onCommand:WOWCubeSDK.openWizard",
+		"onCommand:WOWCubeSDK.scanDevices",
+		"onCommand:config.commands.configureViewOnWindowOpen",
+		"onCommand:workbench.action.tasks.runTask"
+	],
+	"main": "./out/extension.js",
+	"contributes": {
+		"taskDefinitions": [
+			{
+				"type": "wowsdkbuild",
+				"required": [
+					"action"
+				],
+				"properties": {
+					"action": {
+						"type": "string",
+						"description": "The build action. Should be either 'complie' or 'build'."
+					},
+					"target": {
+						"type": "string",
+						"description": "Specifies build target"
+					}
+				}
+			}
+		],	
+		"configuration":[
+			{
+				"title": "Configuration Samples",
+				"order": 1,
+				"properties": {
+					"wowsdk.conf.wizard":
+					{
+						"type": "string",
+						"default": "",
+						"description": "Last used project folder",
+						"scope":"application"
+					},
+					"wowsdk.conf.wowsdkpath":
+					{
+						"type": "string",
+						"default": "",
+						"description": "Path to WOWCube SDK",
+						"scope":"application"
+					}
+				}
+			}
+		],
+		"viewsContainers": {
+			"activitybar": [
+			  {
+				"id": "wow-explorer",
+				"title": "WOWCube SDK",
+				"icon": "media/wow.svg"
+			  }
+			]
+		},
+		"views": {
+			"wow-explorer": [
+				{
+					"id": "WOWCubeSDK.wizardView",
+					"name": "Cubelet Project Wizard",
+					"icon": "media/dep.svg",
+					"type": "webview"
+				},
+				{
+					"type": "webview",
+					"id": "WOWCubeSDK.btdeviceView",
+					"name": "Bluetooth Devices",
+					"icon": "$(clear-all)"
+				},
+				{
+					"type": "webview",
+					"id": "WOWCubeSDK.settingsView",
+					"name": "SDK Settings"
+				}
+			]
+		},	
+		"commands": [
+			{
+				"category": "Configuration Sample",
+				"command": "config.commands.configureViewOnWindowOpen",
+				"title": "Configure view to show on window open"
+			},
+			{
+				"command": "WOWCubeSDK.openWizard",
+				"title": "Open New Cubelet Wizard"
+			},
+			{
+				"command": "WOWCubeSDK.scanDevices",
+				"category": "WOWCube SDK",
+				"title": "Scan for paired WOWCube devices",
+				"icon": "$(clear-all)"
+			}],
+			"menus": {
+				"view/title": [
+					{
+						"command": "WOWCubeSDK.scanDevices",
+						"group": "navigation",
+						"when": "view == WOWCubeSDK.btdeviceView"
+					}
+				]
+			}
+	},
+	"scripts": {
+		"vscode:prepublish": "npm run compile",
+		"compile": "tsc -p ./",
+		"watch": "tsc -watch -p ./",
+		"pretest": "npm run compile && npm run lint",
+		"lint": "eslint src --ext ts",
+		"test": "node ./out/test/runTest.js"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.62.0",
+		"@types/glob": "^7.1.4",
+		"@types/mocha": "^9.0.0",
+		"@types/node": "14.x",
+		"@typescript-eslint/eslint-plugin": "^5.1.0",
+		"@typescript-eslint/parser": "^5.1.0",
+		"eslint": "^8.1.0",
+		"glob": "^7.1.7",
+		"mocha": "^9.1.3",
+		"typescript": "^4.4.4",
+		"@vscode/test-electron": "^1.6.2"
+	}
+}

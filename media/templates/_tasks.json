@@ -1,0 +1,37 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "wowsdkbuild",
+			"action": "compile",
+			"target": "",
+			"problemMatcher": [],
+			"label": "Compile CUB file from source",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"type": "wowsdkbuild",
+			"action": "build",
+			"target": "",
+			"problemMatcher": [],
+			"label": "Build CUB file"
+		},
+		{
+			"type": "wowsdkbuild",
+			"action": "build",
+			"target": "emulator",
+			"problemMatcher": [],
+			"label": "Build and Run on WOWCube Emulator"
+		},
+		{
+			"type": "wowsdkbuild",
+			"action": "build",
+			"target": "device",
+			"problemMatcher": [],
+			"label": "Build and Run on seleted device"
+		}
+	]
+}

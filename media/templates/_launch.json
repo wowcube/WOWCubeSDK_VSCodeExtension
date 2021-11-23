@@ -1,0 +1,17 @@
+{
+    "version": "2.0.0",
+    "configurations": [ 
+        {
+            "preLaunchTask": "Build and Run on WOWCube Emulator",
+            "type": "node",
+            "request":"attach",
+            "name": "Build and Run on WOWCube Emulator"
+        },
+        {
+            "preLaunchTask": "Build and Run on seleted device",
+            "type": "node",
+            "request":"attach",
+            "name": "Build and Run on seleted device"
+        }
+    ]
+}
