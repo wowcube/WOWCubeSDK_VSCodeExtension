@@ -92,3 +92,26 @@ input::placeholder,
 textarea::placeholder {
 	color: var(--vscode-input-placeholderForeground);
 }
+
+.wait
+{
+	display: none;
+	position: relative;
+	margin-left:calc(50% - 20px);
+	margin-right:50%;
+}
+
+.wait.visible
+{
+	display: block;
+}
+
+.hidden
+{
+	display: none;
+}
+
+.visible
+{
+	display: block;
+}

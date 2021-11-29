@@ -5,10 +5,10 @@ forward run(const pkt[], size, const src[]); // public Pawn function seen from C
 // Includes
 // -----------------------------
 
-#include "cubios_abi.pwn"
-#include "trbl.pwn"
-#include "math.pwn"
-#include "run.pwn"
+#include "cubios_abi.inc"
+#include "trbl.inc"
+#include "math.inc"
+#include "run.inc"
 
 // WOWCube application callbacks 
 // -----------------------------
@@ -44,14 +44,3 @@ ON_CHECK_ROTATE()
 
 //This callback is obsolete and left here for compatibility purposes only. Do not use it.
 RENDER(){}
-
-#ifdef CUBIOS_EMULATOR
-main()
-{
-new opt{ 100 }
-argindex(0, opt);
-abi_cubeN = strval(opt);
-printf("Cube %d logic. Listening on port: %d\n", abi_cubeN, (PAWN_PORT_BASE + abi_cubeN));
-listenport(PAWN_PORT_BASE + abi_cubeN);
-}
-#endif

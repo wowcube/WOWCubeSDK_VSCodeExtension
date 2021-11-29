@@ -14,6 +14,7 @@
 		"Other"
 	],
 	"activationEvents": [
+		"onStartupFinished",
 		"onView:WOWCubeSDK.wizardView",
 		"onView:WOWCubeSDK.btdeviceView",
 		"onCommand:WOWCubeSDK.openWizard",
@@ -59,6 +60,20 @@
 						"default": "",
 						"description": "Path to WOWCube SDK",
 						"scope":"application"
+					},
+					"wowsdk.conf.currentdevice":
+					{
+						"type": "string",
+						"default": "",
+						"description": "Selected WOWCube device",
+						"scope":"application"
+					},
+					"wowsdk.conf.detecteddevices":
+					{
+						"type": "string",
+						"default": "",
+						"description": "Detected WOWCube devices",
+						"scope":"application"
 					}
 				}
 			}
@@ -82,23 +97,17 @@
 				},
 				{
 					"type": "webview",
-					"id": "WOWCubeSDK.btdeviceView",
-					"name": "Bluetooth Devices",
-					"icon": "$(clear-all)"
+					"id": "WOWCubeSDK.settingsView",
+					"name": "SDK Settings"
 				},
 				{
 					"type": "webview",
-					"id": "WOWCubeSDK.settingsView",
-					"name": "SDK Settings"
+					"id": "WOWCubeSDK.btdeviceView",
+					"name": "Bluetooth Devices"
 				}
 			]
 		},	
 		"commands": [
-			{
-				"category": "Configuration Sample",
-				"command": "config.commands.configureViewOnWindowOpen",
-				"title": "Configure view to show on window open"
-			},
 			{
 				"command": "WOWCubeSDK.openWizard",
 				"title": "Open New Cubelet Wizard"
@@ -106,18 +115,8 @@
 			{
 				"command": "WOWCubeSDK.scanDevices",
 				"category": "WOWCube SDK",
-				"title": "Scan for paired WOWCube devices",
-				"icon": "$(clear-all)"
-			}],
-			"menus": {
-				"view/title": [
-					{
-						"command": "WOWCubeSDK.scanDevices",
-						"group": "navigation",
-						"when": "view == WOWCubeSDK.btdeviceView"
-					}
-				]
-			}
+				"title": "Scan for paired WOWCube devices"
+			}]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",

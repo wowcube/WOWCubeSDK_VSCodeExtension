@@ -103,10 +103,7 @@ class TemplateItem
     };
  
     window.addEventListener('itempressed', (e)=>
-    {
-        console.log(e);
-        //alert(e.detail.id);
-        
+    {        
             for(var i=1;i<7;i++)
            {
                items[i-1].setSelected(false);

@@ -11,11 +11,12 @@ body {
 	width: 100%;
 	display: flex;
 	margin-bottom: 0.4em;
-	border: 1px solid var(--vscode-input-border);
+	border: 2px solid black;
+	background-color: red;
 }
 
 .color-preview {
-	width: 2em;
+	/*width: 2em; */
 	height: 2em;
 }
 
@@ -135,4 +136,81 @@ body {
 	width:35px;
 	display:inline-block;
 	margin-left: 10px;
+}
+
+.bt-list {
+	list-style: none;
+	min-height: 30px;
+	padding: 0;
+	border-width: 1px;
+	border-style: solid;
+	border-color: var(--vscode-widget-shadow);
+}
+
+.bt-item {
+	width: 100%;
+	display: flex;
+	margin-bottom: 0.1em;
+	color: var(--vscode-foreground);
+}
+
+.bt-item.selected
+{
+	background-color: var(--vscode-button-hoverBackground);
+	color:white;
+}
+
+.bt-item.selected:hover
+{
+	background-color: var(--vscode-button-hoverBackground);
+	color:white;
+}
+
+.bt-item:hover
+{
+	background-color: var(--vscode-editor-foldBackground);
+	cursor: pointer;
+}
+
+.bt-item:active
+{
+	border-width: 1px;
+	border-color: var(--vscode-focusBorder);
+	background-color: var(--vscode-inputValidation-infoBackground);
+	cursor: pointer;
+}
+
+.bt-info
+{
+	padding:8px;
+}
+
+.gap-bottom
+{
+	margin-bottom: 5px;
+}
+
+.fontbold
+{
+	font-weight: bold;
+}
+
+.fontnormal
+{
+	font-weight: normal;
+}
+
+.positive
+{
+	color:var(--vscode-terminal-ansiBrightGreen);
+}
+
+.negative
+{
+	color:var(--vscode-terminal-ansiBrightRed);
+}
+
+.neutral
+{
+	color:var(--vscode-terminal-ansiBrightWhite);
 }

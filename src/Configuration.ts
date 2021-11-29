@@ -28,7 +28,62 @@ export class Configuration
         }
         catch(e)
         {
+            var t;
+            t=0;
         }
+    }
+
+    public static setCurrentDevice(device:object)
+    {
+        try
+        {
+            const d = JSON.stringify(device);
+            Configuration.setString('wowsdk.conf.currentdevice',d);
+        }
+        catch(e){}
+    }
+
+    public static getCurrentDevice()
+    {
+        var obj = null;
+        try
+        {
+            const d = Configuration.getString('wowsdk.conf.currentdevice');   
+            obj = JSON.parse(d);
+            
+            if(typeof(obj.name)==='undefined' || typeof(obj.mac) === 'undefined') {obj = null;}
+        }
+        catch(e)
+        {
+            obj = null;
+        }
+
+        return obj;
+    }
+
+    public static setLastDetectedDevices(devices:Array<object>)
+    {
+        try
+        {
+            const d = JSON.stringify(devices);
+            Configuration.setString('wowsdk.conf.detecteddevices',d);
+        }
+        catch(e){}
+    }
+
+    public static getLastDetectedDevices()
+    {
+        var devices:Array<object> = new Array();
+
+            var d = Configuration.getString('wowsdk.conf.detecteddevices');
+            
+            try
+            {
+              devices = JSON.parse(d);
+            }
+            catch(e){}
+
+        return devices;
     }
 
     public static getLastPath() { return Configuration.getString('wowsdk.conf.wizard');}
