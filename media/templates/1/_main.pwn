@@ -21,6 +21,11 @@ ON_INIT()
 //Main run loop callback. Gets called recurrently by the CUB application as frequent as application code allows. 
 ONTICK()
 {
+    // Detect shake and quit application
+    if (0 == abi_cubeN) 
+        {
+        abi_checkShake();
+        } 
 }
 
 //The "physics" callback. Gets called recurrently with 30ms resolution. 

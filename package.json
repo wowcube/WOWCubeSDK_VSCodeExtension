@@ -113,6 +113,10 @@
 				"title": "Open New Cubelet Wizard"
 			},
 			{
+				"command": "WOWCubeSDK.openDeviceDetails",
+				"title": "Open WOWCube device details"
+			},
+			{
 				"command": "WOWCubeSDK.scanDevices",
 				"category": "WOWCube SDK",
 				"title": "Scan for paired WOWCube devices"

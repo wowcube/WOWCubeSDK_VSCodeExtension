@@ -86,6 +86,7 @@ body {
 
 .item
 {
+	position: relative;
 	width: calc(100% - 50px);
 	min-height: 60px;
 	margin: 10px;
@@ -148,6 +149,7 @@ body {
 }
 
 .bt-item {
+	position: relative;
 	width: 100%;
 	display: flex;
 	margin-bottom: 0.1em;
@@ -183,6 +185,14 @@ body {
 .bt-info
 {
 	padding:8px;
+}
+
+.bt-manage-btn
+{
+	position: absolute;
+	top:5px;
+	right: 5px;
+	width: 60px;
 }
 
 .gap-bottom

@@ -63,6 +63,11 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
                     vscode.commands.executeCommand('WOWCubeSDK.scanDevices');
 				}
 				break;
+				case 'manageButtonPressed':
+				{
+					vscode.commands.executeCommand('WOWCubeSDK.openDeviceDetails');
+				}
+				break;
 				case 'deviceSelected':
 					{
 						Configuration.setCurrentDevice(data.value);
@@ -256,9 +261,7 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 							this.devices.push({name:deviceName, mac:deviceMac});
 						}
 					});
-
-					this.devices.push({name:'fake device for tests', mac:'aa:bb:cc:dd:ee:ff'});
-
+					
 					Configuration.setLastDetectedDevices(this.devices);
 				}
 				else

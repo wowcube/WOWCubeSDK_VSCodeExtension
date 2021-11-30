@@ -127,7 +127,17 @@ class BtList
 
         d.appendChild(d3);
 
+        const manage = document.createElement('button');
+        manage.innerHTML = 'Manage';
+        manage.className = 'bt-manage-btn';
+        manage.addEventListener('click',()=>
+        {
+            window.dispatchEvent(new CustomEvent('managepressed'));
+        });
+
+
         li.appendChild(d);
+        li.appendChild(manage);
 
         this.el.appendChild(li);
 
@@ -294,6 +304,11 @@ class BtList
     window.addEventListener('itempressed', (e)=>
     {            
         devices.setSelected(e.detail.id);
+    });
+
+    window.addEventListener('managepressed', (e)=>
+    {            
+        vscode.postMessage({ type: 'manageButtonPressed', value: "" });
     });
 
     devices = new BtList(document.getElementById("bt-list"));

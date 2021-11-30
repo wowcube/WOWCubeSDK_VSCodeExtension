@@ -6,10 +6,10 @@ import * as path from 'path';
 import { Uri } from "vscode";
 import {Configuration} from './Configuration';
 
-export class WizardPanel {
+export class DeviceDetailsPanel {
 
-    public static currentPanel: WizardPanel | undefined;
-    public static readonly viewType = "WOWCubeSDK.wizardPanel";
+    public static currentPanel: DeviceDetailsPanel | undefined;
+    public static readonly viewType = "WOWCubeSDK.deviceDetailsPanel";
 
     private readonly _panel: vscode.WebviewPanel;  
     private readonly _extensionUri: vscode.Uri;  
@@ -20,32 +20,32 @@ export class WizardPanel {
         ? vscode.window.activeTextEditor.viewColumn: undefined;
 
         // If we already have a panel, show it.      
-        if (WizardPanel.currentPanel) 
+        if (DeviceDetailsPanel.currentPanel) 
         {
-            WizardPanel.currentPanel._panel.reveal(column);
+            DeviceDetailsPanel.currentPanel._panel.reveal(column);
             return;     
         }
         
         // Otherwise, create a new panel. 
         const panel = vscode.window.createWebviewPanel(
-            WizardPanel.viewType,
-            'WOWCube Cubelet Project Wizard',
+            DeviceDetailsPanel.viewType,
+            'WOWCube Device',
             column || vscode.ViewColumn.Two,
             getWebviewOptions(extensionUri),
         );
 
-        WizardPanel.currentPanel = new WizardPanel(panel, extensionUri);    
+        DeviceDetailsPanel.currentPanel = new DeviceDetailsPanel(panel, extensionUri);    
     }
 
     public static kill() 
     { 
-        WizardPanel.currentPanel?.dispose();
-        WizardPanel.currentPanel = undefined; 
+        DeviceDetailsPanel.currentPanel?.dispose();
+        DeviceDetailsPanel.currentPanel = undefined; 
     }
 
-    public static revive(panel: vscode.WebviewPanel,
-        extensionUri: vscode.Uri) {    
-            WizardPanel.currentPanel = new WizardPanel(panel, extensionUri);  
+    public static revive(panel: vscode.WebviewPanel,extensionUri: vscode.Uri) 
+    {    
+            DeviceDetailsPanel.currentPanel = new DeviceDetailsPanel(panel, extensionUri);  
     }
 
     private constructor(panel: vscode.WebviewPanel,
@@ -256,7 +256,7 @@ export class WizardPanel {
         }
 
         public dispose() {    
-            WizardPanel.currentPanel = undefined;  
+            DeviceDetailsPanel.currentPanel = undefined;  
 
             // Clean up our resources  
             this._panel.dispose();
@@ -275,22 +275,13 @@ export class WizardPanel {
         }
         
         private _getHtmlForWebview(webview: vscode.Webview) {    
-            const styleResetUri = webview.asWebviewUri(      
-                vscode.Uri.joinPath(this._extensionUri, "media", "reset.css")   
-            );
+            const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
+            const styleVSCodeUri = webview.asWebviewUri( vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
+            const styleMainCodeUri = webview.asWebviewUri( vscode.Uri.joinPath(this._extensionUri, "media", "main.css"));
+            const styleWaitUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'wait.css'));
 
-            const styleVSCodeUri = webview.asWebviewUri(    
-                vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css")
-            );
+            const scriptUri = webview.asWebviewUri( vscode.Uri.joinPath(this._extensionUri, "media", "devicedetails.js"));
 
-            const styleMainCodeUri = webview.asWebviewUri(    
-                vscode.Uri.joinPath(this._extensionUri, "media", "main.css")
-            );
-
-            const scriptUri = webview.asWebviewUri( 
-                vscode.Uri.joinPath(this._extensionUri, "media", "wizard.js")
-            );
-            
             const nonce = getNonce();  
             const baseUri = webview.asWebviewUri(vscode.Uri.joinPath(
                 this._extensionUri, 'media')
@@ -308,73 +299,46 @@ export class WizardPanel {
                     <link href="${styleResetUri}" rel="stylesheet">
                     <link href="${styleVSCodeUri}" rel="stylesheet"> 
                     <link href="${styleMainCodeUri}" rel="stylesheet"> 
-                    <title>New Cubelet Wizard</title>
+                    <link href="${styleWaitUri}" rel="stylesheet"> 
+                    <title>WOWCube Device Details</title>
                 </head>
                 <body>
-                <!--<input hidden data-uri="${baseUri}">-->
-                    <!--<div id="app"></div>-->
                     <script type="text/javascript" src="${scriptUri}" nonce="${nonce}"></script>
-                      
+
                     <div style="padding:0px;">
-                        <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:24px;">New Cubelet Wizard</div>
-                        <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Create new WOWCube cubelet application project from template</div>
+                        <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:24px;">WOWCube Device Details</div>
+                        <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Basic information and management</div>
                         <div class="separator"></div>
 
                         <div style="margin-top:20px;">
-                            <div style="display:inline-block;">1</div>
-                            <div style="display:inline-block;margin:10px;font-size:14px;">Name of your new project</div>
-                            <input id="projectname" style="display:block;width:50%;"></input>
-                        </div>
-                        
-                        <div style="margin-top:20px;">
-                            <div style="display:inline-block;">2</div>
-                            <div style="display:inline-block;margin:10px;font-size:14px;">Choose the folder for your project</div>
-                            <br/>
-                            <input id="foldername" style="display:inline-block; width:50%;" readonly value="${lastPath}"></input> <button id="folder_button" style="display:inline-block; width:70px;">...</button>
+                            <div style="display:inline-block;font-size:14px;"><strong>Status:</strong></div>
+                            <div class="positive" style="display:inline-block;margin:10px;font-size:14px;">Connected</div>
                         </div>
 
-                        <div style="margin-top:20px;">
-                        <div style="display:inline-block;">3</div>
-                        <div style="display:inline-block;margin:10px;font-size:14px;">Select project template</div>
-                        <br/>
-
-                        <div class="items">
-                            <div id="i1" class="item">
-                                <div style="margin:5px;"><strong>Empty project</strong></div>
-                                <div class="itemdesc">Creates an empty project with a bare minimum of functions needed to build WOWCube cubelet application</div>
-                            </div>
-
-                            <div id="i2" class="item">
-                                <div style="margin:5px;"><strong>Basic cubelet</strong></div>
-                                <div class="itemdesc">Creates a project of WOWCube cubelet application that supports basic interaction with WOWCube deviсe</div>
-                                <div class="itemdesc">Demonstrates principle of work with device topology</div>
-                            </div>
-
-                            <!--
-                            <div id="i3" class="item">
-                                <div style="margin:5px;"><strong>Some project</strong></div>
-                                <div class="itemdesc">Template description here</div>
-                            </div>
-
-                            <div id="i4" class="item">
-                                <div style="margin:5px;"><strong>Some project 2</strong></div>
-                                <div class="itemdesc">Template description here</div>
-                            </div>
-
-                            <div id="i5" class="item">
-                                <div style="margin:5px;"><strong>Some project</strong></div>
-                                <div class="itemdesc">Template description here</div>
-                            </div>
-
-                            <div id="i6" class="item">
-                                <div style="margin:5px;"><strong>Some other project</strong></div>
-                                <div class="itemdesc">Template description here</div>
-                            </div>                            
-                            -->
+                        <div>
+                            <div style="display:inline-block;font-size:14px;"><strong>Firmware:</strong></div>
+                            <div style="display:inline-block;margin:10px;font-size:14px;">Here will be an info about firmware</div>
                         </div>
-                        <button id="generate_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">GENERATE NEW PROJECT</button>
+
+                        <div>
+                            <div style="display:inline-block;font-size:14px;"><strong>Battery:</strong></div>
+                            <div style="display:inline-block;margin:10px;font-size:14px;">Here will be an info about firmware</div>
+                        </div>
+
+                        <div style="margin-top:40px;">
+                        <div style="display:inline-block;font-size:14px;"><strong>Installed Applications</strong></div>
+                    
+                        <div id="applist" class="items" style="top:280px;">
+                        </div>
+                        <button id="generate_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">REFRESH DEVICE INFORMATION</button>
                     </div>
                     </div>
+
+                    <div id="wait" class="fullscreen topmost hidden">
+                        <div class="centered">
+                        <div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+                        </div>
+                    <div>
                 </body>
                 </html> 
             `;  

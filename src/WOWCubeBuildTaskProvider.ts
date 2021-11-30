@@ -101,11 +101,6 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 		this.workspace = workspaceRoot;
 	}
 
-	getOutputChannel(): vscode.OutputChannel 
-	{
-		return this._channel;
-	}
-
 	open(initialDimensions: vscode.TerminalDimensions | undefined): void 
     {
 		/*
@@ -134,8 +129,8 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 	private printOutput(data:string) 
 	{
-		this.getOutputChannel().appendLine(data);
-		this.getOutputChannel().show(true);
+		this._channel.appendLine(data);
+		this._channel.show(true);
 	}
 
 	private async doCompile(action:string): Promise<void> 
@@ -166,7 +161,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			if(pawnpath.length===0)
 			{
 				vscode.window.showErrorMessage("WOWCube SDK is not detected.\nPlease make sure WOWCube SDK is installed and up to date"); 
-				this.getOutputChannel().appendLine('WOWCube SDK path is not set or operating system is not supported.\r\n\r\n');
+				this._channel.appendLine('WOWCube SDK path is not set or operating system is not supported.\r\n\r\n');
 
 				this.closeEmitter.fire(0);
 				resolve();
@@ -181,23 +176,22 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				}
 				if (stderr && stderr.length > 0) 
 				{
-					this.getOutputChannel().appendLine(stderr);
-					this.getOutputChannel().show(true);
+					this._channel.appendLine(stderr);
+					this._channel.show(true);
 				}
 
 				if (stdout && stdout.length > 0) 
 				{
-					this.getOutputChannel().appendLine(stdout);
-					this.getOutputChannel().show(true);
+					this._channel.appendLine(stdout);
+					this._channel.show(true);
 				}
 
 				const date = new Date();
 				this.setSharedState(date.toTimeString() + ' ' + date.toDateString());
-				//this.writeEmitter.fire('File compiled successfully.\r\n\r\n');
 
 				if(child.exitCode===0)
 				{
-					this.getOutputChannel().appendLine('File compiled successfully.\r\n');
+					this._channel.appendLine('File compiled successfully.\r\n');
 
 					if(action==='compile')
 					{
@@ -211,7 +205,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				}
 				else
 				{
-					this.getOutputChannel().appendLine('Failed to compile.\r\n');
+					this._channel.appendLine('Failed to compile.\r\n');
 
 					this.closeEmitter.fire(0);
 					resolve();
@@ -245,14 +239,14 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				}
 				if (stderr && stderr.length > 0) 
 				{
-					this.getOutputChannel().appendLine(stderr);
-					this.getOutputChannel().show(true);
+					this._channel.appendLine(stderr);
+					this._channel.show(true);
 				}
 
 				if (stdout && stdout.length > 0) 
 				{
-					this.getOutputChannel().appendLine(stdout);
-					this.getOutputChannel().show(true);
+					this._channel.appendLine(stdout);
+					this._channel.show(true);
 				}
 
 				const date = new Date();
@@ -261,7 +255,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				if(child.exitCode===0)
 				{
 					//this.writeEmitter.fire('Build complete.\r\n\r\n');
-					this.getOutputChannel().appendLine('Build complete.\r\n');
+					this._channel.appendLine('Build complete.\r\n');
 
 					if(target==='emulator')
 					{
@@ -274,7 +268,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				}
 				else
 				{
-					this.getOutputChannel().appendLine('Failed to build.\r\n');
+					this._channel.appendLine('Failed to build.\r\n');
 
 					this.closeEmitter.fire(0);
 					resolve();
@@ -287,7 +281,68 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 	{
 		return new Promise<void>((resolve,reject) => 
         {
-			this.getOutputChannel().appendLine('Running on device is not implemented yet.\r\n');
+			this.writeEmitter.fire('Running app on selected WOWCube device...\r\n');
+			this._channel.appendLine('Running app on selected WOWCube device...\r\n');
+
+			if(!this.createVirtualFlashDir(cubename))
+			{
+				this._channel.appendLine('Failed to run in emulator.\r\n');
+				this.closeEmitter.fire(0);
+				resolve();
+			}
+
+			var device = Configuration.getCurrentDevice();
+
+			if(device===null)
+			{
+				this._channel.appendLine('Failed to run on device, no device selected.\r\n');
+				this.closeEmitter.fire(0);
+				resolve();
+			}
+			
+			var utilspath = Configuration.getUtilsPath();
+			var command = '"'+utilspath+Configuration.getLoader()+'"';
+			const source = this.workspace+'/binary/'+cubename;
+
+			command+=" up -p ";
+			command+='"'+source+'"';
+			command+=" -a ";
+			command+=device.mac;
+			command+=" -r";
+
+			var child:cp.ChildProcess = cp.exec(command, { cwd: ""}, (error, stdout, stderr) => 
+			{
+				if (error) 
+				{
+					//reject({ error, stdout, stderr });
+				}
+				if (stderr && stderr.length > 0) 
+				{
+					this._channel.appendLine(stderr);
+					this._channel.show(true);
+				}
+
+				if (stdout && stdout.length > 0) 
+				{
+					this._channel.appendLine(stdout);
+					this._channel.show(true);
+				}
+
+				if(child.exitCode===0)
+				{
+					this._channel.appendLine('Done.\r\n');
+
+					this.closeEmitter.fire(0);
+					resolve();
+				}
+				else
+				{
+					this._channel.appendLine('Failed to start cubelet application on selected device.\r\n');
+
+					this.closeEmitter.fire(0);
+					resolve();
+				}
+			});	
 
 			this.closeEmitter.fire(0);
 			resolve();
@@ -330,7 +385,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 	makeDirSync(dir: string) 
 	{
-		if (fs.existsSync(dir)) return;
+		if (fs.existsSync(dir)) {return;}
 		if (!fs.existsSync(path.dirname(dir))) 
 		{
 			this.makeDirSync(path.dirname(dir));
@@ -355,7 +410,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 		}
 		catch(error)
 		{
-			this.getOutputChannel().appendLine('Failed to copy '+cubename+' file to flash directory:'+error+'\r\n');
+			this._channel.appendLine('Failed to copy '+cubename+' file to flash directory:'+error+'\r\n');
 			ret=false;
 		}
 

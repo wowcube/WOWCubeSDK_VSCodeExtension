@@ -22,7 +22,7 @@ class TemplateItem
     setSelected(v)
     {
         this.selected = v;      
-        if(this.selected==true) {this.el.className="item selected";} else {this.el.className="item"};
+        if(this.selected==true) {this.el.className="item selected";} else {this.el.className="item";}
     }
 }
 

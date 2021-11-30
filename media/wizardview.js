@@ -2,10 +2,6 @@
 (function () {
     // @ts-ignore
     const vscode = acquireVsCodeApi();
-//    const oldState = vscode.getState() || { colors: [] };
-
-    /** @type {Array<{ value: string }>} */
- //   let colors = oldState.colors;
 
     document.querySelector('.open-wizard-button').addEventListener('click', () => 
     {
