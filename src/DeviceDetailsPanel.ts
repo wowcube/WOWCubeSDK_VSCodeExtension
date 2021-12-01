@@ -1,9 +1,7 @@
 /* eslint-disable curly */
 import * as vscode from "vscode";
 import { getNonce } from "./getNonce";
-import * as fs from 'fs';
-import * as path from 'path';
-import { Uri } from "vscode";
+import * as cp from 'child_process';
 import {Configuration} from './Configuration';
 
 export class DeviceDetailsPanel {
@@ -45,7 +43,7 @@ export class DeviceDetailsPanel {
 
     public static revive(panel: vscode.WebviewPanel,extensionUri: vscode.Uri) 
     {    
-            DeviceDetailsPanel.currentPanel = new DeviceDetailsPanel(panel, extensionUri);  
+        DeviceDetailsPanel.currentPanel = new DeviceDetailsPanel(panel, extensionUri);  
     }
 
     private constructor(panel: vscode.WebviewPanel,
@@ -82,43 +80,42 @@ export class DeviceDetailsPanel {
                         case 'warn':
                             vscode.window.showWarningMessage(message.value); 
                         break;
-                        case 'folder': 
-                        {
-                            const options: vscode.OpenDialogOptions = {
-                                canSelectMany: false,
-                                openLabel: 'Select Project Folder',
-                                canSelectFiles: false,
-                                canSelectFolders: true
-                            };
-                           
-                           vscode.window.showOpenDialog(options).then(fileUri => 
+                        case 'refresh':
                             {
-                               if (fileUri && fileUri[0]) 
-                               {
-                                    if (this._panel) 
-                                    {
-                                        //save configuration
-                                        Configuration.setLastPath(fileUri[0].fsPath);
-                                        this._panel.webview.postMessage({ type: 'folderSelected',value:fileUri[0].fsPath });
-                                    }
-                               }
-                           });
-                        }
-                        break;
-                        case 'generate':
-                            {
-                                var ret = this.generate(message.value.name,message.value.path,message.value.item);
-
-                                if(ret.path.length===0)
+                                var device = Configuration.getCurrentDevice();
+                                if(device!==null)
                                 {
-                                    //error
-                                    vscode.window.showErrorMessage("Unable to generate new project: "+ret.desc);
+                                    this.doGetDeviceInfo(device.mac);
                                 }
                                 else
                                 {
-                                    //all good
-                                    let uri = Uri.file(ret.path);
-                                    let success = vscode.commands.executeCommand('vscode.openFolder', uri);
+                                    this._panel.webview.postMessage({ type: 'endRequest'});
+                                    vscode.window.showWarningMessage("WOWCube device is not selected"); 
+                                }
+                            }
+                        break;
+                        case 'deleteapp':
+                            {
+                                var device = Configuration.getCurrentDevice();
+                                if(device!==null)
+                                {
+                                    this.doGetDeviceInfo(device.mac);
+                                }
+                                else
+                                {
+                                    this._panel.webview.postMessage({ type: 'endRequest'});
+                                    vscode.window.showWarningMessage("WOWCube device is not selected"); 
+                                }
+
+                                var appname = message.value;
+                                if(appname!==null)
+                                {
+                                   this.doDeleteApp(device.mac,appname);
+                                }
+                                else
+                                {
+                                    this._panel.webview.postMessage({ type: 'endRequest'});
+                                    vscode.window.showWarningMessage("Unable to delete this app");   
                                 }
                             }
                         break;
@@ -127,132 +124,6 @@ export class DeviceDetailsPanel {
                 null,
                 this._disposables 
             );
-        }
-
-        public generate(name:string,path:string,template:number)
-        {
-            var ret = {path:'',desc:''};
-            const templates = require('../media/templates/templates.json');
-
-            try
-            {
-                path = path.replace(/\\/g, "/");
-                if(!path.endsWith("/")) { path+='/';}
-
-                var fullpath = path + name;
-                ret.path = fullpath;
-
-                if(fs.existsSync(fullpath))
-                {
-                    throw new Error("Project with such name already exists in this folder");
-                }
-
-                var currentTemplate = null;
-
-                for(var i=0;i<templates.length;i++)
-                {
-                    if(templates[i].id === template)
-                    {
-                        currentTemplate = templates[i];
-                        break;
-                    }
-                }
-
-                if(currentTemplate===null)
-                {
-                    throw new Error("Unable to find template source files");
-                }
-
-                this.makeDirSync(fullpath);
-                this.makeDirSync(fullpath+'/.vscode');
-                this.makeDirSync(fullpath+'/binary');
-                this.makeDirSync(fullpath+'/src');
-                this.makeDirSync(fullpath+'/resources');
-                this.makeDirSync(fullpath+'/resources/images');
-                this.makeDirSync(fullpath+'/resources/sounds');
-
-                const iconFilename:string = this._extensionUri.fsPath+"/media/templates/appicon.png";             
-                fs.copyFileSync(iconFilename,fullpath+'/resources/appicon.png');
-
-                for(var i=0;i<currentTemplate.files.length; i++)
-                {
-                    if(currentTemplate.files[i]==='_main.pwn')
-                    {
-                        fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/"+currentTemplate.files[i],fullpath+'/src/'+name+'.pwn');
-                    }
-                    else
-                    {
-                        fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/"+currentTemplate.files[i],fullpath+'/src/'+currentTemplate.files[i]);
-                    }
-                }
-            
-                for(var i=0;i<currentTemplate.images.length; i++)
-                {
-                    fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/"+currentTemplate.images[i],fullpath+'/resources/images/'+currentTemplate.images[i]);
-                }
-
-                for(var i=0;i<currentTemplate.sounds.length; i++)
-                {
-                    fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/"+currentTemplate.sounds[i],fullpath+'/resources/sounds/'+currentTemplate.sounds[i]);
-                }
-
-                //create json file for build
-                const json = fs.readFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/_build.json").toString();
-                const str = json.replace(/##NAME##/gi,name);
-
-                fs.writeFileSync(fullpath+'/wowcubeapp-build.json',str);
-
-                //create vscode-related configs
-                fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_launch.json",fullpath+'/.vscode/launch.json');
-                fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_tasks.json",fullpath+'/.vscode/tasks.json');
-
-            }
-            catch(error)
-            {
-                ret.desc = error as string;
-                ret.path = '';
-            } 
-
-            return ret;
-        }
-
-        makefiles(filepaths: string[]) 
-        {
-            filepaths.forEach(filepath => this.makeFileSync(filepath));
-        }
-    
-        makefolders(files: string[]) 
-        {
-            files.forEach(file => this.makeDirSync(file));
-        }
-    
-        makeDirSync(dir: string) 
-        {
-            if (fs.existsSync(dir)) return;
-            if (!fs.existsSync(path.dirname(dir))) 
-            {
-                this.makeDirSync(path.dirname(dir));
-            }
-            fs.mkdirSync(dir);
-        }
-    
-        makeFileSync(filename: string) 
-        {
-            if (!fs.existsSync(filename)) 
-            {
-                this.makeDirSync(path.dirname(filename));
-                fs.createWriteStream(filename).close();
-            }
-        }
-    
-    
-        findDir(filePath: string) 
-        {
-            if (!filePath) return null;
-            if (fs.statSync(filePath).isFile())
-                return path.dirname(filePath);
-    
-            return filePath;
         }
 
         public dispose() {    
@@ -269,9 +140,25 @@ export class DeviceDetailsPanel {
             }
         }
 
-        private async _update() {
+        private async _update() 
+        {
             const webview = this._panel.webview;    
             this._panel.webview.html = this._getHtmlForWebview(webview);  
+        
+            if(this._panel.visible)
+            {
+                var device = Configuration.getCurrentDevice();
+                if(device!==null)
+                {
+                    this._panel.webview.postMessage({ type: 'startRequest'});
+                    this.doGetDeviceInfo(device.mac);
+                }
+                else
+                {
+                    this._panel.webview.postMessage({ type: 'endRequest'});
+                    vscode.window.showWarningMessage("WOWCube device is not selected"); 
+                }
+            }
         }
         
         private _getHtmlForWebview(webview: vscode.Webview) {    
@@ -304,7 +191,6 @@ export class DeviceDetailsPanel {
                 </head>
                 <body>
                     <script type="text/javascript" src="${scriptUri}" nonce="${nonce}"></script>
-
                     <div style="padding:0px;">
                         <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:24px;">WOWCube Device Details</div>
                         <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Basic information and management</div>
@@ -312,17 +198,17 @@ export class DeviceDetailsPanel {
 
                         <div style="margin-top:20px;">
                             <div style="display:inline-block;font-size:14px;"><strong>Status:</strong></div>
-                            <div class="positive" style="display:inline-block;margin:10px;font-size:14px;">Connected</div>
+                            <div id="status" class="positive" style="display:inline-block;margin:10px;font-size:14px;">Connected</div>
                         </div>
 
                         <div>
                             <div style="display:inline-block;font-size:14px;"><strong>Firmware:</strong></div>
-                            <div style="display:inline-block;margin:10px;font-size:14px;">Here will be an info about firmware</div>
+                            <div id="firmware" style="display:inline-block;margin:10px;font-size:14px;">Here will be an info about firmware</div>
                         </div>
 
                         <div>
                             <div style="display:inline-block;font-size:14px;"><strong>Battery:</strong></div>
-                            <div style="display:inline-block;margin:10px;font-size:14px;">Here will be an info about firmware</div>
+                            <div id="charge" style="display:inline-block;margin:10px;font-size:14px;">Here will be an info about firmware</div>
                         </div>
 
                         <div style="margin-top:40px;">
@@ -330,7 +216,7 @@ export class DeviceDetailsPanel {
                     
                         <div id="applist" class="items" style="top:280px;">
                         </div>
-                        <button id="generate_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">REFRESH DEVICE INFORMATION</button>
+                        <button id="refresh_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">REFRESH DEVICE INFORMATION</button>
                     </div>
                     </div>
 
@@ -344,6 +230,289 @@ export class DeviceDetailsPanel {
             `;  
 
             return ret;
+        }
+
+        private async doGetDeviceInfo(mac:string): Promise<void>
+        {
+            return new Promise<void>((resolve) =>
+            {
+                var out:Array<string> = new Array();
+                var err:boolean = false;
+                var info:string = "";
+                var utilspath = Configuration.getUtilsPath();
+                var command = '"'+utilspath+Configuration.getLoader()+'"';
+    
+                command+=" ci -f -a ";
+                command+=mac;
+    
+                var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
+                {    
+                    if (stderr && stderr.length > 0) 
+                    {
+                        out.push(stderr);
+                    }
+    
+                    if (stdout && stdout.length > 0) 
+                    {
+                        out.push(stdout);
+                    }
+    
+                    if(child.exitCode===0)
+                    {
+                        out.forEach(line=>{
+                            
+                            line = line.replace('\n','');
+    
+                            if(line.indexOf('Error:')!==-1)
+                            {
+                                err = true;
+                            }
+    
+                            if(line.indexOf('Build name')!==-1)
+                            {
+                                var l:string[] = line.split('\n');
+    
+                                l.forEach(s=>{
+                                    if(s.indexOf('Build name:')!==-1) {info = s;}
+                                });
+                            }
+                        });
+                    }
+                    else
+                    {
+                        err = true;
+                    }
+    
+                    if(err)
+                        { 
+                            this._panel?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:-1}} ); 
+                            this._panel.webview.postMessage({ type: 'endRequest'});
+
+                            vscode.commands.executeCommand('WOWCubeSDK.scanDevices');
+                        }
+                    else
+                        { 
+                            this._panel?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:1}} ); 
+    
+                            if(info.length>0)
+                            {
+                                this._panel?.webview.postMessage({ type: 'setDeviceInfo',value: {mac:mac,info:info}}); 
+                            }
+
+                            this.doGetBatteryInfo(mac);
+                        }
+        
+                    resolve();
+                });	
+            });
+        }
+
+        private async doGetBatteryInfo(mac:string): Promise<void>
+        {
+            return new Promise<void>((resolve) =>
+            {
+                var out:Array<string> = new Array();
+                var err:boolean = false;
+                var info:string = "";
+                var utilspath = Configuration.getUtilsPath();
+                var command = '"'+utilspath+Configuration.getLoader()+'"';
+    
+                command+=" ci -c -a ";
+                command+=mac;
+    
+                var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
+                {    
+                    if (stderr && stderr.length > 0) 
+                    {
+                        out.push(stderr);
+                    }
+    
+                    if (stdout && stdout.length > 0) 
+                    {
+                        out.push(stdout);
+                    }
+    
+                    if(child.exitCode===0)
+                    {
+                        out.forEach(line=>{
+                            
+                            line = line.replace('\n','');
+    
+                            if(line.indexOf('Error:')!==-1)
+                            {
+                                err = true;
+                            }
+                            else
+                            {
+                                var l:string[] = line.split('\n');
+    
+                                l.forEach(s=>{
+                                    if(s.indexOf('%')!==-1) {info = s;}
+                                });
+                            }
+                        });
+                    }
+                    else
+                    {
+                        err = true;
+                    }
+    
+                    if(err)
+                        { 
+                            this._panel?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:-1}} ); 
+                            this._panel.webview.postMessage({ type: 'endRequest'});
+
+                            vscode.commands.executeCommand('WOWCubeSDK.scanDevices');
+                        }
+                    else
+                        { 
+                            this._panel?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:1}} ); 
+    
+                            if(info.length>0)
+                            {
+                                this._panel?.webview.postMessage({ type: 'setBatteryInfo',value: {mac:mac,info:info}}); 
+                            }
+
+                            this.doAppsList(mac);
+                        }
+                    resolve();
+                });	
+            });
+        }
+
+        private async doAppsList(mac:string): Promise<void>
+        {
+            return new Promise<void>((resolve) =>
+            {
+                var out:Array<string> = new Array();
+                var err:boolean = false;
+                var info:Array<string> = new Array();
+                var utilspath = Configuration.getUtilsPath();
+                var command = '"'+utilspath+Configuration.getLoader()+'"';
+    
+                command+=" ci -al -a ";
+                command+=mac;
+    
+                var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
+                {    
+                    if (stderr && stderr.length > 0) 
+                    {
+                        out.push(stderr);
+                    }
+    
+                    if (stdout && stdout.length > 0) 
+                    {
+                        out.push(stdout);
+                    }
+    
+                    if(child.exitCode===0)
+                    {
+                        out.forEach(line=>{
+                            
+                            line = line.replace('\n','');
+    
+                            if(line.indexOf('Error:')!==-1)
+                            {
+                                err = true;
+                            }
+                            else
+                            {
+                                var l:string[] = line.split('\n');
+    
+                                l.forEach(s=>{
+                                    if(s.length>0) {info.push(s);}
+                                });
+                            }
+                        });
+                    }
+                    else
+                    {
+                        err = true;
+                    }
+    
+                    if(err)
+                        { 
+                            this._panel?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:-1}} ); 
+                            this._panel.webview.postMessage({ type: 'endRequest'});
+
+                            vscode.commands.executeCommand('WOWCubeSDK.scanDevices');
+                        }
+                    else
+                        { 
+                            this._panel?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:1}} ); 
+    
+                            if(info.length>0)
+                            {
+                                this._panel?.webview.postMessage({ type: 'setAppsList',value: {mac:mac,info:info}}); 
+                            }
+
+                            this._panel.webview.postMessage({ type: 'endRequest'});
+                        }
+                    resolve();
+                });	
+            });
+        }
+
+        private async doDeleteApp(mac:string, name:string): Promise<void>
+        {
+            return new Promise<void>((resolve) =>
+            {
+                var out:Array<string> = new Array();
+                var err:boolean = false;
+                var info:Array<string> = new Array();
+                var utilspath = Configuration.getUtilsPath();
+                var command = '"'+utilspath+Configuration.getLoader()+'"';
+    
+                command+=" rm -n ";
+                command+=name;
+                command+=" -a ";
+                command+=mac;
+    
+                var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
+                {    
+                    if (stderr && stderr.length > 0) 
+                    {
+                        out.push(stderr);
+                    }
+    
+                    if (stdout && stdout.length > 0) 
+                    {
+                        out.push(stdout);
+                    }
+    
+                    if(child.exitCode===0)
+                    {
+                        out.forEach(line=>{
+                            
+                            line = line.replace('\n','');
+    
+                            if(line.indexOf('Error:')!==-1)
+                            {
+                                err = true;
+                            }
+                        });
+                    }
+                    else
+                    {
+                        err = true;
+                    }
+    
+                    if(err)
+                        { 
+                            if(out.length>0)
+                                vscode.window.showWarningMessage("Unable to delete this app: "+out[0]);   
+                            else
+                                vscode.window.showWarningMessage("Unable to delete this app");
+
+                            this._panel.webview.postMessage({ type: 'endRequest'});
+                        }
+                    else
+                        { 
+                            this.doAppsList(mac);
+                        }
+                    resolve();
+                });	
+            });
         }
 }
 function getWebviewOptions(extensionUri: vscode.Uri): 

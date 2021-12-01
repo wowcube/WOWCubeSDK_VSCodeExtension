@@ -36,14 +36,6 @@ class AppList
     {
         var n = this.items.length;
 
-
-        /*
-                            <div id="i1" class="item" style="min-height: 20px;padding: 8px;">
-                                <div style="margin:5px; margin-top:0px; margin-bottom:0px;"><strong>Example1.cub</strong></div>
-                                <button class="bt-manage-btn">Delete</button>
-                            </div>
-        */
-
         const d = document.createElement('div');
         d.id = 'i'+n;
         d.className = 'item';
@@ -65,7 +57,7 @@ class AppList
 
         b.addEventListener('click',()=>
         {
-            window.dispatchEvent(new CustomEvent('deleteressed',{app:app.name}));
+            window.dispatchEvent(new CustomEvent('deleteressed',{detail:app.name}));
         });
 
         d.appendChild(b);
@@ -80,6 +72,75 @@ class AppList
         this.items = new Array();
         this.el.innerHTML = "";
     }
+
+    setDeviceStatus(status)
+    {
+        var el = document.getElementById('status');
+
+        el.className = "fontnormal "+this.getStatusClass(status);
+        el.innerHTML = this.getStatusLine(status);
+    }
+
+    setDeviceInfo(info)
+    {
+        var el = document.getElementById('firmware');
+
+        el.className = "fontnormal";
+        el.innerHTML = info;
+    }
+
+    setBatteryInfo(info)
+    {
+        var el = document.getElementById('charge');
+
+        el.className = "fontnormal";
+        el.innerHTML = info;
+    }
+
+    setAppsList(info)
+    {
+        try
+        {
+            this.clearApps();
+
+            for(var i=0;i<info.length;i++)
+            {
+                this.addApp({name:info[i]});
+            }
+         }
+         catch(e){}
+    }
+
+    clear()
+    {
+        document.getElementById('status').innerHTML = "";
+        document.getElementById('firmware').innerHTML = "";
+        document.getElementById('charge').innerHTML = "";
+
+        this.clearApps();
+    }
+
+    getStatusLine(status)
+    {
+        switch(status)
+        {
+            case 0: return 'Connecting...';
+            case 1: return 'Connected';
+            case -1: return 'Not Connected';
+        }
+        return 'Unknown';
+    }
+
+    getStatusClass(status)
+    {
+        switch(status)
+        {
+            case 0: return 'neutral';
+            case 1: return 'positive';
+            case -1: return 'negative';
+        }
+        return 'neutral';
+    }
 }
 
 (function () {
@@ -88,61 +149,77 @@ class AppList
     
     // @ts-ignore
     window.onload = function()
-    {        
+    {                
         apps = new AppList(document.getElementById("applist"));
 
-        for(var i=0;i<10;i++)
-        {
-           apps.addApp({name:'Application '+i+'.cub'});
-        }
-
-        document.getElementById('generate_button').addEventListener('click', () => 
+        document.getElementById('refresh_button').addEventListener('click', () => 
         {
             showWait(true);
-
-            
-            /*
-            if(val!=null)
-            {               
-                vscode.postMessage({ type: 'generate', value: val });
-            }
-            else
-            {
-                vscode.postMessage({ type: 'error', value: "Unable to generate the project, please provide correct values first" });
-            }
-            */
+            apps.clear();
+            vscode.postMessage({ type: 'refresh', value: "" });
         }); 
     };
- 
-    window.addEventListener('itempressed', (e)=>
+
+    window.addEventListener('deleteressed', (e)=>
     {        
-        /*
-            for(var i=1;i<7;i++)
-           {
-               items[i-1].setSelected(false);
-               
-               if(items[i-1].id==e.detail.id) 
-               {
-                   items[i-1].setSelected(true);
-                   selectedItem = items[i-1].id;
-                }
-           }
-           */
+        showWait(true);
+        vscode.postMessage({ type: 'deleteapp', value: e.detail }); 
     });
 
     // Handle messages sent from the extension to the webview
+
     window.addEventListener('message', event =>  
-    {
-        /*
+    {  
         const message = event.data; // The json data that the extension sent
         switch (message.type) 
         {
-            case 'folderSelected':
+            case 'startRequest':
                 {
-                    document.getElementById('foldername').value = message.value;
-                    break;
+                    apps.clear();
+                    showWait(true);
                 }
+                break;
+            case 'endRequest':
+                {
+                    showWait(false);
+                }
+                break;
+            case 'setDeviceStatus':
+                {
+                    try
+                    {
+                        apps.setDeviceStatus(message.value.status);
+                    }
+                    catch(e){}
+                }
+                break;
+            case 'setDeviceInfo':
+                {
+                    try
+                    {
+                        apps.setDeviceInfo(message.value.info);
+                    }
+                    catch(e){}
+                }
+                break;
+            case 'setBatteryInfo':
+                {
+                    try
+                    {
+                        apps.setBatteryInfo(message.value.info);
+                    }
+                    catch(e){}
+                }
+                break;
+            case 'setAppsList':
+                {
+                    try
+                    {
+                        apps.setAppsList(message.value.info);
+                    }
+                    catch(e){}
+                }
+                break;
         }
-        */
     });
 }());

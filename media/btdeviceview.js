@@ -60,8 +60,8 @@ class BtItem
     {
         this.info = s;
 
-        this.i_el.className = "fontnormal";
-        this.i_el.innerHTML = this.info;
+        //this.i_el.className = "fontnormal";
+        //this.i_el.innerHTML = this.info;
     }
 
     getStatusLine()
