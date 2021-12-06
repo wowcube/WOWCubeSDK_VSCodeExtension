@@ -89,7 +89,7 @@ export class Configuration
     public static getLastPath() { return Configuration.getString('wowsdk.conf.wizard');}
     public static setLastPath(value:string) {Configuration.setString('wowsdk.conf.wizard',value);}
 
-    public static getWOWSDKPath() 
+    public static async getWOWSDKPathAsync():Promise<string>
     {
          var path:string = Configuration.getString('wowsdk.conf.wowsdkpath');
          var p = os.platform();
@@ -109,7 +109,71 @@ export class Configuration
                 }
                 break;
                 case 'win32': //windows
+                {
+                    var regedit = require('regedit');
+                    var done:boolean = false;
+
                     path = "/";
+
+                    regedit.list('HKCU\\SOFTWARE\\WOWCube SDK', (err:any, result:any) =>
+                    {
+                        if(err===null)
+                        {
+                            var key = result['HKCU\\SOFTWARE\\WOWCube SDK'];
+                            if(key.exists)
+                            {
+                              //the value doesn't have a name, hence '' 
+                                var p:string = key.values[''].value;
+                                path = p.replace(/\\/g,'/')+'/';
+                            }
+                        }
+
+                        this.setWOWSDKPath(path);
+                        done = true;
+                    });
+                    
+                    while(!done)
+                    {
+                        await Configuration.sleep(100);
+                    }                    
+                }
+                break;
+                case 'linux':
+                    path = "/";
+                break;
+                default:
+                //unsupported os
+                path = "";
+                break; 
+            }
+         }
+
+         return path;
+    }
+
+    public static getWOWSDKPath():string
+    {
+         var path:string = Configuration.getString('wowsdk.conf.wowsdkpath');
+         var p = os.platform();
+
+         if(typeof(path)==='undefined' || path.length===0)
+         {
+            //try to find the SDK
+            switch(p)
+            {
+                case 'darwin': //mac
+                {
+                    if(fs.existsSync("/Applications/WOWCube SDK.app"))
+                    {
+                        path = "/Applications/WOWCube SDK.app/Contents/MacOS/";
+                        this.setWOWSDKPath(path);
+                    }
+                }
+                break;
+                case 'win32': //windows
+                {
+                    path = "/";                 
+                }
                 break;
                 case 'linux':
                     path = "/";
@@ -192,7 +256,7 @@ export class Configuration
 
     public static getPawnPath()
     {
-        var ret:string = Configuration.getWOWSDKPath();
+        var ret:string =  Configuration.getWOWSDKPath();
 
         if(typeof(ret)==='undefined' || ret.length===0)
         {
@@ -216,14 +280,26 @@ export class Configuration
         return ret;
     }
 
-    public static init()
+    public static async init()
     {
         //detect SDK path 
-        //for now, it's hardcoded
-        var path = Configuration.getWOWSDKPath();
+
+        var path:string = await Configuration.getWOWSDKPathAsync();
         if(typeof(path)==='undefined' || path.length===0)
         {
             vscode.window.showErrorMessage("WOWCube SDK is not detected.\nPlease make sure WOWCube SDK is installed and up to date"); 
         }
     }
+
+    static async sleep(timer:number) 
+    {
+        return new Promise<void>(resolve => 
+            {
+            timer = timer || 2000;
+            setTimeout(function () 
+            {
+                resolve();
+            }, timer);
+        });
+    };
 }

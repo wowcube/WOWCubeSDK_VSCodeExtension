@@ -67,6 +67,28 @@ class AppList
         this.items.push(item);       
     }
 
+    deleteApp(name)
+    {
+        var app = null;
+        var n = -1;
+
+        for(var i=0;i<this.items.length;i++)
+        {
+            if(this.items[i].item.name==name)
+            {
+                app = this.items[i];
+                n=i;
+                break;
+            }
+        }
+
+        if(app!=null)
+        {
+            this.el.removeChild(app.el);
+            this.items.splice(n,1); 
+        }
+    }
+
     clearApps()
     {
         this.items = new Array();
@@ -220,6 +242,15 @@ class AppList
                     catch(e){}
                 }
                 break;
+            case 'deleteAppItem':
+                    {
+                        try
+                        {
+                            apps.deleteApp(message.value.name);
+                        }
+                        catch(e){}
+                    }
+                    break;
         }
     });
 }());

@@ -21,7 +21,7 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 		this._busy = false;
 	 }
 
-     public reload()
+     public async reload()
      { 
 		if(!this._busy)
 		{
@@ -149,7 +149,7 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 			var out:Array<string> = new Array();
 			var err:boolean = false;
 			var info:string = "";
-			var utilspath = Configuration.getUtilsPath();
+			var utilspath:string = Configuration.getUtilsPath();
 			var command = '"'+utilspath+Configuration.getLoader()+'"';
 
 			command+=" ci -f -a ";
@@ -157,21 +157,6 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 
 			var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
 			{
-				if (error) 
-				{
-					resolve();
-				}
-
-				if (stderr && stderr.length > 0) 
-				{
-					out.push(stderr);
-				}
-
-				if (stdout && stdout.length > 0) 
-				{
-					out.push(stdout);
-				}
-
 				if(child.exitCode===0)
 				{
 					out.forEach(line=>{
@@ -185,11 +170,7 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 
 						if(line.indexOf('Build name')!==-1)
 						{
-							var l:string[] = line.split('\n');
-
-							l.forEach(s=>{
-								if(s.indexOf('Build name:')!==-1) {info = s;}
-							});
+							info = line;
 						}
 					});
 				}
@@ -210,18 +191,27 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 						}
 					}
 
-
 				resolve();
 			});	
+
+			child?.stdout?.on('data', function(data) 
+			{
+				out.push(data);
+			});
+
+			child?.stderr?.on('data', function(data) 
+			{
+				out.push(data);
+			});
 		});
 	}
 	private async doDeviceDiscovery(): Promise<void> 
     {
 		return new Promise<void>((resolve) => 
-        {	
+        {			
 			var out:Array<string> = new Array();
 
-			var utilspath = Configuration.getUtilsPath();
+			var utilspath:string = Configuration.getUtilsPath();
 			var command = '"'+utilspath+Configuration.getLoader()+'"';
 
 			command+=" dd";
@@ -230,21 +220,6 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 
 			var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
 			{
-				if (error) 
-				{
-					resolve();
-				}
-
-				if (stderr && stderr.length > 0) 
-				{
-					out.push(stderr);
-				}
-
-				if (stdout && stdout.length > 0) 
-				{
-					out.push(stdout);
-				}
-
 				if(child.exitCode===0)
 				{
 					out.forEach(line=>{
@@ -273,6 +248,16 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 
 				resolve();
 			});	
+
+			child?.stdout?.on('data', function(data) 
+			{
+				out.push(data);
+			});
+
+			child?.stderr?.on('data', function(data) 
+			{
+				out.push(data);
+			});
 		});
 	}
 }

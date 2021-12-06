@@ -13,6 +13,8 @@ export class DeviceDetailsPanel {
     private readonly _extensionUri: vscode.Uri;  
     private _disposables: vscode.Disposable[] = [];
 
+    private _currentState:number = -1;
+
     public static createOrShow(extensionUri: vscode.Uri) { 
         const column = vscode.window.activeTextEditor
         ? vscode.window.activeTextEditor.viewColumn: undefined;
@@ -62,7 +64,15 @@ export class DeviceDetailsPanel {
                 e => {
                     if (this._panel.visible) 
                     {  
-                        this._update();
+                        if(this._currentState!==1)
+                        {
+                            this._currentState = 1;
+                            this._update();
+                        }
+                    }
+                    else
+                    {
+                        this._currentState = 0;
                     }
                 },
                 null,
@@ -97,25 +107,23 @@ export class DeviceDetailsPanel {
                         case 'deleteapp':
                             {
                                 var device = Configuration.getCurrentDevice();
-                                if(device!==null)
-                                {
-                                    this.doGetDeviceInfo(device.mac);
-                                }
-                                else
+                                if(device===null)
                                 {
                                     this._panel.webview.postMessage({ type: 'endRequest'});
                                     vscode.window.showWarningMessage("WOWCube device is not selected"); 
                                 }
-
-                                var appname = message.value;
-                                if(appname!==null)
-                                {
-                                   this.doDeleteApp(device.mac,appname);
-                                }
                                 else
                                 {
-                                    this._panel.webview.postMessage({ type: 'endRequest'});
-                                    vscode.window.showWarningMessage("Unable to delete this app");   
+                                    var appname = message.value;
+                                    if(appname!==null)
+                                    {
+                                       this.doDeleteApp(device.mac,appname);
+                                    }
+                                    else
+                                    {
+                                        this._panel.webview.postMessage({ type: 'endRequest'});
+                                        vscode.window.showWarningMessage("Unable to delete this app");   
+                                    }
                                 }
                             }
                         break;
@@ -147,6 +155,8 @@ export class DeviceDetailsPanel {
         
             if(this._panel.visible)
             {
+                this._currentState = 1;
+
                 var device = Configuration.getCurrentDevice();
                 if(device!==null)
                 {
@@ -158,6 +168,10 @@ export class DeviceDetailsPanel {
                     this._panel.webview.postMessage({ type: 'endRequest'});
                     vscode.window.showWarningMessage("WOWCube device is not selected"); 
                 }
+            }
+            else
+            {
+                this._currentState = 0;
             }
         }
         
@@ -500,16 +514,17 @@ export class DeviceDetailsPanel {
                     if(err)
                         { 
                             if(out.length>0)
-                                vscode.window.showWarningMessage("Unable to delete this app: "+out[0]);   
+                                vscode.window.showErrorMessage("Unable to delete this app: "+out[0]);   
                             else
-                                vscode.window.showWarningMessage("Unable to delete this app");
-
-                            this._panel.webview.postMessage({ type: 'endRequest'});
+                                vscode.window.showErrorMessage("Unable to delete this app");
                         }
                     else
                         { 
-                            this.doAppsList(mac);
+                            this._panel.webview.postMessage({ type: 'deleteAppItem',value: {name:name}});
                         }
+
+                        this._panel.webview.postMessage({ type: 'endRequest'});
+
                     resolve();
                 });	
             });

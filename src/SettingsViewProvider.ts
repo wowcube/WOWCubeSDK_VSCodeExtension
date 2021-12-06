@@ -20,7 +20,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
         vscode.window.showInformationMessage("This feature is not implemented yet");
      }
 
-	 public resolveWebviewView( webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext,_token: vscode.CancellationToken,) 
+	 public async resolveWebviewView( webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext,_token: vscode.CancellationToken,) 
 	 {
 		this._view = webviewView;
 
@@ -34,7 +34,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			]
 		};
 
-		webviewView.webview.html = this._getHtmlForWebview(webviewView.webview);
+		webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
 
 		webviewView.webview.onDidReceiveMessage(data => {
 			switch (data.type) {

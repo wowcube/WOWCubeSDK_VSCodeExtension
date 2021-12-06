@@ -133,7 +133,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 		this._channel.show(true);
 	}
 
-	private async doCompile(action:string): Promise<void> 
+	private doCompile(action:string): Promise<void> 
     {
 		return new Promise<void>((resolve,reject) => 
         {
@@ -143,7 +143,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			const build_json = require(this.workspace+'/wowcubeapp-build.json');
 
 			var pawnpath = Configuration.getPawnPath();
-			var command = '"'+pawnpath+Configuration.getPawnCC()+'"';
+			var command = '"'+pawnpath+ Configuration.getPawnCC()+'"';
 
 			var sourcefile = this.workspace+"/src/"+build_json.name+".pwn";
 			var destfile = this.workspace+"/binary/"+build_json.name+".amx";
@@ -231,6 +231,9 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 			command+=" "+project+" "+output;
 
+			//var process = require('process');
+			//process.chdir(this.workspace+'\\');
+
 			var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
 			{
 				if (error) 
@@ -312,22 +315,6 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 			var child:cp.ChildProcess = cp.exec(command, { cwd: ""}, (error, stdout, stderr) => 
 			{
-				if (error) 
-				{
-					//reject({ error, stdout, stderr });
-				}
-				if (stderr && stderr.length > 0) 
-				{
-					this._channel.appendLine(stderr);
-					this._channel.show(true);
-				}
-
-				if (stdout && stdout.length > 0) 
-				{
-					this._channel.appendLine(stdout);
-					this._channel.show(true);
-				}
-
 				if(child.exitCode===0)
 				{
 					this._channel.appendLine('Done.\r\n');
@@ -344,8 +331,20 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				}
 			});	
 
-			this.closeEmitter.fire(0);
-			resolve();
+			var that = this;
+
+			child?.stdout?.on('data', function(data) 
+			{
+				that._channel.appendLine(data);
+				that._channel.show(true);
+			});
+
+			child?.stderr?.on('data', function(data) 
+			{
+				that._channel.appendLine(data);
+				that._channel.show(true);
+			});
+			
 		});
 	}
 
@@ -356,23 +355,29 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			this.writeEmitter.fire('Running app in WOWCube emulator...\r\n');
 			this._channel.appendLine('Running app in WOWCube emulator...\r\n');
 
+			/*
 			if(!this.createVirtualFlashDir(cubename))
 			{
 				this._channel.appendLine('Failed to run in emulator.\r\n');
 				this.closeEmitter.fire(0);
 				resolve();
 			}
+			*/
 
 			//"/Applications/WOWCube SDK.app/Contents/MacOS//bin//wowcube-sdk" --run --firmware-globals "FLASH_DIR=/Users/apple 1/Test/y5/binary" --firmware-build --firmware-cubelet "y5.cub" 
 
 			var utilspath = Configuration.getUtilsPath();
 			var command = '"'+utilspath+Configuration.getEmulator()+'"';
 
-			const parameters = '--run --firmware-globals';	
-			const flashDir = '"FLASH_DIR='+this.workspace+'/flash"';	
-			const output = '--firmware-build --firmware-cubelet "'+cubename+'"';
+			const source = this.workspace+'/binary/'+cubename;
 
-			command+=" "+parameters+" "+flashDir+" "+output;
+			//const parameters = '--run --firmware-globals';	
+			//const flashDir = '"FLASH_DIR='+this.workspace+'/flash"';	
+			//const output = '--firmware-build --firmware-cubelet "'+cubename+'"';
+			const output = '--project-run "'+source+'" --run';
+
+			//command+=" "+parameters+" "+flashDir+" "+output;
+			command+=" "+output;
 
 			cp.exec(command, { cwd: "" });
 

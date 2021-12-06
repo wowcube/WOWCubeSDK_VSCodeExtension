@@ -15,11 +15,11 @@ let buildTask: vscode.Disposable | undefined;
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) 
+export async function activate(context: vscode.ExtensionContext) 
 {	
 	console.log('WOWCube SDK extension is loaded...');
 	
-	Configuration.init();
+	await Configuration.init();
 
 	const wizard = new WizardViewProvider(context.extensionUri);
 	const btdevices = new BTDeviceViewProvider(context.extensionUri);
