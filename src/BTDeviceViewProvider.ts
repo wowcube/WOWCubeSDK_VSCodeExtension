@@ -67,7 +67,7 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 				{
 					vscode.commands.executeCommand('WOWCubeSDK.openDeviceDetails');
 				}
-				break;
+				break;		
 				case 'deviceSelected':
 					{
 						Configuration.setCurrentDevice(data.value);
@@ -217,24 +217,31 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 			command+=" dd";
 
 			this.devices = [];
-
+			
 			var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
 			{
 				if(child.exitCode===0)
 				{
 					out.forEach(line=>{
-						
-						line = line.replace('\n','');
-						var i_n = line.indexOf('Name:');
-						var i_m = line.indexOf('Mac:');
+						    	
+						var l:string[] = line.split('\n');
 
-						if(i_n===0 && i_m!==-1)
-						{
-							var deviceName = line.substr(5,i_m-5-1);
-							var deviceMac = line.substr(i_m+4);
+						l.forEach(sline =>{
 
-							this.devices.push({name:deviceName, mac:deviceMac});
-						}
+							sline = sline.replace('\n','');
+							sline = sline.replace('\r','');
+
+							var i_n = sline.indexOf('Name:');
+							var i_m = sline.indexOf('Mac:');
+	
+							if(i_n===0 && i_m!==-1)
+							{
+								var deviceName = sline.substr(5,i_m-5-1);
+								var deviceMac = sline.substr(i_m+4);
+	
+								this.devices.push({name:deviceName, mac:deviceMac});
+							}
+						});
 					});
 					
 					Configuration.setLastDetectedDevices(this.devices);

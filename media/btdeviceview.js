@@ -135,7 +135,6 @@ class BtList
             window.dispatchEvent(new CustomEvent('managepressed'));
         });
 
-
         li.appendChild(d);
         li.appendChild(manage);
 
