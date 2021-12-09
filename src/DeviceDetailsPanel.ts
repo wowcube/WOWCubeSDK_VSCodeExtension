@@ -106,7 +106,7 @@ export class DeviceDetailsPanel {
                                 var device = Configuration.getCurrentDevice();
                                 if(device!==null)
                                 {
-                                    if(Configuration.isDeviceBusy(device.mac))
+                                    if(Configuration.isDeviceBusy(device.mac)===true)
                                     {
                                         this._panel.webview.postMessage({ type: 'endRequest'});
                                         vscode.window.showWarningMessage("Device '"+device.name+"' is busy, please try again later");   
@@ -138,7 +138,7 @@ export class DeviceDetailsPanel {
                                 }
                                 else
                                 {
-                                    if(Configuration.isDeviceBusy(device.mac))
+                                    if(Configuration.isDeviceBusy(device.mac)===true)
                                     {
                                         vscode.window.showWarningMessage("Device '"+device.name+"' is busy, please try again later");   
                                     }
@@ -194,7 +194,7 @@ export class DeviceDetailsPanel {
                 var device = Configuration.getCurrentDevice();
                 if(device!==null)
                 {
-                    if(!Configuration.isDeviceBusy(device.mac))
+                    if(!Configuration.isDeviceBusy(device.mac)===true)
                     {
                         this._panel.webview.postMessage({ type: 'setDeviceName',value: {name:device.name+' ('+device.mac+')'}}); 
                         this._panel.webview.postMessage({ type: 'startRequest'});

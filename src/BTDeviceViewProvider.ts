@@ -243,7 +243,7 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 
 			this.devices = [];
 
-			if(Configuration.isAnyDeviceBusy())
+			if(Configuration.isAnyDeviceBusy()===true)
 			{
 				vscode.window.showWarningMessage("At least one device from the list is busy, please wait till current operation is complete to scan for new devices.");  
 

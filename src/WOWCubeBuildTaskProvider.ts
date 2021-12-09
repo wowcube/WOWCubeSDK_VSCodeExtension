@@ -303,7 +303,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				resolve();
 			}
 			
-			if(Configuration.isDeviceBusy(device.mac))
+			if(Configuration.isDeviceBusy(device.mac)===true)
 			{
 				this._channel.appendLine('Failed to run on device, device is busy. Please wait before current operation is finished and try again.\r\n');
 				this.closeEmitter.fire(0);
