@@ -10,6 +10,7 @@ import { BTDeviceViewProvider } from './BTDeviceViewProvider';
 import { SettingsViewProvider } from './SettingsViewProvider';
 import { WOWCubeBuildTaskProvider } from './WOWCubeBuildTaskProvider';
 import {Configuration} from './Configuration';
+import {Providers} from './Providers';
 
 let buildTask: vscode.Disposable | undefined;
 
@@ -20,27 +21,24 @@ export async function activate(context: vscode.ExtensionContext)
 	console.log('WOWCube SDK extension is loaded...');
 	
 	await Configuration.init();
-
-	const wizard = new WizardViewProvider(context.extensionUri);
-	const btdevices = new BTDeviceViewProvider(context.extensionUri);
-	const settings = new SettingsViewProvider(context.extensionUri);
+	Providers.init(context.extensionUri);
 
 	const workspaceRoot = (vscode.workspace.workspaceFolders && (vscode.workspace.workspaceFolders.length > 0)) ? vscode.workspace.workspaceFolders[0].uri.fsPath : "";
 	buildTask = vscode.tasks.registerTaskProvider(WOWCubeBuildTaskProvider.wowCubeBuildScriptType, new WOWCubeBuildTaskProvider(workspaceRoot));
 
 	context.subscriptions.push(
-			vscode.window.registerWebviewViewProvider(WizardViewProvider.viewType, wizard));
+			vscode.window.registerWebviewViewProvider(WizardViewProvider.viewType, Providers.wizard));
 
 	context.subscriptions.push(
-				vscode.window.registerWebviewViewProvider(BTDeviceViewProvider.viewType, btdevices));
+				vscode.window.registerWebviewViewProvider(BTDeviceViewProvider.viewType, Providers.btdevices));
 
 	context.subscriptions.push(
-					vscode.window.registerWebviewViewProvider(SettingsViewProvider.viewType, settings));
+					vscode.window.registerWebviewViewProvider(SettingsViewProvider.viewType, Providers.settings));
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('WOWCubeSDK.scanDevices', () => 
 		{
-			btdevices.reload();
+			Providers.btdevices.reload();
 		}));
 
 	context.subscriptions.push(

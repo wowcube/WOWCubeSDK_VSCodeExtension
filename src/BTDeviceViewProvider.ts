@@ -1,13 +1,9 @@
 import * as vscode from 'vscode';
 import { getNonce } from "./getNonce";
 
-import * as path from 'path';
-import * as fs from 'fs';
 import * as cp from 'child_process';
-import { error } from 'console';
-import { rejects } from 'assert';
 import {Configuration} from './Configuration';
-import { resolve } from 'path';
+import { DeviceDetailsPanel } from './DeviceDetailsPanel';
 
 export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 {
@@ -70,7 +66,15 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 				break;		
 				case 'deviceSelected':
 					{
-						Configuration.setCurrentDevice(data.value);
+						var currentDevice = Configuration.getCurrentDevice();
+
+						if(currentDevice===null) {currentDevice = {name:"",mac:""};}
+
+						if(currentDevice.name!==data.value.name || currentDevice.mac!==data.value.mac)
+						{
+							Configuration.setCurrentDevice(data.value);
+							DeviceDetailsPanel.setDevice(data.value);
+						}
 					}
 					break;		
 				case 'checkDeviceConnection':
@@ -84,6 +88,23 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 		this._loadeSavedDevices();	
 	}
 
+	public setDeviceStatus(mac:string, status:number)
+	{
+		this._view?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:status}} ); 
+	}
+
+	public showWait(b:boolean)
+	{
+		if(b)
+		{
+			this._view?.webview.postMessage({ type: 'showWait',value: {show:b}} ); 
+		}
+		else
+		{
+			this._view?.webview.postMessage({ type: 'hideWait',value: {show:b}} ); 
+		}
+
+	}
 	private _loadeSavedDevices()
 	{
 		var devices = Configuration.getLastDetectedDevices();
@@ -129,7 +150,9 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 				<div id="debug"></div>
 				<br/>
 				<div class="wait" id="wait">
-					<div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+					<div class="centered">
+						<div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+					</div>
 				</div>
 				<div class="visible" id="list">
 					<ul class="bt-list" id="bt-list">
@@ -155,8 +178,10 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 			command+=" ci -f -a ";
 			command+=mac;
 
+			Configuration.setDeviceBusy(mac,true);			
 			var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
 			{
+				Configuration.setDeviceBusy(mac,false);
 				if(child.exitCode===0)
 				{
 					out.forEach(line=>{
@@ -217,7 +242,17 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 			command+=" dd";
 
 			this.devices = [];
-			
+
+			if(Configuration.isAnyDeviceBusy())
+			{
+				vscode.window.showWarningMessage("At least one device from the list is busy, please wait till current operation is complete to scan for new devices.");  
+
+				this._view?.webview.postMessage({ type: 'endDiscovery',value: this.devices});
+				this._busy = false;
+
+				resolve();
+			}
+
 			var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
 			{
 				if(child.exitCode===0)

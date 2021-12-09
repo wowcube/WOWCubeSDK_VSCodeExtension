@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import { getNonce } from "./getNonce";
 import * as cp from 'child_process';
 import {Configuration} from './Configuration';
+import { Providers } from "./Providers";
 
 export class DeviceDetailsPanel {
 
@@ -15,7 +16,8 @@ export class DeviceDetailsPanel {
 
     private _currentState:number = -1;
 
-    public static createOrShow(extensionUri: vscode.Uri) { 
+    public static createOrShow(extensionUri: vscode.Uri) 
+    { 
         const column = vscode.window.activeTextEditor
         ? vscode.window.activeTextEditor.viewColumn: undefined;
 
@@ -46,6 +48,15 @@ export class DeviceDetailsPanel {
     public static revive(panel: vscode.WebviewPanel,extensionUri: vscode.Uri) 
     {    
         DeviceDetailsPanel.currentPanel = new DeviceDetailsPanel(panel, extensionUri);  
+    }
+
+    public static setDevice(device:any) 
+    { 
+        if(DeviceDetailsPanel.currentPanel?._panel?.visible)
+        {
+            DeviceDetailsPanel.currentPanel?._panel?.webview.postMessage({ type: 'setDeviceName',value: {name:device.name+' ('+device.mac+')'}}); 
+            DeviceDetailsPanel.currentPanel?._update();
+        }
     }
 
     private constructor(panel: vscode.WebviewPanel,
@@ -95,11 +106,22 @@ export class DeviceDetailsPanel {
                                 var device = Configuration.getCurrentDevice();
                                 if(device!==null)
                                 {
-                                    this.doGetDeviceInfo(device.mac);
+                                    if(Configuration.isDeviceBusy(device.mac))
+                                    {
+                                        this._panel.webview.postMessage({ type: 'endRequest'});
+                                        vscode.window.showWarningMessage("Device '"+device.name+"' is busy, please try again later");   
+                                    }
+                                    else
+                                    {
+                                        this.doGetDeviceInfo(device.mac);
+                                        Providers.btdevices.showWait(true);
+                                    }
                                 }
                                 else
                                 {
                                     this._panel.webview.postMessage({ type: 'endRequest'});
+                                    Providers.btdevices.showWait(false);
+
                                     vscode.window.showWarningMessage("WOWCube device is not selected"); 
                                 }
                             }
@@ -110,20 +132,32 @@ export class DeviceDetailsPanel {
                                 if(device===null)
                                 {
                                     this._panel.webview.postMessage({ type: 'endRequest'});
+                                    Providers.btdevices.showWait(false);
+
                                     vscode.window.showWarningMessage("WOWCube device is not selected"); 
                                 }
                                 else
                                 {
-                                    var appname = message.value;
-                                    if(appname!==null)
+                                    if(Configuration.isDeviceBusy(device.mac))
                                     {
-                                       this.doDeleteApp(device.mac,appname);
+                                        vscode.window.showWarningMessage("Device '"+device.name+"' is busy, please try again later");   
                                     }
                                     else
                                     {
-                                        this._panel.webview.postMessage({ type: 'endRequest'});
-                                        vscode.window.showWarningMessage("Unable to delete this app");   
-                                    }
+                                        var appname = message.value;
+                                        if(appname!==null)
+                                        {
+                                        this.doDeleteApp(device.mac,appname);
+                                        Providers.btdevices.showWait(true);
+                                        }
+                                        else
+                                        {
+                                            this._panel.webview.postMessage({ type: 'endRequest'});
+                                            Providers.btdevices.showWait(false);
+
+                                            vscode.window.showWarningMessage("Unable to delete this app");   
+                                        }
+                                    }   
                                 }
                             }
                         break;
@@ -148,7 +182,7 @@ export class DeviceDetailsPanel {
             }
         }
 
-        private async _update() 
+        private _update() 
         {
             const webview = this._panel.webview;    
             this._panel.webview.html = this._getHtmlForWebview(webview);  
@@ -160,12 +194,25 @@ export class DeviceDetailsPanel {
                 var device = Configuration.getCurrentDevice();
                 if(device!==null)
                 {
-                    this._panel.webview.postMessage({ type: 'startRequest'});
-                    this.doGetDeviceInfo(device.mac);
+                    if(!Configuration.isDeviceBusy(device.mac))
+                    {
+                        this._panel.webview.postMessage({ type: 'setDeviceName',value: {name:device.name+' ('+device.mac+')'}}); 
+                        this._panel.webview.postMessage({ type: 'startRequest'});
+                        Providers.btdevices.showWait(true);
+
+                        this.doGetDeviceInfo(device.mac);
+                    }
+                    else
+                    {
+                        this._panel.webview.postMessage({ type: 'endRequest'});    
+                        vscode.window.showWarningMessage("Device '"+device.name+"' is busy, please try again later");   
+                    }
                 }
                 else
                 {
                     this._panel.webview.postMessage({ type: 'endRequest'});
+                    Providers.btdevices.showWait(false);
+
                     vscode.window.showWarningMessage("WOWCube device is not selected"); 
                 }
             }
@@ -210,19 +257,24 @@ export class DeviceDetailsPanel {
                         <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Basic information and management</div>
                         <div class="separator"></div>
 
-                        <div style="margin-top:20px;">
-                            <div style="display:inline-block;font-size:14px;"><strong>Status:</strong></div>
-                            <div id="status" class="positive" style="display:inline-block;margin:10px;font-size:14px;">Connected</div>
+                        <div style="margin-top:20px;margin-bottom:5px;">
+                            <div style="display:inline-block;font-size:14px;margin-bottom:15px;"><strong>Device:</strong></div>
+                            <div id="device" class="positive" style="display:inline-block;font-size:14px;"> </div>
                         </div>
 
                         <div>
-                            <div style="display:inline-block;font-size:14px;"><strong>Firmware:</strong></div>
-                            <div id="firmware" style="display:inline-block;margin:10px;font-size:14px;">Here will be an info about firmware</div>
+                            <div style="display:inline-block;font-size:14px;margin-bottom:10px;"><strong>Status:</strong></div>
+                            <div id="status" class="positive" style="display:inline-block;font-size:14px;"></div>
                         </div>
 
                         <div>
-                            <div style="display:inline-block;font-size:14px;"><strong>Battery:</strong></div>
-                            <div id="charge" style="display:inline-block;margin:10px;font-size:14px;">Here will be an info about firmware</div>
+                            <div style="display:inline-block;font-size:14px;margin-bottom:10px;"><strong>Firmware:</strong></div>
+                            <div id="firmware" style="display:inline-block;font-size:14px;"></div>
+                        </div>
+
+                        <div>
+                            <div style="display:inline-block;font-size:14px;margin-bottom:10px;"><strong>Battery:</strong></div>
+                            <div id="charge" style="display:inline-block;font-size:14px;"></div>
                         </div>
 
                         <div style="margin-top:40px;">
@@ -259,8 +311,10 @@ export class DeviceDetailsPanel {
                 command+=" ci -f -a ";
                 command+=mac;
     
+                Configuration.setDeviceBusy(mac,true);
                 var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
                 {    
+                    Configuration.setDeviceBusy(mac,false);                    
                     if (stderr && stderr.length > 0) 
                     {
                         out.push(stderr);
@@ -270,7 +324,7 @@ export class DeviceDetailsPanel {
                     {
                         out.push(stdout);
                     }
-    
+                    
                     if(child.exitCode===0)
                     {
                         out.forEach(line=>{
@@ -300,14 +354,16 @@ export class DeviceDetailsPanel {
                     if(err)
                         { 
                             this._panel?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:-1}} ); 
-                            this._panel.webview.postMessage({ type: 'endRequest'});
+                            Providers.btdevices.setDeviceStatus(mac,-1);
 
-                            vscode.commands.executeCommand('WOWCubeSDK.scanDevices');
+                            this._panel.webview.postMessage({ type: 'endRequest'});
+                            Providers.btdevices.showWait(false);
                         }
                     else
                         { 
                             this._panel?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:1}} ); 
-    
+                            Providers.btdevices.setDeviceStatus(mac,1);
+
                             if(info.length>0)
                             {
                                 this._panel?.webview.postMessage({ type: 'setDeviceInfo',value: {mac:mac,info:info}}); 
@@ -334,8 +390,11 @@ export class DeviceDetailsPanel {
                 command+=" ci -c -a ";
                 command+=mac;
     
+                Configuration.setDeviceBusy(mac,true);
                 var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
                 {    
+                    Configuration.setDeviceBusy(mac,false);
+
                     if (stderr && stderr.length > 0) 
                     {
                         out.push(stderr);
@@ -374,14 +433,18 @@ export class DeviceDetailsPanel {
                     if(err)
                         { 
                             this._panel?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:-1}} ); 
+                            Providers.btdevices.setDeviceStatus(mac,-1);
+
                             this._panel.webview.postMessage({ type: 'endRequest'});
+                            Providers.btdevices.showWait(false);
 
                             vscode.commands.executeCommand('WOWCubeSDK.scanDevices');
                         }
                     else
                         { 
                             this._panel?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:1}} ); 
-    
+                            Providers.btdevices.setDeviceStatus(mac,1);
+
                             if(info.length>0)
                             {
                                 this._panel?.webview.postMessage({ type: 'setBatteryInfo',value: {mac:mac,info:info}}); 
@@ -407,8 +470,10 @@ export class DeviceDetailsPanel {
                 command+=" ci -al -a ";
                 command+=mac;
     
+                Configuration.setDeviceBusy(mac,true);
                 var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
                 {    
+                    Configuration.setDeviceBusy(mac,false);
                     if (stderr && stderr.length > 0) 
                     {
                         out.push(stderr);
@@ -447,20 +512,25 @@ export class DeviceDetailsPanel {
                     if(err)
                         { 
                             this._panel?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:-1}} ); 
-                            this._panel.webview.postMessage({ type: 'endRequest'});
+                            Providers.btdevices.setDeviceStatus(mac,-1);
 
-                            vscode.commands.executeCommand('WOWCubeSDK.scanDevices');
+                            this._panel.webview.postMessage({ type: 'endRequest'});    
+                            Providers.btdevices.showWait(false);
+
                         }
                     else
                         { 
                             this._panel?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:1}} ); 
-    
+                            Providers.btdevices.setDeviceStatus(mac,1);
+
                             if(info.length>0)
                             {
                                 this._panel?.webview.postMessage({ type: 'setAppsList',value: {mac:mac,info:info}}); 
                             }
-
+                            
                             this._panel.webview.postMessage({ type: 'endRequest'});
+                            Providers.btdevices.showWait(false);
+
                         }
                     resolve();
                 });	
@@ -482,8 +552,10 @@ export class DeviceDetailsPanel {
                 command+=" -a ";
                 command+=mac;
     
+                Configuration.setDeviceBusy(mac,true);
                 var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
                 {    
+                    Configuration.setDeviceBusy(mac,false);
                     if (stderr && stderr.length > 0) 
                     {
                         out.push(stderr);
@@ -524,6 +596,7 @@ export class DeviceDetailsPanel {
                         }
 
                         this._panel.webview.postMessage({ type: 'endRequest'});
+                        Providers.btdevices.showWait(false);
 
                     resolve();
                 });	

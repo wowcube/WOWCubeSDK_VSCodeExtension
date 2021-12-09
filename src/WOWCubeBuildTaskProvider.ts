@@ -303,6 +303,13 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				resolve();
 			}
 			
+			if(Configuration.isDeviceBusy(device.mac))
+			{
+				this._channel.appendLine('Failed to run on device, device is busy. Please wait before current operation is finished and try again.\r\n');
+				this.closeEmitter.fire(0);
+				resolve();
+			}
+
 			var utilspath = Configuration.getUtilsPath();
 			var command = '"'+utilspath+Configuration.getLoader()+'"';
 			const source = this.workspace+'/binary/'+cubename;
@@ -313,8 +320,11 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			command+=device.mac;
 			command+=" -r";
 
+			Configuration.setDeviceBusy(device.mac,true);
 			var child:cp.ChildProcess = cp.exec(command, { cwd: ""}, (error, stdout, stderr) => 
 			{
+				Configuration.setDeviceBusy(device.mac,false);
+
 				if(child.exitCode===0)
 				{
 					this._channel.appendLine('Done.\r\n');

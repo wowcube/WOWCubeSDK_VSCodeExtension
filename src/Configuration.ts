@@ -5,6 +5,9 @@ import { deepStrictEqual } from "assert";
 
 export class Configuration 
 {
+    private static _currentDevice:any = null;
+    private static _busyDevices:Map<string,boolean> = new Map<string,boolean>();
+
     public static getString(key:string)
     {
         var ret:string = "";
@@ -33,11 +36,34 @@ export class Configuration
         }
     }
 
+    public static setDeviceBusy(mac:string, busy:boolean)
+    {
+        Configuration._busyDevices.set(mac,busy);
+    }
+
+    public static isDeviceBusy(mac:string):boolean
+    {
+        var b = Configuration._busyDevices.get(mac);
+        if(typeof(b)=== 'undefined') { return false;}
+
+        return b;
+    }
+
+    public static isAnyDeviceBusy():boolean
+    {
+        Configuration._busyDevices.forEach((value: boolean, key: string, map: Map<string, boolean>) =>
+        {
+            if(value===true) {return true;}
+        });
+
+        return false;
+    }
     public static setCurrentDevice(device:object)
     {
         try
         {
             const d = JSON.stringify(device);
+            Configuration._currentDevice = device;
             Configuration.setString('wowsdk.conf.currentdevice',d);
         }
         catch(e){}
@@ -48,6 +74,8 @@ export class Configuration
         var obj = null;
         try
         {
+            if(Configuration._currentDevice!==null) {return Configuration._currentDevice;}
+
             const d = Configuration.getString('wowsdk.conf.currentdevice');   
             obj = JSON.parse(d);
             

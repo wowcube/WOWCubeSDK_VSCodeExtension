@@ -119,6 +119,14 @@ class AppList
         el.innerHTML = info;
     }
 
+    setDeviceName(name)
+    {
+        var el = document.getElementById('device');
+
+        el.className = "fontnormal";
+        el.innerHTML = name;
+    }
+
     setAppsList(info)
     {
         try
@@ -206,6 +214,15 @@ class AppList
                     showWait(false);
                 }
                 break;
+             case 'setDeviceName':
+                    {
+                        try
+                        {
+                            apps.setDeviceName(message.value.name);
+                        }
+                        catch(e){}
+                    }
+                    break;                
             case 'setDeviceStatus':
                 {
                     try

@@ -93,12 +93,18 @@ textarea::placeholder {
 	color: var(--vscode-input-placeholderForeground);
 }
 
+
 .wait
 {
-	display: none;
-	position: relative;
-	margin-left:calc(50% - 20px);
-	margin-right:50%;
+display: none;
+position: absolute;
+background-color: var(--vscode-editor-background);
+opacity: 0.6;
+top: 0px;
+bottom: 0px;
+right: 0px;
+left: 0px;
+z-index: 100000;
 }
 
 .wait.visible
