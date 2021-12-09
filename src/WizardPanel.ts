@@ -346,8 +346,8 @@ export class WizardPanel {
 
                             <div id="i2" class="item">
                                 <div style="margin:5px;"><strong>Basic cubelet</strong></div>
-                                <div class="itemdesc">Creates a project of WOWCube cubelet application that supports basic interaction with WOWCube deviсe</div>
-                                <div class="itemdesc">Demonstrates principle of work with device topology</div>
+                                <div class="itemdesc">Creates a project of WOWCube cubelet application that supports basic rendering</div>
+                                <div class="itemdesc">Demonstrates principles of work with a compound multi-screen device</div>
                             </div>
 
                             <!--

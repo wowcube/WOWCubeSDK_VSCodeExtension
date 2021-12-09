@@ -1,7 +1,7 @@
 [
 {
    "id":1,
-   "name":"Example1",
+   "name":"EmptyProject",
    "files":
    [
     "_main.pwn"
@@ -11,10 +11,10 @@
 },
 {
     "id":2,
-    "name":"Example2",
+    "name":"BasicGraphics",
     "files":
     [
- 
+      "_main.pwn"
     ],
     "images":[],
      "sounds":[]
