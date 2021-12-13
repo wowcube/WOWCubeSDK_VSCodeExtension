@@ -346,31 +346,21 @@ export class WizardPanel {
 
                             <div id="i2" class="item">
                                 <div style="margin:5px;"><strong>Basic cubelet</strong></div>
-                                <div class="itemdesc">Creates a project of WOWCube cubelet application that supports basic rendering</div>
+                                <div class="itemdesc">Creates a project of WOWCube cubelet application with basic rendering support</div>
                                 <div class="itemdesc">Demonstrates principles of work with a compound multi-screen device</div>
                             </div>
 
-                            <!--
                             <div id="i3" class="item">
-                                <div style="margin:5px;"><strong>Some project</strong></div>
-                                <div class="itemdesc">Template description here</div>
+                                <div style="margin:5px;"><strong>Basic cubelet with resources</strong></div>
+                                <div class="itemdesc">Creates a project of WOWCube cubelet application with some resources</div>
+                                <div class="itemdesc">Demonstrates how to find and use application resources</div>
                             </div>
 
                             <div id="i4" class="item">
-                                <div style="margin:5px;"><strong>Some project 2</strong></div>
-                                <div class="itemdesc">Template description here</div>
+                                <div style="margin:5px;"><strong>Basic cubelet with splash screens</strong></div>
+                                <div class="itemdesc">Creates a project of WOWCube cubelet application with in-game splash screens support</div>
+                                <div class="itemdesc">Demonstrates the use of in-game splash screens</div>
                             </div>
-
-                            <div id="i5" class="item">
-                                <div style="margin:5px;"><strong>Some project</strong></div>
-                                <div class="itemdesc">Template description here</div>
-                            </div>
-
-                            <div id="i6" class="item">
-                                <div style="margin:5px;"><strong>Some other project</strong></div>
-                                <div class="itemdesc">Template description here</div>
-                            </div>                            
-                            -->
                         </div>
                         <button id="generate_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">GENERATE NEW PROJECT</button>
                     </div>

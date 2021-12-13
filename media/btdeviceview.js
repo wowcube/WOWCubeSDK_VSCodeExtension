@@ -4,12 +4,12 @@ const vscode = acquireVsCodeApi();
 
 class BtItem
 {
-    constructor(id, el,s_el,i_el, item)
+    constructor(id, el,s_el, item)
     {
         this.id = id;
         this.el = el;
         this.s_el = s_el;
-        this.i_el = i_el;
+        //this.i_el = i_el;
         this.selected = false;
         this.item = item;
         this.status = 0;
@@ -43,6 +43,7 @@ class BtItem
     {
         this.status = s;
 
+        /*
         if(this.status===1)
         {
             this.i_el.innerHTML = this.info;
@@ -51,6 +52,7 @@ class BtItem
         {
             this.i_el.innerHTML = '';
         }
+        */
 
         this.s_el.className = "fontnormal "+this.getStatusClass();
         this.s_el.innerHTML = this.getStatusLine();
@@ -59,9 +61,6 @@ class BtItem
     setInfo(s)
     {
         this.info = s;
-
-        //this.i_el.className = "fontnormal";
-        //this.i_el.innerHTML = this.info;
     }
 
     getStatusLine()
@@ -118,11 +117,11 @@ class BtList
         d2.innerHTML = "Mac: "+dev.mac;
 
         const d3 = document.createElement('div');
-        const d4 = document.createElement('div');
+        //const d4 = document.createElement('div');
 
         d.appendChild(d1);
 
-        d.appendChild(d4);
+        //d.appendChild(d4);
         d.appendChild(d2);
 
         d.appendChild(d3);
@@ -140,7 +139,7 @@ class BtList
 
         this.el.appendChild(li);
 
-        var item = new BtItem(n,li,d3,d4,dev);
+        var item = new BtItem(n,li,d3,dev);
         item.setStatus(0);
 
         this.items.push(item);       

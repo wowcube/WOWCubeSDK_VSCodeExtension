@@ -147,8 +147,22 @@ export class DeviceDetailsPanel {
                                         var appname = message.value;
                                         if(appname!==null)
                                         {
-                                        this.doDeleteApp(device.mac,appname);
-                                        Providers.btdevices.showWait(true);
+                                            vscode.window.showInformationMessage(
+                                                "Application '"+appname+"' will be deleted from the device",
+                                                ...["Delete Application", "Cancel"]
+                                            ).then((answer)=>
+                                            {
+                                                if(answer==="Delete Application")
+                                                {
+                                                    this.doDeleteApp(device.mac,appname);
+                                                    Providers.btdevices.showWait(true); 
+                                                }
+                                                else
+                                                {
+                                                    this._panel.webview.postMessage({ type: 'endRequest'});
+                                                    Providers.btdevices.showWait(false);
+                                                }
+                                            });
                                         }
                                         else
                                         {

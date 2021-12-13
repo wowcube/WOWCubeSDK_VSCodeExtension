@@ -17,39 +17,46 @@ forward run(const pkt[], size, const src[]); // public Pawn function seen from C
 
 #define TEXT_SIZE       8
 
+// Application variables
+// -----------------------------
+new theImageHandle = 0;
+
 // WOWCube application callbacks 
 // -----------------------------
 
 //Applicaton initialization callback. Called once when CUB application starts
 ON_INIT()
 {
+    #ifndef CUBIOS_EMULATOR
+        theImageHandle = getSpriteIdByName("cube.png");
+    #endif
 }
 
 //Main run loop callback. Gets called recurrently by the CUB application as frequent as application code allows. 
 ONTICK()
 {
-    //fill the first screen of each module with red
-    abi_CMD_FILL(255,0,0);
-    abi_CMD_TEXT("SCREEN 1", 0, DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2 - 20, TEXT_SIZE, 0, TEXT_ALIGN_CENTER, 255, 255, 255);
-    drawModuleNumber();
+    //fill the first screen of each module with black
+    abi_CMD_FILL(0,0,0);
+    //draw bitmap at the center of a screen
+    abi_CMD_BITMAP(theImageHandle, 120, 120, 0, MIRROR_BLANK);
 
     //commit to screen buffer
     abi_CMD_REDRAW(0);
             
             
-    //fill the second screen of each module with red
-    abi_CMD_FILL(0,255,0);
-    abi_CMD_TEXT("SCREEN 2", 0, DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2 - 20, TEXT_SIZE, 0, TEXT_ALIGN_CENTER, 255, 255, 255);
-    drawModuleNumber()
+    //fill the second screen of each module with black
+    abi_CMD_FILL(0,0,0);
+    //draw bitmap at the center of a screen
+    abi_CMD_BITMAP(theImageHandle, 120, 120, 0, MIRROR_BLANK);
 
     //commit to screen buffer
     abi_CMD_REDRAW(1);
 
 
-    //fill the third screen of each module with red
-    abi_CMD_FILL(0,0,255);
-    abi_CMD_TEXT("SCREEN 3", 0, DISPLAY_WIDTH / 2,  DISPLAY_HEIGHT / 2 - 20, TEXT_SIZE, 0, TEXT_ALIGN_CENTER, 255, 255, 255);
-    drawModuleNumber()
+    //fill the third screen of each module with black
+    abi_CMD_FILL(0,0,0);
+    //draw bitmap at the center of a screen
+    abi_CMD_BITMAP(theImageHandle, 120, 120, 0, MIRROR_BLANK);
 
     //commit to screen buffer
     abi_CMD_REDRAW(2);
@@ -60,7 +67,7 @@ ONTICK()
     //  detecting shakes of each module of a cube is redundant and should not be done; it is enough to choose a single module and continuously perform recurrent checks 
     if (0 == abi_cubeN) 
         {
-        abi_checkShake();
+            abi_checkShake();
         }
 }
 
@@ -88,10 +95,3 @@ RENDER(){}
 
 // User-defined functions
 // -----------------------------
-
-drawModuleNumber()
-{
-   new string[4];  // 4 cells is 16 bytes (16 packed characters including null terminator)
-   strformat(string, sizeof(string), true, "MODULE %d", abi_cubeN);
-   abi_CMD_TEXT(string, 0, DISPLAY_WIDTH / 2, DISPLAY_HEIGHT / 2 + 20, TEXT_SIZE, 0, TEXT_ALIGN_CENTER, 255, 255, 255);  
-}

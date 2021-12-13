@@ -5,6 +5,7 @@ import * as cp from 'child_process';
 import { error } from 'console';
 import { rejects } from 'assert';
 import {Configuration} from './Configuration';
+import {Providers} from './Providers';
 
 interface WOWCubeBuildTaskDefinition extends vscode.TaskDefinition 
 {
@@ -320,13 +321,17 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			command+=device.mac;
 			command+=" -r";
 
+			Providers.btdevices.showWait(true);
 			Configuration.setDeviceBusy(device.mac,true);
 			var child:cp.ChildProcess = cp.exec(command, { cwd: ""}, (error, stdout, stderr) => 
 			{
 				Configuration.setDeviceBusy(device.mac,false);
+				Providers.btdevices.showWait(false);
 
 				if(child.exitCode===0)
 				{
+					Providers.btdevices.setDeviceStatus(device.mac,1);
+
 					this._channel.appendLine('Done.\r\n');
 
 					this.closeEmitter.fire(0);

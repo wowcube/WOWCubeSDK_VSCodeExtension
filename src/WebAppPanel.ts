@@ -132,13 +132,7 @@ export class WebAppPanel {
                 <body>
                 <input hidden data-uri="${baseUri}">
                     <div id="app"></div>  
-                    <!--
-                    <script type="text/javascript"
-                        src="${scriptVendorUri}" nonce="${nonce}"></script>  
-                    <script type="text/javascript"
-                        src="${scriptUri}" nonce="${nonce}"></script> -->
-                        
-                    <div style="margin:10px;font-size:18px;"> WOWCube SDK !!! </div>
+                    <div style="margin:10px;font-size:18px;"> WOWCube SDK </div>
                 </body>
                 </html> 
             `;  

@@ -18,5 +18,25 @@
     ],
     "images":[],
      "sounds":[]
+},
+{
+  "id":3,
+  "name":"BasicResources",
+  "files":
+  [
+    "_main.pwn"
+  ],
+  "images":["cube.png"],
+   "sounds":[]
+},
+{
+  "id":4,
+  "name":"BasicSplashscreen",
+  "files":
+  [
+    "_main.pwn"
+  ],
+  "images":["ss_back.png","ss_board.png","ss_main.png","ss_name.png","ss_QR_code.png","ss_results.png","ss_tap.png","ss_twist_1.png","ss_twist_2.png"],
+   "sounds":[]
 }
 ]    

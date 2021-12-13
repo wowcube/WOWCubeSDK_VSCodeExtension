@@ -21,7 +21,9 @@ ON_INIT()
 //Main run loop callback. Gets called recurrently by the CUB application as frequent as application code allows. 
 ONTICK()
 {
-    // Detect shake and quit application
+    // detect device shake and quit application
+    // pay attention: 
+    //  detecting shakes of each module of a cube is redundant and should not be done; it is enough to choose a single module and continuously perform recurrent checks 
     if (0 == abi_cubeN) 
         {
         abi_checkShake();
