@@ -158,7 +158,7 @@ z-index: 100000;
 {
 	color: var(--vscode-button-foreground);
 	width:23px;
-	height:20px; 
+	height:23px; 
 	text-align:center;
-	 padding-top:3px;
+	line-height: 23px;
 }

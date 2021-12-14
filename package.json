@@ -3,7 +3,7 @@
   "displayName": "WOWCubeSDK",
   "description": "WOWCube SDK extension for developing Pawn applications for WOWCube device",
   "icon": "media/icon.png",
-  "version": "0.9.4",
+  "version": "0.9.5",
   "engines": {
     "vscode": "^1.62.0"
   },
@@ -25,6 +25,32 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "languages": [
+      {
+          "id": "Log",
+          "aliases": [
+              "log"
+          ],
+          "extensions": [
+              ".log"
+          ],
+          "configuration": "./log.configuration.json",
+          "mimetypes": [
+              "log",
+              "text/log",
+              "text/x-log",
+              "text/x-code-output",
+              "x-code-output"
+          ]
+      }
+  ],
+  "grammars": [
+      {
+          "language": "Log",
+          "scopeName": "code.log",
+          "path": "./src/syntaxes/log.tmLanguage"
+      }
+  ],
     "taskDefinitions": [
       {
         "type": "wowsdkbuild",

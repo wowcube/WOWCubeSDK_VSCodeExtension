@@ -25,6 +25,16 @@ This extension contributes the next settings:
 * `wwowsdk.conf.currentdevice`: selected WOWCube device
 * `wowsdk.conf.detecteddevices`: a list of paired WOWCube devices
 
+
+## Third-party Components
+
+This extension uses syntax colorization for both the output/debug/extensions pane and *.log files.
+
+**Note: If you are using other extensions that colorize the output panel, it could override and disable colorization!**
+
+https://code.visualstudio.com/docs/customization/colorizer
+
+
 ## Known Issues
 
 This version of extension is NOT FOR PUBLIC release and must only be used for a purpose of internal testing.

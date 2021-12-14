@@ -6,6 +6,7 @@ import { error } from 'console';
 import { rejects } from 'assert';
 import {Configuration} from './Configuration';
 import {Providers} from './Providers';
+import {Output} from './Output';
 
 interface WOWCubeBuildTaskDefinition extends vscode.TaskDefinition 
 {
@@ -87,15 +88,15 @@ export class WOWCubeBuildTaskProvider implements vscode.TaskProvider
 
 class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal 
 {
-	private writeEmitter = new vscode.EventEmitter<string>();
+	private writeEmitter = Output.terminal();
 	onDidWrite: vscode.Event<string> = this.writeEmitter.event;
-	private closeEmitter = new vscode.EventEmitter<number>();
+	private closeEmitter = Output.terminalClose();
 	onDidClose?: vscode.Event<number> = this.closeEmitter.event;
 
 	private fileWatcher: vscode.FileSystemWatcher | undefined;
 
 	private workspace:string;
-	private _channel: vscode.OutputChannel = vscode.window.createOutputChannel('WOWCube SDK');
+	private _channel: vscode.OutputChannel = Output.channel();
 
 	constructor(private workspaceRoot: string, private action: string, private target: string, private getSharedState: () => string | undefined, private setSharedState: (state: string) => void) 
     {
@@ -138,7 +139,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
     {
 		return new Promise<void>((resolve,reject) => 
         {
-			this.writeEmitter.fire('Compiling cub file...\r\n');
+			//this.writeEmitter.fire('Compiling cub file...\r\n');
 			this._channel.appendLine('Compiling cub file...\r\n');
 
 			const build_json = require(this.workspace+'/wowcubeapp-build.json');
@@ -219,7 +220,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
     {
 		return new Promise<void>((resolve,reject) => 
         {
-			this.writeEmitter.fire('Building cub file...\r\n');
+			//this.writeEmitter.fire('Building cub file...\r\n');
 			this._channel.appendLine('Building cub file...\r\n');
 
 			const build_json = require(this.workspace+'/wowcubeapp-build.json');
@@ -231,9 +232,6 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			const output = '"'+this.workspace+'/binary/'+build_json.name+'.cub"';
 
 			command+=" "+project+" "+output;
-
-			//var process = require('process');
-			//process.chdir(this.workspace+'\\');
 
 			var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
 			{
@@ -285,7 +283,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 	{
 		return new Promise<void>((resolve,reject) => 
         {
-			this.writeEmitter.fire('Running app on selected WOWCube device...\r\n');
+			//this.writeEmitter.fire('Running app on selected WOWCube device...\r\n');
 			this._channel.appendLine('Running app on selected WOWCube device...\r\n');
 
 			if(!this.createVirtualFlashDir(cubename))
@@ -367,7 +365,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 	{
 		return new Promise<void>((resolve,reject) => 
         {
-			this.writeEmitter.fire('Running app in WOWCube emulator...\r\n');
+			//this.writeEmitter.fire('Running app in WOWCube emulator...\r\n');
 			this._channel.appendLine('Running app in WOWCube emulator...\r\n');
 
 			/*
