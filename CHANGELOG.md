@@ -1,9 +1,14 @@
-# Change Log
+### 0.9.0
 
-All notable changes to the "WOWCubeSDK" extension will be documented in this file.
+* Release candidate for internal testing
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+### 0.9.1
 
-## [Unreleased]
+* Second release candidate for internal testing
+* Improved syncronization of views
+* Minor UI changed
 
-- Initial release
+### 0.9.2
+### 0.9.3
+### 0.9.4
+* Minor UI changed

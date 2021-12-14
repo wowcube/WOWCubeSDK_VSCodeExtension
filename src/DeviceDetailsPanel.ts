@@ -214,7 +214,8 @@ export class DeviceDetailsPanel {
                         this._panel.webview.postMessage({ type: 'startRequest'});
                         Providers.btdevices.showWait(true);
 
-                        this.doGetDeviceInfo(device.mac);
+                        //this.doGetDeviceInfo(device.mac);
+                        this.doGetDeviceInfoAll(device.mac);
                     }
                     else
                     {
@@ -271,30 +272,33 @@ export class DeviceDetailsPanel {
                         <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Basic information and management</div>
                         <div class="separator"></div>
 
-                        <div style="margin-top:20px;margin-bottom:5px;">
-                            <div style="display:inline-block;font-size:14px;margin-bottom:15px;"><strong>Device:</strong></div>
-                            <div id="device" class="positive" style="display:inline-block;font-size:14px;"> </div>
-                        </div>
+                        <div class="view">
+                            <div style="margin-top:0px;margin-bottom:5px;">
+                                <div style="display:inline-block;font-size:14px;margin-bottom:15px;"><strong>Device:</strong></div>
+                                <div id="device" class="positive" style="display:inline-block;font-size:14px;"> </div>
+                            </div>
 
-                        <div>
-                            <div style="display:inline-block;font-size:14px;margin-bottom:10px;"><strong>Status:</strong></div>
-                            <div id="status" class="positive" style="display:inline-block;font-size:14px;"></div>
-                        </div>
+                            <div>
+                                <div style="display:inline-block;font-size:14px;margin-bottom:10px;"><strong>Status:</strong></div>
+                                <div id="status" class="positive" style="display:inline-block;font-size:14px;"></div>
+                            </div>
 
-                        <div>
-                            <div style="display:inline-block;font-size:14px;margin-bottom:10px;"><strong>Firmware:</strong></div>
-                            <div id="firmware" style="display:inline-block;font-size:14px;"></div>
-                        </div>
+                            <div>
+                                <div style="display:inline-block;font-size:14px;margin-bottom:10px;"><strong>Firmware:</strong></div>
+                                <div id="firmware" style="display:inline-block;font-size:14px;"></div>
+                            </div>
 
-                        <div>
-                            <div style="display:inline-block;font-size:14px;margin-bottom:10px;"><strong>Battery:</strong></div>
-                            <div id="charge" style="display:inline-block;font-size:14px;"></div>
-                        </div>
+                            <div>
+                                <div style="display:inline-block;font-size:14px;margin-bottom:10px;"><strong>Battery:</strong></div>
+                                <div id="charge" style="display:inline-block;font-size:14px;"></div>
+                            </div>
 
-                        <div style="margin-top:40px;">
-                        <div style="display:inline-block;font-size:14px;"><strong>Installed Applications</strong></div>
-                    
-                        <div id="applist" class="items" style="top:280px;">
+                            <div style="margin-top:40px;">
+                                <div style="display:inline-block;font-size:14px;"><strong>Installed Applications</strong></div>
+                            
+                                <div id="applist" class="items" style="margin-top:10px;">
+                                </div>
+                            </div>
                         </div>
                         <button id="refresh_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">REFRESH DEVICE INFORMATION</button>
                     </div>
@@ -310,6 +314,107 @@ export class DeviceDetailsPanel {
             `;  
 
             return ret;
+        }
+
+        private async doGetDeviceInfoAll(mac:string): Promise<void>
+        {
+            return new Promise<void>((resolve) =>
+            {
+                var out:Array<string> = new Array();
+                var err:boolean = false;
+                var info:string = "";
+                var battery:string = "";
+                var apps:Array<string> = new Array();
+                var utilspath = Configuration.getUtilsPath();
+                var command = '"'+utilspath+Configuration.getLoader()+'"';
+    
+                command+=" ci -f -c -al -a ";
+                command+=mac;
+    
+                Configuration.setDeviceBusy(mac,true);
+                var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
+                {    
+                    Configuration.setDeviceBusy(mac,false);                    
+                    if (stderr && stderr.length > 0) 
+                    {
+                        out.push(stderr);
+                    }
+    
+                    if (stdout && stdout.length > 0) 
+                    {
+                        out.push(stdout);
+                    }
+                    
+                    if(child.exitCode===0)
+                    {
+                        out.forEach(line=>{
+                            
+                            if(line.indexOf('Error:')!==-1)
+                            {
+                                err = true;
+                            }
+                            else
+                            {
+                                var l:string[] = line.split('\n');
+
+                                l.forEach(s=>{
+                                    if(s.indexOf('Build name:')!==-1) {info = s;}
+                                    if(s.indexOf('%')!==-1) {battery = s;}
+
+                                    if(s.indexOf('.cub')!==-1 || s.indexOf('.CUB')!==-1) {apps.push(s);}
+                                });
+
+                            }
+                        });
+                    }
+                    else
+                    {
+                        err = true;
+                    }
+    
+                    if(err)
+                        { 
+                            this._panel?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:-1}} ); 
+                            Providers.btdevices.setDeviceStatus(mac,-1);
+
+                            this._panel.webview.postMessage({ type: 'endRequest'});    
+                            Providers.btdevices.showWait(false);
+                        }
+                    else
+                        { 
+                            this._panel?.webview.postMessage({ type: 'setDeviceStatus',value: {mac:mac,status:1}} ); 
+                            Providers.btdevices.setDeviceStatus(mac,1);
+
+                            if(info.length>0)
+                            {
+                                this._panel?.webview.postMessage({ type: 'setDeviceInfo',value: {mac:mac,info:info}}); 
+                            }
+                            else
+                            {
+                                this._panel?.webview.postMessage({ type: 'setDeviceInfo',value: {mac:mac,info:"Unknown firmware"}}); 
+                            }
+
+                            if(battery.length>0)
+                            {
+                                this._panel?.webview.postMessage({ type: 'setBatteryInfo',value: {mac:mac,info:battery}}); 
+                            }
+                            else
+                            {
+                                this._panel?.webview.postMessage({ type: 'setBatteryInfo',value: {mac:mac,info:"Unknwon status"}}); 
+                            }
+
+                            if(apps.length>0)
+                            {
+                                this._panel?.webview.postMessage({ type: 'setAppsList',value: {mac:mac,info:apps}}); 
+                            }
+                            
+                            this._panel.webview.postMessage({ type: 'endRequest'});
+                            Providers.btdevices.showWait(false);
+                        }
+        
+                    resolve();
+                });	
+            });
         }
 
         private async doGetDeviceInfo(mac:string): Promise<void>

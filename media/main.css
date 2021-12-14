@@ -72,16 +72,22 @@ body {
 	height: 1px;
 }
 
+.view
+{
+	position:absolute; 
+	overflow: auto;
+	top: 90px;
+    bottom: 80px;
+    left: 20px;
+    right: 20px;
+}
+
 .items
 {
 	background-color: var(--vscode-editor-foldBackground);
-	position:absolute; 
-	left:20px; 
-	right:20px; 
-	bottom:80px; 
-	top:310px; 
+	position:relative; 
 	padding: 10px;
-	overflow: auto;
+	overflow: hidden;
 }
 
 .item

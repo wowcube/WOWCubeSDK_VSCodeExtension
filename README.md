@@ -4,15 +4,17 @@ This extension is designed for WOWCube cubelet application developers. It simpli
 
 ## Features
 
-<< TO ADD >>
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+* New Cubelet application wizard
+* Cubelet application compiler and builder
+* Automatic install and run on selected WOWCube device
+* Automatic install and run on WOWCube Emulator 
+* Paired WOWCube device detection
+* WOWCube device basic information display
+* Installed cubelet applications management 
 
 ## Requirements
 
-WOWCube SDK must be installed on the computer.
+ WOWCube SDK version 2.3.4 must be installed on the computer.
 
 ## Extension Settings
 
@@ -29,7 +31,17 @@ This version of extension is NOT FOR PUBLIC release and must only be used for a 
 
 ## Release Notes
 
-### 0.0.9
+### 0.9.0
 
-Release candidate for internal testing
+* Release candidate for internal testing
 
+### 0.9.1
+
+* Second release candidate for internal testing
+* Improved syncronization of views
+* Minor UI changed
+
+### 0.9.2
+### 0.9.3
+### 0.9.4
+* Minor UI changed

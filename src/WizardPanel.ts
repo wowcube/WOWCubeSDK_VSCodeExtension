@@ -311,8 +311,6 @@ export class WizardPanel {
                     <title>New Cubelet Wizard</title>
                 </head>
                 <body>
-                <!--<input hidden data-uri="${baseUri}">-->
-                    <!--<div id="app"></div>-->
                     <script type="text/javascript" src="${scriptUri}" nonce="${nonce}"></script>
                       
                     <div style="padding:0px;">
@@ -320,50 +318,54 @@ export class WizardPanel {
                         <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Create new WOWCube cubelet application project from template</div>
                         <div class="separator"></div>
 
-                        <div style="margin-top:20px;">
-                            <div style="display:inline-block;">1</div>
-                            <div style="display:inline-block;margin:10px;font-size:14px;">Name of your new project</div>
-                            <input id="projectname" style="display:block;width:50%;"></input>
-                        </div>
+                        <div class="view">
                         
-                        <div style="margin-top:20px;">
-                            <div style="display:inline-block;">2</div>
-                            <div style="display:inline-block;margin:10px;font-size:14px;">Choose the folder for your project</div>
-                            <br/>
-                            <input id="foldername" style="display:inline-block; width:50%;" readonly value="${lastPath}"></input> <button id="folder_button" style="display:inline-block; width:70px;">...</button>
+                            <div style="margin-top:0px;">
+                                <div class="badge"> <div class="badge_text">1</div></div>
+                                <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Name of your new project</div>
+                                <input id="projectname" style="display:block;width:50%;"></input>
+                            </div>
+                          
+                            <div style="margin-top:30px;">
+                                <div class="badge"> <div class="badge_text">2</div></div>
+                                <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Choose the folder for your project</div>
+                                <br/>
+                                <input id="foldername" style="display:inline-block; width:50%;" readonly value="${lastPath}"></input> <button id="folder_button" style="display:inline-block; width:70px;">...</button>
+                            </div>
+                        
+                            <div style="margin-top:30px;margin-bottom:5px;">
+                                <div class="badge"> <div class="badge_text">3</div></div>
+                                <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Select project template</div>
+                            </div>
+
+                            <div class="items">
+                                <div id="i1" class="item">
+                                    <div style="margin:5px;"><strong>Empty project</strong></div>
+                                    <div class="itemdesc">Creates an empty project with a bare minimum of functions needed to build WOWCube cubelet application</div>
+                                </div>
+
+                                <div id="i2" class="item">
+                                    <div style="margin:5px;"><strong>Basic cubelet</strong></div>
+                                    <div class="itemdesc">Creates a project of WOWCube cubelet application with basic rendering support</div>
+                                    <div class="itemdesc">Demonstrates principles of work with a compound multi-screen device</div>
+                                </div>
+
+                                <div id="i3" class="item">
+                                    <div style="margin:5px;"><strong>Basic cubelet with resources</strong></div>
+                                    <div class="itemdesc">Creates a project of WOWCube cubelet application with some resources</div>
+                                    <div class="itemdesc">Demonstrates how to find and use application resources</div>
+                                </div>
+
+                                <div id="i4" class="item">
+                                    <div style="margin:5px;"><strong>Basic cubelet with splash screens</strong></div>
+                                    <div class="itemdesc">Creates a project of WOWCube cubelet application with in-game splash screens support</div>
+                                    <div class="itemdesc">Demonstrates the use of in-game splash screens</div>
+                                </div>
+                            </div>
+                            
                         </div>
 
-                        <div style="margin-top:20px;">
-                        <div style="display:inline-block;">3</div>
-                        <div style="display:inline-block;margin:10px;font-size:14px;">Select project template</div>
-                        <br/>
-
-                        <div class="items">
-                            <div id="i1" class="item">
-                                <div style="margin:5px;"><strong>Empty project</strong></div>
-                                <div class="itemdesc">Creates an empty project with a bare minimum of functions needed to build WOWCube cubelet application</div>
-                            </div>
-
-                            <div id="i2" class="item">
-                                <div style="margin:5px;"><strong>Basic cubelet</strong></div>
-                                <div class="itemdesc">Creates a project of WOWCube cubelet application with basic rendering support</div>
-                                <div class="itemdesc">Demonstrates principles of work with a compound multi-screen device</div>
-                            </div>
-
-                            <div id="i3" class="item">
-                                <div style="margin:5px;"><strong>Basic cubelet with resources</strong></div>
-                                <div class="itemdesc">Creates a project of WOWCube cubelet application with some resources</div>
-                                <div class="itemdesc">Demonstrates how to find and use application resources</div>
-                            </div>
-
-                            <div id="i4" class="item">
-                                <div style="margin:5px;"><strong>Basic cubelet with splash screens</strong></div>
-                                <div class="itemdesc">Creates a project of WOWCube cubelet application with in-game splash screens support</div>
-                                <div class="itemdesc">Demonstrates the use of in-game splash screens</div>
-                            </div>
-                        </div>
                         <button id="generate_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">GENERATE NEW PROJECT</button>
-                    </div>
                     </div>
                 </body>
                 </html> 

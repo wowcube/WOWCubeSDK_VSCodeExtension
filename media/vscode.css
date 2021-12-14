@@ -144,3 +144,21 @@ z-index: 100000;
 	top:calc(50% - 20px);
 	left: calc(50% - 20px);
 }
+
+.badge
+{
+	display:inline-block; 
+	background: var(--vscode-button-background); 
+	border-radius: 999999px; 
+	width: 23px; 
+	height: 23px;
+}
+
+.badge_text
+{
+	color: var(--vscode-button-foreground);
+	width:23px;
+	height:20px; 
+	text-align:center;
+	 padding-top:3px;
+}
