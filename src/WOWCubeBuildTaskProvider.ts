@@ -228,7 +228,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			var utilspath = Configuration.getUtilsPath();
 			var command = '"'+utilspath+Configuration.getBuilder()+'"';
 
-			const project = '"'+this.workspace+'/wowcubeapp-build.json"';		
+			const project = '"'+this.workspace+'/wowcubeapp-build.json"';	
 			const output = '"'+this.workspace+'/binary/'+build_json.name+'.cub"';
 
 			command+=" "+project+" "+output;
@@ -379,7 +379,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 			//"/Applications/WOWCube SDK.app/Contents/MacOS//bin//wowcube-sdk" --run --firmware-globals "FLASH_DIR=/Users/apple 1/Test/y5/binary" --firmware-build --firmware-cubelet "y5.cub" 
 
-			var utilspath = Configuration.getUtilsPath();
+			var utilspath = Configuration.getEmulPath();
 			var command = '"'+utilspath+Configuration.getEmulator()+'"';
 
 			const source = this.workspace+'/binary/'+cubename;

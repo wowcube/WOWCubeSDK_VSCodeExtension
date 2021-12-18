@@ -16,3 +16,9 @@
 ### 0.9.5
 * Added output and log colorization
 * Fixed virtual terminal - related bug
+
+### 0.9.7
+* Changes to support WOWCube SDK 2.3.4-alpha3
+* Fixed filenames inconsistency for case-sensitive file systems
+* Improved handling of new project creation failure
+* Minor UI improvements and bugfixes

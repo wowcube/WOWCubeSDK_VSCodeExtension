@@ -133,13 +133,15 @@ export class WizardPanel {
         {
             var ret = {path:'',desc:''};
             const templates = require('../media/templates/templates.json');
+            var fullpath = '';
+            var needDeleteFolder:boolean = false;
 
             try
             {
                 path = path.replace(/\\/g, "/");
                 if(!path.endsWith("/")) { path+='/';}
 
-                var fullpath = path + name;
+                fullpath = path + name;
                 ret.path = fullpath;
 
                 if(fs.existsSync(fullpath))
@@ -164,6 +166,9 @@ export class WizardPanel {
                 }
 
                 this.makeDirSync(fullpath);
+
+                needDeleteFolder = true;
+
                 this.makeDirSync(fullpath+'/.vscode');
                 this.makeDirSync(fullpath+'/binary');
                 this.makeDirSync(fullpath+'/src');
@@ -171,8 +176,8 @@ export class WizardPanel {
                 this.makeDirSync(fullpath+'/resources/images');
                 this.makeDirSync(fullpath+'/resources/sounds');
 
-                const iconFilename:string = this._extensionUri.fsPath+"/media/templates/appicon.png";             
-                fs.copyFileSync(iconFilename,fullpath+'/resources/appicon.png');
+                const iconFilename:string = this._extensionUri.fsPath+"/media/templates/appIcon.png";             
+                fs.copyFileSync(iconFilename,fullpath+'/resources/appIcon.png');
 
                 for(var i=0;i<currentTemplate.files.length; i++)
                 {
@@ -211,6 +216,14 @@ export class WizardPanel {
             {
                 ret.desc = error as string;
                 ret.path = '';
+
+                if(needDeleteFolder===true)
+                {
+                    if(!this.deleteDir(fullpath))
+                    {
+                        ret.desc+='; unalbe to delete recently created project folder!';
+                    }
+                }
             } 
 
             return ret;
@@ -245,7 +258,6 @@ export class WizardPanel {
             }
         }
     
-    
         findDir(filePath: string) 
         {
             if (!filePath) return null;
@@ -253,6 +265,24 @@ export class WizardPanel {
                 return path.dirname(filePath);
     
             return filePath;
+        }
+
+        deleteDir(dir:string)
+        {
+            var ret:boolean = true;
+            try
+            {
+                if (fs.existsSync(dir)) 
+                {
+                    fs.rmSync(dir,{ recursive: true });
+                }
+            }
+            catch(error)
+            {
+                ret = false;
+            }
+
+            return ret;
         }
 
         public dispose() {    

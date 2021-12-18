@@ -193,7 +193,7 @@ export class Configuration
                 {
                     if(fs.existsSync("/Applications/WOWCube SDK.app"))
                     {
-                        path = "/Applications/WOWCube SDK.app/Contents/MacOS/";
+                        path = "/Applications/WOWCube SDK.app/Contents/";
                         this.setWOWSDKPath(path);
                     }
                 }
@@ -257,7 +257,7 @@ export class Configuration
             case 'linux':
                 return 'wowcube-sdk';
             case 'win32': //windows
-                return 'wowcube-sdk.bat';
+                return 'wowcube-sdk.exe';
             default:
             //unsupported os
             return 'wowcube-sdk';
@@ -305,6 +305,33 @@ export class Configuration
         }
 
         ret+='bin/';
+        return ret;
+    }
+
+    public static getEmulPath()
+    {
+        var ret:string = Configuration.getWOWSDKPath();
+
+        if(typeof(ret)==='undefined' || ret.length===0)
+        {
+            return "";
+        }
+
+        var p = os.platform();
+        switch(p)
+        {
+            case 'darwin': //mac
+            {
+                ret+='MacOS/';
+            }
+            break;
+            case 'linux':
+            break;
+            case 'win32': //windows
+            break;
+            default:
+            break;
+        }
         return ret;
     }
 

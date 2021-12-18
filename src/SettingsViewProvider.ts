@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { getNonce } from "./getNonce";
+import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Uri } from "vscode";
@@ -24,6 +25,16 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 	 {
 		this._view = webviewView;
 
+		this._view?.onDidChangeVisibility(e=>{
+
+			if(this._view?.visible)
+			{
+				var path = Configuration.getWOWSDKPath();
+				if(typeof(path)==='undefined') path='';
+				this._view.webview.postMessage({ type: 'folderSelected',value:path });
+			}
+		});
+
 		webviewView.webview.options = 
 		{
 			// Allow scripts in the webview
@@ -45,11 +56,33 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 					break;
 				case 'buttonPressed':
 						{
+							var p = os.platform();
+							var canSelectFiles = false;
+							var canSelectFolders = true;
+
+							var title = 'Select WOWCube SDK Folder';
+
+							switch(p)
+							{
+								case 'darwin': //mac
+								{
+									canSelectFiles = true;
+									canSelectFolders = false;
+									title ='Select WOWCube SDK Application';
+								}
+								break;
+
+								case 'linux':
+								case 'win32': //windows
+								default:
+								break;
+							}
+
                             const options: vscode.OpenDialogOptions = {
                                 canSelectMany: false,
-                                openLabel: 'Select WOWCube SDK Folder',
-                                canSelectFiles: false,
-                                canSelectFolders: true
+                                openLabel: title,
+                                canSelectFiles: canSelectFiles,
+                                canSelectFolders: canSelectFolders
                             };
                            
                            vscode.window.showOpenDialog(options).then(fileUri => 
@@ -59,8 +92,17 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
                                     if (this._view) 
                                     {
                                         //save configuration
-                                        Configuration.setWOWSDKPath(fileUri[0].fsPath);
-                                        this._view.webview.postMessage({ type: 'folderSelected',value:fileUri[0].fsPath });
+										if(canSelectFiles===false)
+										{
+                                        	Configuration.setWOWSDKPath(fileUri[0].fsPath+'/');
+											this._view.webview.postMessage({ type: 'folderSelected',value:fileUri[0].fsPath+'/' });
+										}
+										else
+										{
+											Configuration.setWOWSDKPath(fileUri[0].fsPath+'/Contents/');
+											this._view.webview.postMessage({ type: 'folderSelected',value:fileUri[0].fsPath+'/Contents/' });
+										}
+
                                     }
                                }
                            });
