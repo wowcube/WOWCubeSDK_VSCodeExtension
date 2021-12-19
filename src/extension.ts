@@ -38,6 +38,12 @@ export async function activate(context: vscode.ExtensionContext)
 	context.subscriptions.push(
 		vscode.commands.registerCommand('WOWCubeSDK.scanDevices', () => 
 		{
+			if(Configuration.isLinux())
+			{
+				vscode.window.showWarningMessage("Feature is not supported on this platform!");  
+				return;
+			}
+			
 			Providers.btdevices.reload();
 		}));
 
@@ -50,6 +56,12 @@ export async function activate(context: vscode.ExtensionContext)
 	context.subscriptions.push(
 		vscode.commands.registerCommand('WOWCubeSDK.openDeviceDetails', () => 
 		{
+			if(Configuration.isLinux())
+			{
+				vscode.window.showWarningMessage("Feature is not supported on this platform!");  
+				return;
+			}
+
 			DeviceDetailsPanel.createOrShow(context.extensionUri);
 		}));	
 }

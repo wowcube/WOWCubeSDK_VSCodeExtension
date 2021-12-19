@@ -356,6 +356,25 @@ export class Configuration
         return '';
     }
 
+    public static isLinux()
+    {
+        var p = os.platform();
+
+        switch(p)
+        {
+            case 'linux':
+            {
+                return true;
+            }
+            break;
+            case 'darwin': //mac
+            case 'win32': //windows
+                return false;
+            break;
+        }
+        return true;
+    }
+
     public static async init()
     {
         //detect SDK path 
