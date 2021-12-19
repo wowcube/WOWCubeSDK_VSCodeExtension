@@ -98,8 +98,15 @@ export class WizardPanel {
                                     if (this._panel) 
                                     {
                                         //save configuration
-                                        Configuration.setLastPath(fileUri[0].fsPath);
-                                        this._panel.webview.postMessage({ type: 'folderSelected',value:fileUri[0].fsPath });
+                                        var path = fileUri[0].fsPath;
+
+                                        if(!path.endsWith(Configuration.getSlash()))
+                                        {
+                                            path = path + Configuration.getSlash();
+                                        }
+
+                                        Configuration.setLastPath(path);
+                                        this._panel.webview.postMessage({ type: 'folderSelected',value:path});
                                     }
                                }
                            });

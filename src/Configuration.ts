@@ -131,7 +131,7 @@ export class Configuration
                 {
                     if(fs.existsSync("/Applications/WOWCube SDK.app"))
                     {
-                        path = "/Applications/WOWCube SDK.app/Contents/MacOS/";
+                        path = "/Applications/WOWCube SDK.app/Contents/";
                         this.setWOWSDKPath(path);
                     }
                 }
@@ -328,11 +328,32 @@ export class Configuration
             case 'linux':
             break;
             case 'win32': //windows
+                ret+='bin/';
             break;
             default:
             break;
         }
         return ret;
+    }
+
+    public static getSlash()
+    {
+        var p = os.platform();
+        switch(p)
+        {
+            case 'darwin': //mac
+            case 'linux':
+            {
+                return '/';
+            }
+            break;
+            case 'win32': //windows
+                return '\\';
+            break;
+            default:
+            break;
+        }
+        return '';
     }
 
     public static async init()

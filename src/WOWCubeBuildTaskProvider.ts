@@ -365,17 +365,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 	{
 		return new Promise<void>((resolve,reject) => 
         {
-			//this.writeEmitter.fire('Running app in WOWCube emulator...\r\n');
 			this._channel.appendLine('Running app in WOWCube emulator...\r\n');
-
-			/*
-			if(!this.createVirtualFlashDir(cubename))
-			{
-				this._channel.appendLine('Failed to run in emulator.\r\n');
-				this.closeEmitter.fire(0);
-				resolve();
-			}
-			*/
 
 			//"/Applications/WOWCube SDK.app/Contents/MacOS//bin//wowcube-sdk" --run --firmware-globals "FLASH_DIR=/Users/apple 1/Test/y5/binary" --firmware-build --firmware-cubelet "y5.cub" 
 
@@ -384,12 +374,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 			const source = this.workspace+'/binary/'+cubename;
 
-			//const parameters = '--run --firmware-globals';	
-			//const flashDir = '"FLASH_DIR='+this.workspace+'/flash"';	
-			//const output = '--firmware-build --firmware-cubelet "'+cubename+'"';
 			const output = '--project-run "'+source+'" --run';
-
-			//command+=" "+parameters+" "+flashDir+" "+output;
 			command+=" "+output;
 
 			cp.exec(command, { cwd: "" });

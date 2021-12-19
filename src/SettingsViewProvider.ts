@@ -94,13 +94,13 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
                                         //save configuration
 										if(canSelectFiles===false)
 										{
-                                        	Configuration.setWOWSDKPath(fileUri[0].fsPath+'/');
-											this._view.webview.postMessage({ type: 'folderSelected',value:fileUri[0].fsPath+'/' });
+                                        	Configuration.setWOWSDKPath(fileUri[0].fsPath+Configuration.getSlash());
+											this._view.webview.postMessage({ type: 'folderSelected',value:fileUri[0].fsPath+Configuration.getSlash() });
 										}
 										else
 										{
-											Configuration.setWOWSDKPath(fileUri[0].fsPath+'/Contents/');
-											this._view.webview.postMessage({ type: 'folderSelected',value:fileUri[0].fsPath+'/Contents/' });
+											Configuration.setWOWSDKPath(fileUri[0].fsPath+'/Contents'+Configuration.getSlash());
+											this._view.webview.postMessage({ type: 'folderSelected',value:fileUri[0].fsPath+'/Contents'+Configuration.getSlash() });
 										}
 
                                     }
