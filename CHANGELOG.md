@@ -18,8 +18,9 @@
 * Fixed virtual terminal - related bug
 
 ### 0.9.7
-* Changes to support WOWCube SDK 2.3.4-alpha4
+* Changes to support WOWCube SDK 2.3.4-alpha5
 * Fixed filenames inconsistency for case-sensitive file systems
 * Fixed backslash character support in path names
 * Improved handling of new project creation failure
 * Minor UI improvements and bugfixes
+* Minor changes for better compatibility with Linux

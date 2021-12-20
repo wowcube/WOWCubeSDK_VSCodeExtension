@@ -14,7 +14,7 @@ This extension is designed for WOWCube cubelet application developers. It simpli
 
 ## Requirements
 
- WOWCube SDK version 2.3.4-alpha4 must be installed on the computer.
+ WOWCube SDK version 2.3.4-alpha5 must be installed on the computer.
 
 ## Extension Settings
 
@@ -61,8 +61,9 @@ This version of extension is NOT FOR PUBLIC release and must only be used for a 
 * Fixed virtual terminal - related bug
 
 ### 0.9.7
-* Changes to support WOWCube SDK 2.3.4-alpha4
+* Changes to support WOWCube SDK 2.3.4-alpha5
 * Fixed filenames inconsistency for case-sensitive file systems
 * Fixed backslash character support in path names
 * Improved handling of new project creation failure
 * Minor UI improvements and bugfixes
+* Minor changes for better compatibility with Linux
