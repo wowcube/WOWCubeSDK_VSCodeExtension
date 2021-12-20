@@ -326,6 +326,7 @@ export class Configuration
             }
             break;
             case 'linux':
+                ret+="bin/";
             break;
             case 'win32': //windows
                 ret+='bin/';

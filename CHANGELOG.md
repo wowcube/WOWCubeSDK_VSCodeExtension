@@ -24,3 +24,6 @@
 * Improved handling of new project creation failure
 * Minor UI improvements and bugfixes
 * Minor changes for better compatibility with Linux
+
+### 0.9.8
+* Fixed for WOWCube emulator executable path on Linux
