@@ -5,13 +5,15 @@
             "preLaunchTask": "Build and Run on WOWCube Emulator",
             "type": "node",
             "request":"attach",
-            "name": "Build and Run on WOWCube Emulator"
+            "name": "Build and Run on WOWCube Emulator",
+            "timeout": 1
         },
         {
             "preLaunchTask": "Build and Run on seleted device",
             "type": "node",
             "request":"attach",
-            "name": "Build and Run on seleted device"
+            "name": "Build and Run on seleted device",
+            "timeout": 1
         }
     ]
 }
