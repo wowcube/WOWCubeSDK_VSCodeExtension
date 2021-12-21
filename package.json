@@ -3,7 +3,7 @@
   "displayName": "WOWCubeSDK",
   "description": "WOWCube SDK extension for developing Pawn applications for WOWCube device",
   "icon": "media/icon.png",
-  "version": "0.9.9",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.62.0"
   },

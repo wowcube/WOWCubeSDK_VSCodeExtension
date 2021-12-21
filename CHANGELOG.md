@@ -30,3 +30,6 @@
 
 ### 0.9.9
 * Fixed for inclusion of local .inc files on Windows
+
+### 1.0.0
+* Production build
