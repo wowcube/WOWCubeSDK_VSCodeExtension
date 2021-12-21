@@ -148,6 +148,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			var command = '"'+pawnpath+ Configuration.getPawnCC()+'"';
 
 			var sourcefile = this.workspace+"/src/"+build_json.name+".pwn";
+			var currDir = this.workspace+"\\src";	
 			var destfile = this.workspace+"/binary/"+build_json.name+".amx";
 
 			this.makeDirSync(this.workspace+"/binary");
@@ -155,6 +156,15 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			//-X$100000 -d0 -O3 -v2 -i../PawnLibs -DSource ladybug.pwn
 
 			var includepath = Configuration.getWOWSDKPath()+'include/';
+
+			if(Configuration.isWindows())
+			{
+				//This is weird, but it seems that pawncc treats include directories differently on different platforms
+				//On windows, it auto-searches for "standard" include folder on level up bin/ folder
+				//On mac, it does the opposite - auto-searches for inc files in source folder, but does not know where the "standard" folder is 
+				
+				includepath=currDir;
+			}
 
 			command+=' -X100000 -d0 -O3 -v2 -i"'+includepath+'" ';
 			command+='-o"'+destfile+'" ';

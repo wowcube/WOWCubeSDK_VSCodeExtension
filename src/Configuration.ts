@@ -376,6 +376,25 @@ export class Configuration
         return true;
     }
 
+    public static isWindows()
+    {
+        var p = os.platform();
+
+        switch(p)
+        {
+            case 'win32':
+            {
+                return true;
+            }
+            break;
+            case 'linux': //mac
+            case 'win32': //windows
+                return false;
+            break;
+        }
+        return false;
+    }
+
     public static async init()
     {
         //detect SDK path 

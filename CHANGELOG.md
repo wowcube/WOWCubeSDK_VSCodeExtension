@@ -27,3 +27,6 @@
 
 ### 0.9.8
 * Fixed for WOWCube emulator executable path on Linux
+
+### 0.9.9
+* Fixed for inclusion of local .inc files on Windows

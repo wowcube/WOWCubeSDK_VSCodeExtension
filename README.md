@@ -70,3 +70,6 @@ This version of extension is NOT FOR PUBLIC release and must only be used for a 
 
 ### 0.9.8
 * Fixed for WOWCube emulator executable path on Linux
+
+### 0.9.9
+* Fixed for inclusion of local .inc files on Windows
