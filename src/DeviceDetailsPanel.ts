@@ -211,7 +211,7 @@ export class DeviceDetailsPanel {
                                     }
                                     else
                                     {
-                                        var appname = message.value;
+                                        var appname = message.value.replace('\r','');
                                         if(appname!==null)
                                         {
                                             this.doRunApp(device.mac,appname);
@@ -246,7 +246,7 @@ export class DeviceDetailsPanel {
                                     }
                                     else
                                     {
-                                        var appname = message.value;
+                                        var appname = message.value.replace('\r','');
                                         if(appname!==null)
                                         {
                                             vscode.window.showInformationMessage(
@@ -720,7 +720,7 @@ export class DeviceDetailsPanel {
                     {
                         out.forEach(line=>{
                             
-                            line = line.replace('\n','');
+                            //line = line.replace('\n','');
     
                             if(line.indexOf('Error:')!==-1)
                             {
@@ -731,7 +731,7 @@ export class DeviceDetailsPanel {
                                 var l:string[] = line.split('\n');
     
                                 l.forEach(s=>{
-                                    if(s.length>0) {info.push(s);}
+                                    if(s.length>0) {info.push(s.replace('\r',''));}
                                 });
                             }
                         });
@@ -784,7 +784,9 @@ export class DeviceDetailsPanel {
                 command+=" -a ";
                 command+=mac;
     
-                this._channel.appendLine("Deleting '"+name+"' from device...");
+                var s:string = "Deleting '"+name+"' from device...";
+
+                this._channel.appendLine(s);
                 this._channel.show(true);
 
                 Configuration.setDeviceBusy(mac,true);
@@ -856,7 +858,9 @@ export class DeviceDetailsPanel {
                 command+=" -a ";
                 command+=mac;
     
-                this._channel.appendLine("Starting '"+name+"'...");
+                var s:string = "Starting '"+name+"'...";
+
+                this._channel.appendLine(s);
                 this._channel.show(true);
 
                 Configuration.setDeviceBusy(mac,true);
