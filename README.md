@@ -76,3 +76,8 @@ This version of extension is NOT FOR PUBLIC release and must only be used for a 
 
 ### 1.0.0
 * Production build
+
+### 1.1.0
+* Introduced new "Upload CUB File to Device" feature
+* Added WOWCube SDK path validation
+* Minor UI tweaks and fixes
