@@ -24,6 +24,23 @@
                     document.getElementById('sdkpath').value = message.value;
                     break;
                 }
+                case 'checkPath':
+                    {
+                        vscode.postMessage({ type: 'checkPath', value: "" });
+                        break;
+                    }    
+                case 'pathError':
+                    {
+                        if(message.value==true)
+                        {
+                            document.getElementById('path_err').className = 'visible';
+                        }
+                        else
+                        {
+                            document.getElementById('path_err').className = 'hidden';
+                        }
+                        break;
+                    }
         }
     });
 }());

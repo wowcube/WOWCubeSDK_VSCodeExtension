@@ -188,6 +188,23 @@ class AppList
             apps.clear();
             vscode.postMessage({ type: 'refresh', value: "" });
         }); 
+
+        document.getElementById('cubselect_button').addEventListener('click', () => 
+        {
+            vscode.postMessage({ type: 'cubselect', value: "" });
+        });
+
+        document.getElementById('cubupload_button').addEventListener('click', () => 
+        {
+            var v = document.getElementById('cubuploadname').value;
+
+            if(typeof(v)==='undefined') 
+            {
+                v = '';
+            }
+            showWait(true);
+            vscode.postMessage({ type: 'cubupload', value: v });
+        });
     };
 
     window.addEventListener('deleteressed', (e)=>
@@ -214,6 +231,14 @@ class AppList
                     showWait(false);
                 }
                 break;
+            case 'endUpload':
+                    {
+                        showWait(false);
+                        showWait(true);
+                        apps.clear();
+                        vscode.postMessage({ type: 'refresh', value: "" }); 
+                    }
+                    break;    
              case 'setDeviceName':
                     {
                         try
@@ -268,6 +293,15 @@ class AppList
                         catch(e){}
                     }
                     break;
+            case 'cubSelected':
+                {
+                    try
+                    {
+                        document.getElementById('cubuploadname').value = message.value;
+                    }
+                    catch(e){}
+                }
+                break;
         }
     });
 }());

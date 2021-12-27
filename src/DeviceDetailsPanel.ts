@@ -4,6 +4,7 @@ import { getNonce } from "./getNonce";
 import * as cp from 'child_process';
 import {Configuration} from './Configuration';
 import { Providers } from "./Providers";
+import {Output} from "./Output";
 
 export class DeviceDetailsPanel {
 
@@ -15,6 +16,12 @@ export class DeviceDetailsPanel {
     private _disposables: vscode.Disposable[] = [];
 
     private _currentState:number = -1;
+
+    private writeEmitter = Output.terminal();
+	onDidWrite: vscode.Event<string> = this.writeEmitter.event;
+	private closeEmitter = Output.terminalClose();
+	onDidClose?: vscode.Event<number> = this.closeEmitter.event;
+	private _channel: vscode.OutputChannel = Output.channel();
 
     public static createOrShow(extensionUri: vscode.Uri) 
     { 
@@ -101,6 +108,66 @@ export class DeviceDetailsPanel {
                         case 'warn':
                             vscode.window.showWarningMessage(message.value); 
                         break;
+                        case 'cubselect':
+                            {
+                                const options: vscode.OpenDialogOptions = {
+                                    canSelectMany: false,
+                                    openLabel: 'Select CUB File',
+                                    canSelectFiles: true,
+                                    canSelectFolders: false,
+                                    filters: { 'Cubelets': ['cub', 'CUB'],'All Files':['*.*'] }
+                                };
+                               
+                               vscode.window.showOpenDialog(options).then(fileUri => 
+                                {
+                                   if (fileUri && fileUri[0]) 
+                                   {
+                                        if (this._panel) 
+                                        {
+                                            var path = fileUri[0].fsPath;
+                                            this._panel.webview.postMessage({ type: 'cubSelected',value:path});
+                                        }
+                                   }
+                               });
+                            }
+                            break;
+                        case 'cubupload':
+                            {
+                                var device = Configuration.getCurrentDevice();
+
+                                if(device!==null)
+                                {
+                                    if(Configuration.isDeviceBusy(device.mac)===true)
+                                    {
+                                        this._panel.webview.postMessage({ type: 'endRequest'});
+                                        vscode.window.showWarningMessage("Device '"+device.name+"' is busy, please try again later");   
+                                    }
+                                    else
+                                    {
+                                        if(message.value!='')
+                                        {
+                                            this.doUploadApp(device.mac,message.value);
+                                            Providers.btdevices.showWait(true);
+                                        }
+                                        else
+                                        {
+                                            this._panel.webview.postMessage({ type: 'endRequest'});
+                                            Providers.btdevices.showWait(false);
+        
+                                            vscode.window.showWarningMessage("CUB file is not selected");   
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    this._panel.webview.postMessage({ type: 'endRequest'});
+                                    Providers.btdevices.showWait(false);
+
+                                    vscode.window.showWarningMessage("WOWCube device is not selected"); 
+                                }
+
+                            }
+                            break;
                         case 'refresh':
                             {
                                 var device = Configuration.getCurrentDevice();
@@ -294,11 +361,22 @@ export class DeviceDetailsPanel {
                             </div>
 
                             <div style="margin-top:40px;">
+                                <div style="display:inline-block;font-size:14px;"><strong>Application Uploader</strong></div>
+                                <br/>
+                                <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Select CUB application file to upload</div>
+                                <br/>
+                                <input id="cubuploadname" style="display:inline-block; width:calc(100% - 300px);min-width:140px;" readonly></input>
+                                 <button id="cubselect_button" style="display:inline-block; width:120px;margin-left:10px;">Select File</button>
+                                 <button id="cubupload_button" style="display:inline-block; width:120px;">Upload</button>
+                            </div>
+
+                            <div style="margin-top:40px;">
                                 <div style="display:inline-block;font-size:14px;"><strong>Installed Applications</strong></div>
                             
                                 <div id="applist" class="items" style="margin-top:10px;">
                                 </div>
                             </div>
+
                         </div>
                         <button id="refresh_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">REFRESH DEVICE INFORMATION</button>
                     </div>
@@ -719,6 +797,82 @@ export class DeviceDetailsPanel {
 
                     resolve();
                 });	
+            });
+        }
+
+        private async doUploadApp(mac:string, source:string): Promise<void>
+        {
+            return new Promise<void>((resolve) =>
+            {
+                var out:Array<string> = new Array();
+                var err:boolean = false;
+                var info:Array<string> = new Array();
+                var utilspath = Configuration.getUtilsPath();
+                var command = '"'+utilspath+Configuration.getLoader()+'"';
+        
+                command+=" up -p ";
+                command+='"'+source+'"';
+                command+=" -a ";
+                command+=mac;
+                command+=" -r";
+
+                Configuration.setDeviceBusy(mac,true);
+                var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
+                {    
+                    Configuration.setDeviceBusy(mac,false);
+    
+                    if(child.exitCode===0)
+                    {
+                        out.forEach(line=>{
+                            
+                            line = line.replace('\n','');
+    
+                            if(line.indexOf('Error:')!==-1)
+                            {
+                                err = true;
+                            }
+                        });
+                    }
+                    else
+                    {
+                        err = true;
+                    }
+    
+                    if(err)
+                        { 
+                            if(out.length>0)
+                                vscode.window.showErrorMessage("Unable to upload this app: "+out[0]);   
+                            else
+                                vscode.window.showErrorMessage("Unable to upload this app");
+
+                            this._channel.appendLine('CUB file upload error');
+                            this._panel.webview.postMessage({ type: 'endRequest'});
+                        }
+                    else
+                        { 
+                            this._panel.webview.postMessage({ type: 'endUpload'});
+                            this._channel.appendLine('CUB file has been successfully uploaded, refreshing applicaiton list...');
+                        }
+
+                        Providers.btdevices.showWait(false);
+
+                    this.closeEmitter.fire(0);
+                    resolve();
+                });	
+
+                var that = this;
+
+                child?.stdout?.on('data', function(data) 
+                {
+                    that._channel.appendLine(data);
+                    that._channel.show(true);
+                });
+    
+                child?.stderr?.on('data', function(data) 
+                {
+                    that._channel.appendLine(data);
+                    that._channel.show(true);
+                });
             });
         }
 }

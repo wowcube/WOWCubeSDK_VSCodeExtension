@@ -6,6 +6,8 @@ import { deepStrictEqual } from "assert";
 export class Configuration 
 {
     private static _currentDevice:any = null;
+    private static _lastSetSDKPath:any = null;
+
     private static _busyDevices:Map<string,boolean> = new Map<string,boolean>();
 
     public static getString(key:string)
@@ -13,7 +15,10 @@ export class Configuration
         var ret:string = "";
         try
         {
-            ret = vscode.workspace.getConfiguration().get(key) as string;
+            const conf = vscode.workspace.getConfiguration();
+            ret = conf.get(key) as string;
+
+            //ret = vscode.workspace.getConfiguration().get(key) as string;
         }
         catch(e)
         {
@@ -181,7 +186,17 @@ export class Configuration
 
     public static getWOWSDKPath():string
     {
-         var path:string = Configuration.getString('wowsdk.conf.wowsdkpath');
+        var path:string = "";
+
+         if(Configuration._lastSetSDKPath!==null)
+         {
+             path = Configuration._lastSetSDKPath;
+         }
+         else
+         {
+            path = Configuration.getString('wowsdk.conf.wowsdkpath');
+         }
+         
          var p = os.platform();
 
          if(typeof(path)==='undefined' || path.length===0)
@@ -280,7 +295,11 @@ export class Configuration
         }
     }
 
-    public static setWOWSDKPath(value:string) {Configuration.setString('wowsdk.conf.wowsdkpath',value);}
+    public static setWOWSDKPath(value:string) 
+    {
+        Configuration.setString('wowsdk.conf.wowsdkpath',value);
+        Configuration._lastSetSDKPath = value;
+    }
 
     public static getPawnPath()
     {

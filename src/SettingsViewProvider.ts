@@ -32,6 +32,15 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				var path = Configuration.getWOWSDKPath();
 				if(typeof(path)==='undefined') path='';
 				this._view.webview.postMessage({ type: 'folderSelected',value:path });
+
+				if(this.validateSDKPath(path)===false)
+				{
+					this._view.webview.postMessage({ type: 'pathError',value:true });
+				}
+				else
+				{
+					this._view.webview.postMessage({ type: 'pathError',value:false });
+				}
 			}
 		});
 
@@ -49,9 +58,22 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 
 		webviewView.webview.onDidReceiveMessage(data => {
 			switch (data.type) {
+				case 'checkPath':
+					{
+						if(this.validateSDKPath(Configuration.getWOWSDKPath())===false)
+						{
+							webviewView.webview.postMessage({ type: 'pathError',value:true });
+						}
+						else
+						{
+							webviewView.webview.postMessage({ type: 'pathError',value:false });
+						}
+					}
+					break;
 				case 'pathChanged':
 					{
-						Configuration.setWOWSDKPath(data.value);
+						Configuration.setWOWSDKPath(data.value);	
+						webviewView.webview.postMessage({ type: 'checkPath',value:true });
 					}
 					break;
 				case 'buttonPressed':
@@ -103,6 +125,14 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 											this._view.webview.postMessage({ type: 'folderSelected',value:fileUri[0].fsPath+'/Contents'+Configuration.getSlash() });
 										}
 
+										if(this.validateSDKPath(fileUri[0].fsPath+'/Contents'+Configuration.getSlash())===false)
+										{
+											this._view.webview.postMessage({ type: 'pathError',value:true });
+										}
+										else
+										{
+											this._view.webview.postMessage({ type: 'pathError',value:false });
+										}
                                     }
                                }
                            });
@@ -110,6 +140,77 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 						}
 			}
 		});
+	}
+
+	private validateSDKPath(path:string)
+	{		
+        if(typeof(path)==='undefined') {path='';}
+
+		if(path.length>0)
+		{
+			//Pawn
+			var pawnpath = Configuration.getPawnPath();
+			if(fs.existsSync(pawnpath)===false)
+			{
+				return false;
+			}
+			else
+			{
+				var exe = pawnpath+ Configuration.getPawnCC();
+				if(fs.existsSync(exe)===false)
+				{
+					return false;
+				}
+			}
+
+			var includepath = Configuration.getWOWSDKPath()+'include/';
+			if(fs.existsSync(includepath)===false)
+			{
+				return false;
+			}
+
+			//Utils
+			var utilspath = Configuration.getUtilsPath();
+			if(fs.existsSync(utilspath)===false)
+			{
+				return false;
+			}
+			else
+			{
+				var exe = utilspath+Configuration.getBuilder();
+				if(fs.existsSync(exe)===false)
+				{
+					return false;
+				}
+
+				exe = utilspath+Configuration.getLoader();
+				if(fs.existsSync(exe)===false)
+				{
+					return false;
+				}
+			}
+
+			//Emulator
+			var emulpath = Configuration.getEmulPath();
+			if(fs.existsSync(emulpath)===false)
+			{
+				return false;
+			}
+			else
+			{
+				var exe = emulpath+Configuration.getEmulator();
+				if(fs.existsSync(exe)===false)
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+		else
+		{ 
+			return true;
+		}
 	}
 
 	private _getHtmlForWebview(webview: vscode.Webview) 
@@ -126,6 +227,14 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 
         var path = Configuration.getWOWSDKPath();
         if(typeof(path)==='undefined') path='';
+
+		var path_valid = this.validateSDKPath(path);
+		var err_class = "hidden";
+
+		if(path_valid===false)
+		{
+			err_class = "visible";
+		}
 
 		return `<!DOCTYPE html>
 			<html lang="en">
@@ -146,6 +255,10 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
                 <input  class='sdk-path' id='sdkpath' value='${path}'></input>
 				<button class='sdk-path-button'>...</button>
                 </div>
+				<div id='path_err' class="${err_class}">
+					<div class="negative">Required files can not be found at that path!</div>
+					<div class="negative">Please provide a path to <strong>WOWCube SDK version 2.3.4</strong> or later</div>
+				</div>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 			</html>`;
