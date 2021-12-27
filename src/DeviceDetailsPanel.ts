@@ -193,6 +193,41 @@ export class DeviceDetailsPanel {
                                 }
                             }
                         break;
+                        case 'runapp':
+                            {
+                                var device = Configuration.getCurrentDevice();
+                                if(device===null)
+                                {
+                                    this._panel.webview.postMessage({ type: 'endRequest'});
+                                    Providers.btdevices.showWait(false);
+
+                                    vscode.window.showWarningMessage("WOWCube device is not selected"); 
+                                }
+                                else
+                                {
+                                    if(Configuration.isDeviceBusy(device.mac)===true)
+                                    {
+                                        vscode.window.showWarningMessage("Device '"+device.name+"' is busy, please try again later");   
+                                    }
+                                    else
+                                    {
+                                        var appname = message.value;
+                                        if(appname!==null)
+                                        {
+                                            this.doRunApp(device.mac,appname);
+                                            Providers.btdevices.showWait(true); 
+                                        }
+                                        else
+                                        {
+                                            this._panel.webview.postMessage({ type: 'endRequest'});
+                                            Providers.btdevices.showWait(false);
+
+                                            vscode.window.showWarningMessage("Unable to run this app");   
+                                        }
+                                    }
+                                }  
+                            }
+                            break;
                         case 'deleteapp':
                             {
                                 var device = Configuration.getCurrentDevice();
@@ -749,6 +784,9 @@ export class DeviceDetailsPanel {
                 command+=" -a ";
                 command+=mac;
     
+                this._channel.appendLine("Deleting '"+name+"' from device...");
+                this._channel.show(true);
+
                 Configuration.setDeviceBusy(mac,true);
                 var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
                 {    
@@ -786,10 +824,84 @@ export class DeviceDetailsPanel {
                                 vscode.window.showErrorMessage("Unable to delete this app: "+out[0]);   
                             else
                                 vscode.window.showErrorMessage("Unable to delete this app");
+
+                                this._channel.appendLine("Failed to delete the cubelet");
                         }
                     else
                         { 
                             this._panel.webview.postMessage({ type: 'deleteAppItem',value: {name:name}});
+                            this._channel.appendLine("Cubelet successfully deleted");
+                        }
+
+                        this._panel.webview.postMessage({ type: 'endRequest'});
+                        Providers.btdevices.showWait(false);
+
+                    resolve();
+                });	
+            });
+        }
+
+        private async doRunApp(mac:string, name:string): Promise<void>
+        {
+            return new Promise<void>((resolve) =>
+            {
+                var out:Array<string> = new Array();
+                var err:boolean = false;
+                var info:Array<string> = new Array();
+                var utilspath = Configuration.getUtilsPath();
+                var command = '"'+utilspath+Configuration.getLoader()+'"';
+    
+                command+=" ra -n ";
+                command+=name;
+                command+=" -a ";
+                command+=mac;
+    
+                this._channel.appendLine("Starting '"+name+"'...");
+                this._channel.show(true);
+
+                Configuration.setDeviceBusy(mac,true);
+                var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
+                {    
+                    Configuration.setDeviceBusy(mac,false);
+                    if (stderr && stderr.length > 0) 
+                    {
+                        out.push(stderr);
+                    }
+    
+                    if (stdout && stdout.length > 0) 
+                    {
+                        out.push(stdout);
+                    }
+    
+                    if(child.exitCode===0)
+                    {
+                        out.forEach(line=>{
+                            
+                            line = line.replace('\n','');
+    
+                            if(line.indexOf('Error:')!==-1)
+                            {
+                                err = true;
+                            }
+                        });
+                    }
+                    else
+                    {
+                        err = true;
+                    }
+    
+                    if(err)
+                        { 
+                            if(out.length>0)
+                                vscode.window.showErrorMessage("Unable to run this app: "+out[0]);   
+                            else
+                                vscode.window.showErrorMessage("Unable to run this app");
+
+                                this._channel.appendLine("Failed to start the cubelet");
+                        }
+                        else
+                        {
+                            this._channel.appendLine("Cubelet started");
                         }
 
                         this._panel.webview.postMessage({ type: 'endRequest'});

@@ -201,6 +201,14 @@ body {
 	width: 60px;
 }
 
+.bt-run-btn
+{
+	position: absolute;
+	top:5px;
+	right: 85px;
+	width: 40px;
+}
+
 .gap-bottom
 {
 	margin-bottom: 5px;

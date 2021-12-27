@@ -60,6 +60,16 @@ class AppList
             window.dispatchEvent(new CustomEvent('deleteressed',{detail:app.name}));
         });
 
+        const b2 = document.createElement('button');
+        b2.className = 'bt-run-btn';
+        b2.innerHTML = 'Run';
+
+        b2.addEventListener('click',()=>
+        {
+            window.dispatchEvent(new CustomEvent('runpressed',{detail:app.name}));
+        });
+
+        d.appendChild(b2);
         d.appendChild(b);
         this.el.appendChild(d);
 
@@ -211,6 +221,12 @@ class AppList
     {        
         showWait(true);
         vscode.postMessage({ type: 'deleteapp', value: e.detail }); 
+    });
+
+    window.addEventListener('runpressed', (e)=>
+    {        
+        showWait(true);
+        vscode.postMessage({ type: 'runapp', value: e.detail }); 
     });
 
     // Handle messages sent from the extension to the webview

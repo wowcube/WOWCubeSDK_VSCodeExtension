@@ -81,3 +81,6 @@ This version of extension is NOT FOR PUBLIC release and must only be used for a 
 * Introduced new "Upload CUB File to Device" feature
 * Added WOWCube SDK path validation
 * Minor UI tweaks and fixes
+
+### 1.2.0
+* Introduced new "Run Cubelet" feature
