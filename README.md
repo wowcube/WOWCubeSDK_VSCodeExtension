@@ -84,3 +84,7 @@ This version of extension is NOT FOR PUBLIC release and must only be used for a 
 
 ### 1.2.0
 * Introduced new "Run Cubelet" feature
+
+### 1.2.2
+* Fix for 'No task to run on cube' issue
+* Bluetooth loader response parsing is slightly improved

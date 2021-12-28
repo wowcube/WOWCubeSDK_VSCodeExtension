@@ -41,3 +41,7 @@
 
 ### 1.2.0
 * Introduced new "Run Cubelet" feature
+
+### 1.2.2
+* Fix for 'No task to run on cube' issue
+* Bluetooth loader response parsing is slightly improved

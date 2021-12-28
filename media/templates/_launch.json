@@ -9,10 +9,10 @@
             "timeout": 1
         },
         {
-            "preLaunchTask": "Build and Run on seleсted device",
+            "preLaunchTask": "Build and Run on selected device",
             "type": "node",
             "request":"attach",
-            "name": "Build and Run on seleсted device",
+            "name": "Build and Run on selected device",
             "timeout": 1
         }
     ]

@@ -730,8 +730,19 @@ export class DeviceDetailsPanel {
                             {
                                 var l:string[] = line.split('\n');
     
-                                l.forEach(s=>{
-                                    if(s.length>0) {info.push(s.replace('\r',''));}
+                                l.forEach(s=>
+                                    {
+                                    if(s.length>0) 
+                                    {
+                                        //reject all lines that contain no cubelet name
+                                        const ext = ".cub";
+                                        const ss:string = s.toLowerCase();
+
+                                        if(ss.indexOf(ext)!==-1)
+                                        {
+                                            info.push(s.replace('\r',''));
+                                        }
+                                    }
                                 });
                             }
                         });
