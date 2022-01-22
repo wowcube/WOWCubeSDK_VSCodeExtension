@@ -87,6 +87,12 @@
             "description": "Path to WOWCube SDK",
             "scope": "application"
           },
+          "wowsdk.conf.wowsdkversion": {
+            "type": "string",
+            "default": "1.0.0",
+            "description": "Currently used version of WOWCube SDK",
+            "scope": "application"
+          },          
           "wowsdk.conf.currentdevice": {
             "type": "string",
             "default": "",

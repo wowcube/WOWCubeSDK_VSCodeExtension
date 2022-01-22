@@ -2,13 +2,16 @@ import * as vscode from "vscode";
 import * as os from 'os';
 import * as fs from 'fs';
 import { deepStrictEqual } from "assert";
+import { Z_FIXED } from "zlib";
 
 export class Configuration 
 {
     private static _currentDevice:any = null;
     private static _lastSetSDKPath:any = null;
+    private static _lastSetSDKVersion:any = null;
 
     private static _busyDevices:Map<string,boolean> = new Map<string,boolean>();
+    private static _detectedSDKVersions:Array<string> = new Array<string>();
 
     public static getString(key:string)
     {
@@ -231,6 +234,74 @@ export class Configuration
          return path;
     }
 
+    public static getVersions():Array<string>
+    {
+        return Configuration._detectedSDKVersions;
+    }
+
+    public reloadVersions()
+    {
+        Configuration.loadVersionFolders(Configuration.getWOWSDKPath());
+    }
+
+    private static loadVersionFolders(path:string)
+    {
+            //clear versions, if any
+            while(Configuration._detectedSDKVersions.length > 0) 
+            {
+                Configuration._detectedSDKVersions.pop();
+            }
+
+            //enumerate available sdk versions, if any
+            if(fs.existsSync(path)===false || fs.existsSync(path+'/sdk')===false) 
+            {
+                Configuration._detectedSDKVersions.push('1.0.0');
+                return; 
+            }
+
+
+            var dirs:string[] =  fs.readdirSync(path+'/sdk').filter(function (file) 
+            {
+                return fs.statSync(path+'/sdk/'+file).isDirectory();
+            });
+
+            for(var i=0;i<dirs.length;i++)
+            {
+                //version format is NN.NNNN.NNNNN
+                if (/^\d{1,2}\.\d{1,4}\.\d{1,4}$/.test(dirs[i])) 
+                {
+                    // Successful match
+                    Configuration._detectedSDKVersions.push(dirs[i]);
+                } 
+            }           
+    }
+    
+    public static getCurrentVersion()
+    {
+        var v:string;   
+
+        if(Configuration._lastSetSDKVersion!==null)
+        {
+            v = Configuration._lastSetSDKVersion;
+        }
+        else
+        {
+           v = Configuration.getString('wowsdk.conf.wowsdkversion');
+        }
+
+        return v;
+    }
+
+    public static setCurrentVersion(v:string)
+    {
+        try
+        {
+            Configuration.setString('wowsdk.conf.wowsdkversion',v);
+            Configuration._lastSetSDKVersion = v;
+        }
+        catch(e){}
+    }
+
     public static getPawnCC()
     {
         var p = os.platform();
@@ -310,7 +381,7 @@ export class Configuration
             return "";
         }
 
-        ret+='bin/';
+        ret+='bin/pawn/';
         return ret;
     }
 
@@ -422,6 +493,10 @@ export class Configuration
         if(typeof(path)==='undefined' || path.length===0)
         {
             vscode.window.showErrorMessage("WOWCube SDK is not detected.\nPlease make sure WOWCube SDK is installed and up to date"); 
+        }
+        else
+        {
+            Configuration.loadVersionFolders(path);
         }
     }
 

@@ -13,6 +13,11 @@
         vscode.postMessage({ type: 'pathChanged', value: document.getElementById('sdkpath').value });
     });
 
+    document.querySelector('.selector').addEventListener('change',() =>
+    {
+        vscode.postMessage({ type: 'versionChanged', value: document.getElementById('versions').value });
+    });
+    
     // Handle messages sent from the extension to the webview
     window.addEventListener('message', event =>  
     {
@@ -41,6 +46,11 @@
                         }
                         break;
                     }
+                case 'setVersion':
+                    {
+                        document.getElementById('versions').value = message.value;
+                        break;
+                     }
         }
     });
 }());

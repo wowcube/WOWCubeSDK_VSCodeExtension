@@ -22,6 +22,7 @@ This extension contributes the next settings:
 
 * `wowsdk.conf.wizard`: a folder that has been used for new project generation last time
 * `wowsdk.conf.wowsdkpath`: a path to installed WOWCube SDK
+* `wowsdk.conf.wowsdkversion"`: a version of WOWCube SDK that will be used
 * `wwowsdk.conf.currentdevice`: selected WOWCube device
 * `wowsdk.conf.detecteddevices`: a list of paired WOWCube devices
 

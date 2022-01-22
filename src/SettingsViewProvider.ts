@@ -5,11 +5,18 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Uri } from "vscode";
 import {Configuration} from './Configuration';
+import {Output} from "./Output";
 
 export class SettingsViewProvider implements vscode.WebviewViewProvider
 {
 	public static readonly viewType = 'WOWCubeSDK.settingsView';
 	private _view?: vscode.WebviewView;
+
+	private writeEmitter = Output.terminal();
+	onDidWrite: vscode.Event<string> = this.writeEmitter.event;
+	private closeEmitter = Output.terminalClose();
+	onDidClose?: vscode.Event<number> = this.closeEmitter.event;
+	private _channel: vscode.OutputChannel = Output.channel();
 
 	constructor(private readonly _extensionUri: vscode.Uri,)
     {
@@ -41,6 +48,9 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				{
 					this._view.webview.postMessage({ type: 'pathError',value:false });
 				}
+
+				let version:string = Configuration.getCurrentVersion();
+				this._view.webview.postMessage({type:'setVersion',value:version});
 			}
 		});
 
@@ -74,6 +84,21 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 					{
 						Configuration.setWOWSDKPath(data.value);	
 						webviewView.webview.postMessage({ type: 'checkPath',value:true });
+					}
+					break;
+				case 'versionChanged':
+					{
+						Configuration.setCurrentVersion(data.value);
+
+						if(this.validateSDKPath(Configuration.getWOWSDKPath())===false)
+						{
+							webviewView.webview.postMessage({ type: 'pathError',value:true });
+						}
+						else
+						{
+							webviewView.webview.postMessage({ type: 'pathError',value:false });
+						}
+
 					}
 					break;
 				case 'buttonPressed':
@@ -142,16 +167,27 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 		});
 	}
 
+	private refreshVersionSelector()
+	{
+		let versions = Configuration.getVersions();			
+		let version:string = Configuration.getCurrentVersion();
+	}
+
 	private validateSDKPath(path:string)
 	{		
         if(typeof(path)==='undefined') {path='';}
 
 		if(path.length>0)
 		{
+			this.refreshVersionSelector();
+
 			//Pawn
 			var pawnpath = Configuration.getPawnPath();
 			if(fs.existsSync(pawnpath)===false)
 			{
+				this._channel.appendLine("SDK Settigs Error: Path \""+pawnpath+"\" is invalid");
+				this._channel.show(true);
+
 				return false;
 			}
 			else
@@ -159,13 +195,20 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				var exe = pawnpath+ Configuration.getPawnCC();
 				if(fs.existsSync(exe)===false)
 				{
+					this._channel.appendLine("SDK Settigs Error: File "+exe+" does not exist");
+					this._channel.show(true);
+
 					return false;
 				}
 			}
 
-			var includepath = Configuration.getWOWSDKPath()+'include/';
+			//let's assume if this folder exists, all subfolders for other languages exist too
+			var includepath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/pawn/include/';
 			if(fs.existsSync(includepath)===false)
 			{
+				this._channel.appendLine("SDK Settigs Error: Path \""+includepath+"\" is invalid");
+				this._channel.show(true);
+
 				return false;
 			}
 
@@ -173,6 +216,9 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			var utilspath = Configuration.getUtilsPath();
 			if(fs.existsSync(utilspath)===false)
 			{
+				this._channel.appendLine("SDK Settigs Error: Path \""+utilspath+"\" is invalid");
+				this._channel.show(true);
+
 				return false;
 			}
 			else
@@ -180,12 +226,18 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				var exe = utilspath+Configuration.getBuilder();
 				if(fs.existsSync(exe)===false)
 				{
+					this._channel.appendLine("SDK Settigs Error: File "+exe+" does not exist");
+					this._channel.show(true);
+
 					return false;
 				}
 
 				exe = utilspath+Configuration.getLoader();
 				if(fs.existsSync(exe)===false)
 				{
+					this._channel.appendLine("SDK Settigs Error: File "+exe+" does not exist");
+					this._channel.show(true);
+
 					return false;
 				}
 			}
@@ -194,6 +246,9 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			var emulpath = Configuration.getEmulPath();
 			if(fs.existsSync(emulpath)===false)
 			{
+				this._channel.appendLine("SDK Settigs Error: Path \""+emulpath+"\" is invalid");
+				this._channel.show(true);
+
 				return false;
 			}
 			else
@@ -201,6 +256,9 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				var exe = emulpath+Configuration.getEmulator();
 				if(fs.existsSync(exe)===false)
 				{
+					this._channel.appendLine("SDK Settigs Error: File "+exe+" does not exist");
+					this._channel.show(true);
+
 					return false;
 				}
 			}
@@ -236,31 +294,55 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			err_class = "visible";
 		}
 
-		return `<!DOCTYPE html>
-			<html lang="en">
-			<head>
-				<meta charset="UTF-8">
-				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-				<meta name="viewport" content="width=device-width, initial-scale=1.0">
-				<link href="${styleResetUri}" rel="stylesheet">
-				<link href="${styleVSCodeUri}" rel="stylesheet">
-				<link href="${styleMainUri}" rel="stylesheet">
-				
-				<title>SDK Settings</title>
-			</head>
-			<body>
-				<br/>
-				<div>SDK Path</div>
-                <div>
-                <input  class='sdk-path' id='sdkpath' value='${path}'></input>
-				<button class='sdk-path-button'>...</button>
-                </div>
-				<div id='path_err' class="${err_class}">
-					<div class="negative">Required files can not be found at that path!</div>
-					<div class="negative">Please provide a path to <strong>WOWCube SDK version 2.3.4</strong> or later</div>
-				</div>
-				<script nonce="${nonce}" src="${scriptUri}"></script>
-			</body>
-			</html>`;
+		var body:string = `<!DOCTYPE html>
+		<html lang="en">
+		<head>
+			<meta charset="UTF-8">
+			<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+			<meta name="viewport" content="width=device-width, initial-scale=1.0">
+			<link href="${styleResetUri}" rel="stylesheet">
+			<link href="${styleVSCodeUri}" rel="stylesheet">
+			<link href="${styleMainUri}" rel="stylesheet">
+			
+			<title>SDK Settings</title>
+		</head>
+		<body>
+			<br/>
+			<div>SDK Path</div>
+			<div>
+			<input  class='sdk-path' id='sdkpath' value='${path}'></input>
+			<button class='sdk-path-button'>...</button>
+			</div>
+			<div id='path_err' class="${err_class}">
+				<div class="negative">Required files can not be found at that path!</div>
+				<div class="negative">Please provide a path to <strong>WOWCube SDK version 2.4.0</strong> or later version</div>
+			</div>
+			<br/>
+			<div>SDK Version</div>
+			<select id="versions" class='selector'>`;
+
+			let versions = Configuration.getVersions();			
+			let version:string = Configuration.getCurrentVersion();
+
+
+			for(var i=0;i<versions.length;i++)
+			{
+				if(versions[i]!==version)
+				{
+					body+=`<option value="`+versions[i]+`">`+versions[i]+`</option>`;
+				}
+				else
+				{
+					body+=`<option value="`+versions[i]+`" selected>`+versions[i]+`</option>`;
+				}
+			}
+
+			body+=`</select>
+
+			<script nonce="${nonce}" src="${scriptUri}"></script>
+		</body>
+		</html>`;
+
+		return body;
 	}
 }
