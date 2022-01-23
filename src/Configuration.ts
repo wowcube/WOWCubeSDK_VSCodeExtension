@@ -239,7 +239,7 @@ export class Configuration
         return Configuration._detectedSDKVersions;
     }
 
-    public reloadVersions()
+    public static reloadVersions()
     {
         Configuration.loadVersionFolders(Configuration.getWOWSDKPath());
     }

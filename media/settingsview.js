@@ -27,13 +27,13 @@
             case 'folderSelected':
                 {
                     document.getElementById('sdkpath').value = message.value;
-                    break;
                 }
+                break;
                 case 'checkPath':
                     {
                         vscode.postMessage({ type: 'checkPath', value: "" });
-                        break;
                     }    
+                break;
                 case 'pathError':
                     {
                         if(message.value==true)
@@ -44,13 +44,24 @@
                         {
                             document.getElementById('path_err').className = 'hidden';
                         }
-                        break;
                     }
+                break;
                 case 'setVersion':
                     {
                         document.getElementById('versions').value = message.value;
-                        break;
                      }
+                break;                     
+                case 'clearVersions':
+                    {
+                        document.getElementById('versions').innerHTML = "";
+                    }
+                break;    
+                case 'addVersion':
+                    {
+                        var s = document.getElementById('versions');
+                        s.options[s.options.length] = new Option(message.value, message.value);
+                    } 
+                break;                                         
         }
     });
 }());

@@ -169,8 +169,17 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 
 	private refreshVersionSelector()
 	{
+		Configuration.reloadVersions();
 		let versions = Configuration.getVersions();			
 		let version:string = Configuration.getCurrentVersion();
+		this._view?.webview.postMessage({ type: 'clearVersions',value:true });
+
+		for(var i=0;i<versions.length;i++)
+		{
+			this._view?.webview.postMessage({ type: 'addVersion',value:versions[i] });
+		}
+
+		this._view?.webview.postMessage({ type: 'setVersion',value:version });
 	}
 
 	private validateSDKPath(path:string)
@@ -321,6 +330,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			<div>SDK Version</div>
 			<select id="versions" class='selector'>`;
 
+			
 			let versions = Configuration.getVersions();			
 			let version:string = Configuration.getCurrentVersion();
 
@@ -336,6 +346,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 					body+=`<option value="`+versions[i]+`" selected>`+versions[i]+`</option>`;
 				}
 			}
+			
 
 			body+=`</select>
 
