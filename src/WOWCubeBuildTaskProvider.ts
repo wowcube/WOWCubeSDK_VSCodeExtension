@@ -168,7 +168,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			pos = build_json.scriptFile.indexOf('/');
 			if(pos!==-1)
 			{
-				if(srcdir.substring(0,pos)!=='src')
+				if(build_json.scriptFile.substring(0,pos)!=='binary')
 				{
 					this._channel.appendLine('NOTE: Non-standard intermediary binary files folder name is used. Please consider using `binary` as a name of the folder.\r\n');
 				}
