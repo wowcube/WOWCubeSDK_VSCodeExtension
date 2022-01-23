@@ -89,3 +89,7 @@ This version of extension is NOT FOR PUBLIC release and must only be used for a 
 ### 1.2.2
 * Fix for 'No task to run on cube' issue
 * Bluetooth loader response parsing is slightly improved
+
+### 1.3.0
+* Added WOWCube SDK version selection support
+* Improved support for custom pathes defined in wowcube-build file

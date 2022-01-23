@@ -45,3 +45,7 @@
 ### 1.2.2
 * Fix for 'No task to run on cube' issue
 * Bluetooth loader response parsing is slightly improved
+
+### 1.3.0
+* Added WOWCube SDK version selection support
+* Improved support for custom pathes defined in wowcube-build file

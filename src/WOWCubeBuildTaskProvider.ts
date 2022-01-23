@@ -139,23 +139,50 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
     {
 		return new Promise<void>((resolve,reject) => 
         {
-			//this.writeEmitter.fire('Compiling cub file...\r\n');
 			this._channel.appendLine('Compiling cub file...\r\n');
 
 			const build_json = require(this.workspace+'/wowcubeapp-build.json');
 
+			this._channel.appendLine('Project name: '+build_json.name);
+			this._channel.appendLine('Project version: '+build_json.version+'\r\n');
+
 			var pawnpath = Configuration.getPawnPath();
 			var command = '"'+pawnpath+ Configuration.getPawnCC()+'"';
 
-			var sourcefile = this.workspace+"/src/"+build_json.name+".pwn";
-			var currDir = this.workspace+"\\src";	
-			var destfile = this.workspace+"/binary/"+build_json.name+".amx";
+			var sourcefile = this.workspace+'/'+build_json.sourceFile;
 
-			this.makeDirSync(this.workspace+"/binary");
+			var currDir = this.workspace+"\\src";	
+
+			var srcdir:string = build_json.sourceFile;
+			var pos = srcdir.indexOf('/');
+			if(pos!==-1)
+			{
+				if(srcdir.substring(0,pos)!=='src')
+				{
+					this._channel.appendLine('NOTE: Non-standard source files folder name is used. Please consider using `src` as a name of the folder.\r\n');
+				}
+				currDir = this.workspace+"\\"+srcdir.substring(0,pos);
+			}
+
+			var builddir:string = this.workspace+"/binary";
+			pos = build_json.scriptFile.indexOf('/');
+			if(pos!==-1)
+			{
+				if(srcdir.substring(0,pos)!=='src')
+				{
+					this._channel.appendLine('NOTE: Non-standard intermediary binary files folder name is used. Please consider using `binary` as a name of the folder.\r\n');
+				}
+
+				builddir = this.workspace+"/"+build_json.scriptFile.substring(0,pos);
+			}
+
+			var destfile = this.workspace+'/'+build_json.scriptFile;
+
+			this.makeDirSync(builddir);
 
 			//-X$100000 -d0 -O3 -v2 -i../PawnLibs -DSource ladybug.pwn
 
-			var includepath = Configuration.getWOWSDKPath()+'include/';
+			var includepath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/pawn/include/';
 
 			if(Configuration.isWindows())
 			{

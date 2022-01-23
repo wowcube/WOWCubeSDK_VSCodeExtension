@@ -324,7 +324,8 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			</div>
 			<div id='path_err' class="${err_class}">
 				<div class="negative">Required files can not be found at that path!</div>
-				<div class="negative">Please provide a path to <strong>WOWCube SDK version 2.4.0</strong> or later version</div>
+				<div class="negative">Please provide a path to <strong>WOWCube SDK version 2.4.0</strong> or later</div>
+				<div class="negative">and make sure you have selected supported SDK version.</div>
 			</div>
 			<br/>
 			<div>SDK Version</div>
