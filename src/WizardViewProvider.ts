@@ -31,7 +31,6 @@ export class WizardViewProvider implements vscode.WebviewViewProvider
 			switch (data.type) {
 				case 'buttonPressed':
 						{
-							//vscode.window.showInformationMessage(`${data.value}`);
                             vscode.commands.executeCommand('WOWCubeSDK.openWizard');
 							break;
 						}

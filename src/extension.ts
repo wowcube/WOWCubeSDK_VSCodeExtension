@@ -8,6 +8,7 @@ import { DeviceDetailsPanel } from './DeviceDetailsPanel';
 import { WizardViewProvider } from './WizardViewProvider';
 import { BTDeviceViewProvider } from './BTDeviceViewProvider';
 import { SettingsViewProvider } from './SettingsViewProvider';
+import { ExamplesViewProvider } from './ExamplesViewProvider';
 import { WOWCubeBuildTaskProvider } from './WOWCubeBuildTaskProvider';
 import {Configuration} from './Configuration';
 import {Providers} from './Providers';
@@ -21,6 +22,8 @@ export async function activate(context: vscode.ExtensionContext)
 	console.log('WOWCube SDK extension is loaded...');
 	
 	await Configuration.init();
+	Configuration.context = context;
+	
 	Providers.init(context.extensionUri);
 
 	const workspaceRoot = (vscode.workspace.workspaceFolders && (vscode.workspace.workspaceFolders.length > 0)) ? vscode.workspace.workspaceFolders[0].uri.fsPath : "";
@@ -34,6 +37,9 @@ export async function activate(context: vscode.ExtensionContext)
 
 	context.subscriptions.push(
 					vscode.window.registerWebviewViewProvider(SettingsViewProvider.viewType, Providers.settings));
+
+	context.subscriptions.push(
+						vscode.window.registerWebviewViewProvider(ExamplesViewProvider.viewType, Providers.examples));
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('WOWCubeSDK.scanDevices', () => 

@@ -6,58 +6,55 @@ import * as path from 'path';
 import { Uri } from "vscode";
 import {Configuration} from './Configuration';
 
-export class WizardPanel {
+export class ExamplePanel {
 
-    public static currentPanel: WizardPanel | undefined;
-    public static readonly viewType = "WOWCubeSDK.wizardPanel";
+    public static panels = new Map<string,ExamplePanel>();
+    public static readonly viewType = "WOWCubeSDK.examplePanel";
 
     private readonly _panel: vscode.WebviewPanel;  
     private readonly _extensionUri: vscode.Uri;  
     private _disposables: vscode.Disposable[] = [];
 
-    public static createOrShow(extensionUri: vscode.Uri) 
+    private readonly _key:string = "";
+
+    public static createOrShow(extensionUri: vscode.Uri,exampleKey:string) 
     { 
         const column = vscode.window.activeTextEditor
         ? vscode.window.activeTextEditor.viewColumn: undefined;
 
         // If we already have a panel, show it.      
-        if (WizardPanel.currentPanel) 
+        if(ExamplePanel.panels.has(exampleKey))
         {
-            WizardPanel.currentPanel._panel.reveal(column);
-            return;     
+            ExamplePanel.panels.get(exampleKey)?._panel.reveal(column);
+            return;
         }
-        
+
         // Otherwise, create a new panel. 
-        const panel = vscode.window.createWebviewPanel(
-            WizardPanel.viewType,
-            'WOWCube Cubelet Project Wizard',
+        const panel = vscode.window.createWebviewPanel
+        (
+            ExamplePanel.viewType,
+            'Example Panel '+exampleKey,
             column || vscode.ViewColumn.Two,
             getWebviewOptions(extensionUri),
         );
 
-        WizardPanel.currentPanel = new WizardPanel(panel, extensionUri);    
-    }
-
-    public static kill() 
-    { 
-        WizardPanel.currentPanel?.dispose();
-        WizardPanel.currentPanel = undefined; 
-    }
-
-    public static revive(panel: vscode.WebviewPanel,
-        extensionUri: vscode.Uri) {    
-            WizardPanel.currentPanel = new WizardPanel(panel, extensionUri);  
+        ExamplePanel.panels.set(exampleKey,new ExamplePanel(panel, extensionUri,exampleKey));
     }
 
     private constructor(panel: vscode.WebviewPanel,
-        extensionUri: vscode.Uri) {    
+        extensionUri: vscode.Uri, key:string) 
+        {    
             this._panel = panel;    
             this._extensionUri = extensionUri;
+            this._key = key;
 
         // Set the webview's initial html content    
             this._update();
 
-            this._panel.onDidDispose(() => this.dispose(), 
+            this._panel.onDidDispose(() => 
+            {
+                 this.dispose();
+                }, 
                 null, this._disposables);
             
         // Update the content based on view changes 
@@ -85,49 +82,10 @@ export class WizardPanel {
                         break;
                         case 'folder': 
                         {
-                            const options: vscode.OpenDialogOptions = {
-                                canSelectMany: false,
-                                openLabel: 'Select Project Folder',
-                                canSelectFiles: false,
-                                canSelectFolders: true
-                            };
-                           
-                           vscode.window.showOpenDialog(options).then(fileUri => 
-                            {
-                               if (fileUri && fileUri[0]) 
-                               {
-                                    if (this._panel) 
-                                    {
-                                        //save configuration
-                                        var path = fileUri[0].fsPath;
-
-                                        if(!path.endsWith(Configuration.getSlash()))
-                                        {
-                                            path = path + Configuration.getSlash();
-                                        }
-
-                                        Configuration.setLastPath(path);
-                                        this._panel.webview.postMessage({ type: 'folderSelected',value:path});
-                                    }
-                               }
-                           });
                         }
                         break;
                         case 'generate':
                             {
-                                var ret = this.generate(message.value.name,message.value.path,message.value.item);
-
-                                if(ret.path.length===0)
-                                {
-                                    //error
-                                    vscode.window.showErrorMessage("Unable to generate new project: "+ret.desc);
-                                }
-                                else
-                                {
-                                    //all good
-                                    let uri = Uri.file(ret.path);
-                                    let success = vscode.commands.executeCommand('vscode.openFolder', uri);
-                                }
                             }
                         break;
                     }
@@ -293,8 +251,9 @@ export class WizardPanel {
             return ret;
         }
 
-        public dispose() {    
-            WizardPanel.currentPanel = undefined;  
+        public dispose() 
+        {    
+            ExamplePanel.panels.delete(this._key);
 
             // Clean up our resources  
             this._panel.dispose();
@@ -326,7 +285,7 @@ export class WizardPanel {
             );
 
             const scriptUri = webview.asWebviewUri( 
-                vscode.Uri.joinPath(this._extensionUri, "media", "wizard.js")
+                vscode.Uri.joinPath(this._extensionUri, "media", "example.js")
             );
             
             const nonce = getNonce();  
@@ -346,61 +305,18 @@ export class WizardPanel {
                     <link href="${styleResetUri}" rel="stylesheet">
                     <link href="${styleVSCodeUri}" rel="stylesheet"> 
                     <link href="${styleMainCodeUri}" rel="stylesheet"> 
-                    <title>New Cubelet Wizard</title>
+                    <title>Example</title>
                 </head>
                 <body>
                     <script type="text/javascript" src="${scriptUri}" nonce="${nonce}"></script>
                       
                     <div style="padding:0px;">
-                        <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:24px;">New Cubelet Wizard</div>
-                        <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Create new WOWCube cubelet application project from template</div>
+                        <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:24px;">Example A</div>
+                        <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">White something about this example</div>
                         <div class="separator"></div>
 
                         <div class="view">
-                        
-                            <div style="margin-top:0px;">
-                                <div class="badge"> <div class="badge_text">1</div></div>
-                                <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Name of your new project</div>
-                                <input id="projectname" style="display:block;width:50%;"></input>
-                            </div>
-                          
-                            <div style="margin-top:30px;">
-                                <div class="badge"> <div class="badge_text">2</div></div>
-                                <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Choose the folder for your project</div>
-                                <br/>
-                                <input id="foldername" style="display:inline-block; width:50%;" readonly value="${lastPath}"></input> <button id="folder_button" style="display:inline-block; width:70px;">...</button>
-                            </div>
-                        
-                            <div style="margin-top:30px;margin-bottom:5px;">
-                                <div class="badge"> <div class="badge_text">3</div></div>
-                                <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Select project template</div>
-                            </div>
-
-                            <div class="items">
-                                <div id="i1" class="item">
-                                    <div style="margin:5px;"><strong>Empty project</strong></div>
-                                    <div class="itemdesc">Creates an empty project with a bare minimum of functions needed to build WOWCube cubelet application</div>
-                                </div>
-
-                                <div id="i2" class="item">
-                                    <div style="margin:5px;"><strong>Basic cubelet</strong></div>
-                                    <div class="itemdesc">Creates a project of WOWCube cubelet application with basic rendering support</div>
-                                    <div class="itemdesc">Demonstrates principles of work with a compound multi-screen device</div>
-                                </div>
-
-                                <div id="i3" class="item">
-                                    <div style="margin:5px;"><strong>Basic cubelet with resources</strong></div>
-                                    <div class="itemdesc">Creates a project of WOWCube cubelet application with some resources</div>
-                                    <div class="itemdesc">Demonstrates how to find and use application resources</div>
-                                </div>
-
-                                <div id="i4" class="item">
-                                    <div style="margin:5px;"><strong>Basic cubelet with splash screens</strong></div>
-                                    <div class="itemdesc">Creates a project of WOWCube cubelet application with in-game splash screens support</div>
-                                    <div class="itemdesc">Demonstrates the use of in-game splash screens</div>
-                                </div>
-                            </div>
-                            
+                        <iframe src="https://www.apple.com"></iframe>
                         </div>
 
                         <button id="generate_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">GENERATE NEW PROJECT</button>

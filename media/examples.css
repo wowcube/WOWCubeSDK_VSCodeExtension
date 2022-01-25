@@ -1,0 +1,43 @@
+ ul, #myUL {
+    list-style-type: none;
+  }
+  
+li{
+    line-height: 20px;
+}
+
+.liitem:hover
+{
+    background-color: var(--vscode-list-hoverBackground);
+    cursor: pointer;
+}
+
+  #myUL {
+    margin: 0;
+    padding: 0;
+  }
+  
+  .caret {
+    cursor: pointer;
+    user-select: none; /* Prevent text selection */
+    line-height: 20px;
+  }
+  
+  .caret::before {
+    content: "\25B6";
+    color: var(--vscode-button-background);
+    display: inline-block;
+    margin-right: 6px;
+  }
+  
+  .caret-down::before {
+    transform: rotate(90deg);
+  }
+  
+  .nested {
+    display: none;
+  }
+  
+  .active {
+    display: block;
+  } 

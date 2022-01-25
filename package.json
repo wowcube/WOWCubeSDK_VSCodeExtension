@@ -127,6 +127,11 @@
         },
         {
           "type": "webview",
+          "id": "WOWCubeSDK.examplesView",
+          "name": "Documentation & Code Examples"
+        },
+        {
+          "type": "webview",
           "id": "WOWCubeSDK.settingsView",
           "name": "SDK Settings"
         },

@@ -13,6 +13,8 @@ export class Configuration
     private static _busyDevices:Map<string,boolean> = new Map<string,boolean>();
     private static _detectedSDKVersions:Array<string> = new Array<string>();
 
+    public static context:any;
+    
     public static getString(key:string)
     {
         var ret:string = "";
@@ -381,7 +383,8 @@ export class Configuration
             return "";
         }
 
-        ret+='bin/pawn/';
+        //ret+='bin/pawn/';
+        ret+='sdk/'+Configuration.getCurrentVersion()+'/pawn/bin/';
         return ret;
     }
 
