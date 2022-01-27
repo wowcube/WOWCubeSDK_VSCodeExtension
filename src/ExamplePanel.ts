@@ -5,6 +5,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Uri } from "vscode";
 import {Configuration} from './Configuration';
+import { isDeepStrictEqual } from "util";
+
 
 export class ExamplePanel {
 
@@ -33,7 +35,7 @@ export class ExamplePanel {
         const panel = vscode.window.createWebviewPanel
         (
             ExamplePanel.viewType,
-            'Example Panel '+exampleKey,
+            'WOWCube SDK Document',
             column || vscode.ViewColumn.Two,
             getWebviewOptions(extensionUri),
         );
@@ -266,12 +268,58 @@ export class ExamplePanel {
             }
         }
 
-        private async _update() {
+        private async _update() 
+        {
             const webview = this._panel.webview;    
             this._panel.webview.html = this._getHtmlForWebview(webview);  
         }
         
-        private _getHtmlForWebview(webview: vscode.Webview) {    
+        private _getHtmlForWebview(webview: vscode.Webview) 
+        {
+            var MarkdownIt = require('markdown-it');
+            var md = new MarkdownIt();
+            var content: string = "";
+
+            var info:string = this._extensionUri.fsPath+"/media/examples/"+this._key;
+            var minfo:string = info;
+
+            var title:string = "No title";
+            var desc:string  = "No description";
+
+            if(fs.existsSync(info)===false)
+            {
+                content = '# this document is empty';
+            }
+            else
+            {
+                info+='/info.md';
+                minfo+='/info.json';
+
+                if(fs.existsSync(info)===false)
+                {
+                    content = '# this document is empty';
+                }
+                else
+                {
+                    try
+                    {
+                        var contentmd = fs.readFileSync(info,'utf8');
+                        content = md.render(contentmd.toString());
+
+                        const meta = require(minfo);
+
+                        title = meta.name;
+                        desc = meta.desc;
+
+                        this._panel.title = title;
+                    }
+                    catch(e)
+                    {
+                        content = '# this document is empty';
+                    }
+                }
+            }
+                    
             const styleResetUri = webview.asWebviewUri(      
                 vscode.Uri.joinPath(this._extensionUri, "media", "reset.css")   
             );
@@ -282,6 +330,10 @@ export class ExamplePanel {
 
             const styleMainCodeUri = webview.asWebviewUri(    
                 vscode.Uri.joinPath(this._extensionUri, "media", "main.css")
+            );
+
+            const styleMDUri = webview.asWebviewUri(    
+                vscode.Uri.joinPath(this._extensionUri, "media", "markdown.css")
             );
 
             const scriptUri = webview.asWebviewUri( 
@@ -305,27 +357,31 @@ export class ExamplePanel {
                     <link href="${styleResetUri}" rel="stylesheet">
                     <link href="${styleVSCodeUri}" rel="stylesheet"> 
                     <link href="${styleMainCodeUri}" rel="stylesheet"> 
+                    <link href="${styleMDUri}" rel="stylesheet"> 
                     <title>Example</title>
                 </head>
                 <body>
                     <script type="text/javascript" src="${scriptUri}" nonce="${nonce}"></script>
                       
                     <div style="padding:0px;">
-                        <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:24px;">Example A</div>
-                        <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">White something about this example</div>
+                        <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:30px;">${title}</div>
+                        <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">${desc}</div>
                         <div class="separator"></div>
 
-                        <div class="view">
-                        <iframe src="https://www.apple.com"></iframe>
-                        </div>
+                        <div class="view" style="padding:26px;">`;
+                        
+                        ret+= content;
 
-                        <button id="generate_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">GENERATE NEW PROJECT</button>
+                        ret+=`</div>
+
+                        <button id="generate_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">CREATE EXAMPLE PROJECT</button>
                     </div>
                 </body>
                 </html> 
             `;  
 
             return ret;
+            
         }
 }
 function getWebviewOptions(extensionUri: vscode.Uri): 

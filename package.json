@@ -28,30 +28,30 @@
   "contributes": {
     "languages": [
       {
-          "id": "Log",
-          "aliases": [
-              "log"
-          ],
-          "extensions": [
-              ".log"
-          ],
-          "configuration": "./log.configuration.json",
-          "mimetypes": [
-              "log",
-              "text/log",
-              "text/x-log",
-              "text/x-code-output",
-              "x-code-output"
-          ]
+        "id": "Log",
+        "aliases": [
+          "log"
+        ],
+        "extensions": [
+          ".log"
+        ],
+        "configuration": "./log.configuration.json",
+        "mimetypes": [
+          "log",
+          "text/log",
+          "text/x-log",
+          "text/x-code-output",
+          "x-code-output"
+        ]
       }
-  ],
-  "grammars": [
+    ],
+    "grammars": [
       {
-          "language": "Log",
-          "scopeName": "code.log",
-          "path": "./src/syntaxes/log.tmLanguage"
+        "language": "Log",
+        "scopeName": "code.log",
+        "path": "./src/syntaxes/log.tmLanguage"
       }
-  ],
+    ],
     "taskDefinitions": [
       {
         "type": "wowsdkbuild",
@@ -92,7 +92,7 @@
             "default": "1.0.0",
             "description": "Currently used version of WOWCube SDK",
             "scope": "application"
-          },          
+          },
           "wowsdk.conf.currentdevice": {
             "type": "string",
             "default": "",
@@ -180,6 +180,7 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
+    "markdown-it": "^12.3.2",
     "regedit": "^5.0.0"
   }
 }
