@@ -238,3 +238,8 @@ body {
 {
 	color:var(--vscode-terminal-ansiBrightWhite);
 }
+
+.inactive
+{
+	background-color: var(--vscode-titleBar-inactiveBackground);
+}

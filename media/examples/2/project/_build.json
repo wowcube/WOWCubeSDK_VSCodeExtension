@@ -1,0 +1,9 @@
+{
+    "name": "##NAME##",
+    "version": "1.0.0",
+    "sourceFile" : "src/##NAME##.pwn",
+    "scriptFile" : "binary/##NAME##.amx",
+    "appIcon":"resources/appIcon.png",
+    "soundAssetsDir":"resources/sounds",
+    "imageAssetsDir":"resources/images"
+  }

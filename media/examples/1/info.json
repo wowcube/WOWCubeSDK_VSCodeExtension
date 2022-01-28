@@ -2,5 +2,6 @@
     "name":"First Example",
     "desc":"This is a getting-started example",
     "prev_key":-1,
-    "next_key":2
+    "next_key":2,
+    "has_project":true
 }

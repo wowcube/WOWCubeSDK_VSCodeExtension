@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Uri } from "vscode";
 import {Configuration} from './Configuration';
-import { isDeepStrictEqual } from "util";
+import { Providers } from "./Providers";
 
 
 export class ExamplePanel {
@@ -87,7 +87,47 @@ export class ExamplePanel {
                         }
                         break;
                         case 'generate':
+                            {                                
+                                const options: vscode.OpenDialogOptions = {
+                                    canSelectMany: false,
+                                    openLabel: 'Select Folder and Create Project',
+                                    canSelectFiles: false,
+                                    canSelectFolders: true
+                                };
+                               
+                               vscode.window.showOpenDialog(options).then(fileUri => 
+                                {
+                                   if (fileUri && fileUri[0]) 
+                                   {
+                                        if (this._panel) 
+                                        {
+                                            //save project
+                                            var path = fileUri[0].fsPath;
+
+                                            var ret = this.generateExample(message.value,path);
+
+                                            if(ret.path.length===0)
+                                            {
+                                                //error
+                                                vscode.window.showErrorMessage("Unable to create example project: "+ret.desc);
+                                            }
+                                            else
+                                            {
+                                                //all good
+                                                let uri = Uri.file(ret.path);
+                                                let success = vscode.commands.executeCommand('vscode.openFolder', uri,{forceNewWindow:true});
+                                            }
+                                        }
+                                   }
+                               });
+
+                            }
+                        break;
+                        case 'prev':
+                        case 'next':
                             {
+                                ExamplePanel.createOrShow(Configuration.context.extensionUri,message.value);
+                                this.dispose();
                             }
                         break;
                     }
@@ -97,40 +137,66 @@ export class ExamplePanel {
             );
         }
 
-        public generate(name:string,path:string,template:number)
+        public generateExample(key:number,path:string)
         {
             var ret = {path:'',desc:''};
-            const templates = require('../media/templates/templates.json');
             var fullpath = '';
             var needDeleteFolder:boolean = false;
 
             try
             {
+            var info:string = this._extensionUri.fsPath+"/media/examples/"+key;
+            var minfo:string = info;
+
+            var title:string = "Untitled Project";
+            var desc:string  = "No description";
+            var prev = -1;
+            var next = -1;
+            var hasProject:boolean = false;
+
+            if(fs.existsSync(info)===false)
+            {
+                throw new Error("Unable to find example project source folder, please try to re-install WOWCube SDK extension");
+            }
+            else
+            {
+                info+='/info.md';
+                minfo+='/info.json';
+
+                if(fs.existsSync(info)===false)
+                {
+                    throw new Error("Unable to find example project source folder, please try to re-install WOWCube SDK extension");
+                }
+                else
+                {
+                    try
+                    {
+                        const meta = require(minfo);
+
+                        title = meta.name;
+                        desc = meta.desc;
+
+                        prev = meta.prev_key;
+                        next = meta.next_key;
+
+                        hasProject = meta.has_project;
+                    }
+                    catch(e)
+                    {
+                        throw new Error("Unable to find example project metadata, please try to re-install WOWCube SDK extension");
+                    }
+                }
+            }
+
                 path = path.replace(/\\/g, "/");
                 if(!path.endsWith("/")) { path+='/';}
 
-                fullpath = path + name;
+                fullpath = path + title;
                 ret.path = fullpath;
 
                 if(fs.existsSync(fullpath))
                 {
                     throw new Error("Project with such name already exists in this folder");
-                }
-
-                var currentTemplate = null;
-
-                for(var i=0;i<templates.length;i++)
-                {
-                    if(templates[i].id === template)
-                    {
-                        currentTemplate = templates[i];
-                        break;
-                    }
-                }
-
-                if(currentTemplate===null)
-                {
-                    throw new Error("Unable to find template source files");
                 }
 
                 this.makeDirSync(fullpath);
@@ -147,6 +213,7 @@ export class ExamplePanel {
                 const iconFilename:string = this._extensionUri.fsPath+"/media/templates/appIcon.png";             
                 fs.copyFileSync(iconFilename,fullpath+'/resources/appIcon.png');
 
+                /*
                 for(var i=0;i<currentTemplate.files.length; i++)
                 {
                     if(currentTemplate.files[i]==='_main.pwn')
@@ -158,20 +225,32 @@ export class ExamplePanel {
                         fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/"+currentTemplate.files[i],fullpath+'/src/'+currentTemplate.files[i]);
                     }
                 }
-            
-                for(var i=0;i<currentTemplate.images.length; i++)
+                */
+                
+                //copy resources
+                var sourceImg = this._extensionUri.fsPath+"/media/examples/"+key+"/project/resources/images/";
+                var sourceSnd = this._extensionUri.fsPath+"/media/examples/"+key+"/project/resources/sounds/";
+
+                if(fs.existsSync(sourceImg)===true)
                 {
-                    fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/"+currentTemplate.images[i],fullpath+'/resources/images/'+currentTemplate.images[i]);
+                    fs.readdirSync(sourceImg).forEach(file => 
+                        {
+                            fs.copyFileSync(sourceImg+file,fullpath+'/resources/images/'+file);
+                        });
                 }
 
-                for(var i=0;i<currentTemplate.sounds.length; i++)
+                if(fs.existsSync(sourceSnd)===true)
                 {
-                    fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/"+currentTemplate.sounds[i],fullpath+'/resources/sounds/'+currentTemplate.sounds[i]);
+                    fs.readdirSync(sourceSnd).forEach(file => 
+                        {
+                            fs.copyFileSync(sourceImg+file,fullpath+'/resources/sounds/'+file);
+                        });
                 }
+
 
                 //create json file for build
-                const json = fs.readFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/_build.json").toString();
-                const str = json.replace(/##NAME##/gi,name);
+                const json = fs.readFileSync(this._extensionUri.fsPath+"/media/examples/"+key+"/project/_build.json").toString();
+                const str = json.replace(/##NAME##/gi,title);
 
                 fs.writeFileSync(fullpath+'/wowcubeapp-build.json',str);
 
@@ -285,6 +364,9 @@ export class ExamplePanel {
 
             var title:string = "No title";
             var desc:string  = "No description";
+            var prev = -1;
+            var next = -1;
+            var hasProject:boolean = false;
 
             if(fs.existsSync(info)===false)
             {
@@ -311,6 +393,10 @@ export class ExamplePanel {
                         title = meta.name;
                         desc = meta.desc;
 
+                        prev = meta.prev_key;
+                        next = meta.next_key;
+
+                        hasProject = meta.has_project;
                         this._panel.title = title;
                     }
                     catch(e)
@@ -368,14 +454,37 @@ export class ExamplePanel {
                         <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">${desc}</div>
                         <div class="separator"></div>
 
-                        <div class="view" style="padding:26px;">`;
+                        <div class="view" style="padding:26px;margin-top: 10px; margin-bottom: 10px;">`;
                         
                         ret+= content;
 
-                        ret+=`</div>
+                        ret+=`</div>`;
 
-                        <button id="generate_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">CREATE EXAMPLE PROJECT</button>
-                    </div>
+                        if(prev!==-1)
+                        {
+                            ret+=`<button id="prev_button" style="position:absolute; left:20px; bottom:20px; height:40px; width:90px;" key="${prev}"><< PREV</button>`;
+                        }
+                        else
+                        {
+                            ret+=`<div class="inactive" style="position: absolute;left: 20px;bottom: 20px;height: 52px;width: 90px;line-height: 52px;text-align: center;"><< PREV</div>`;
+                        }
+
+                        if(hasProject===true)
+                        {
+                            ret+=`<button id="generate_button" style="position:absolute; left:130px; right:20px; bottom:20px; height:40px; width:calc(100% - 270px);" key="${this._key}"}>CREATE EXAMPLE PROJECT</button>`;
+                        }
+
+                        if(next!==-1)
+                        {
+                            ret+=`<button id="next_button" style="position:absolute; right:20px; bottom:20px; height:40px; width:90px;" key="${next}">NEXT >> </button>`;
+                        }
+                        else
+                        {
+                            ret+=`<div class="inactive" style="position:absolute; right:20px; bottom:20px; height:52px; width:90px;line-height: 52px;text-align: center;">NEXT >> </div>`;
+                        }
+
+                        ret+=`
+                         </div>
                 </body>
                 </html> 
             `;  
