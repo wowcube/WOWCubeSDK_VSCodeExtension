@@ -239,6 +239,11 @@ body {
 	color:var(--vscode-terminal-ansiBrightWhite);
 }
 
+.neutral-blue
+{
+	color:var(--vscode-terminal-ansiBrightBlue);
+}
+
 .inactive
 {
 	background-color: var(--vscode-titleBar-inactiveBackground);

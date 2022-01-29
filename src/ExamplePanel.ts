@@ -6,7 +6,7 @@ import * as path from 'path';
 import { Uri } from "vscode";
 import {Configuration} from './Configuration';
 import { Providers } from "./Providers";
-
+import { Version } from "./Version";
 
 export class ExamplePanel {
 
@@ -213,20 +213,16 @@ export class ExamplePanel {
                 const iconFilename:string = this._extensionUri.fsPath+"/media/templates/appIcon.png";             
                 fs.copyFileSync(iconFilename,fullpath+'/resources/appIcon.png');
 
-                /*
-                for(var i=0;i<currentTemplate.files.length; i++)
+                //copy project files
+                var sourcePrj = this._extensionUri.fsPath+"/media/examples/"+key+"/project/src/";
+                if(fs.existsSync(sourcePrj)===true)
                 {
-                    if(currentTemplate.files[i]==='_main.pwn')
-                    {
-                        fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/"+currentTemplate.files[i],fullpath+'/src/'+name+'.pwn');
-                    }
-                    else
-                    {
-                        fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/"+currentTemplate.files[i],fullpath+'/src/'+currentTemplate.files[i]);
-                    }
+                    fs.readdirSync(sourcePrj).forEach(file => 
+                        {
+                            fs.copyFileSync(sourcePrj+file,fullpath+'/src/'+file);
+                        });
                 }
-                */
-                
+
                 //copy resources
                 var sourceImg = this._extensionUri.fsPath+"/media/examples/"+key+"/project/resources/images/";
                 var sourceSnd = this._extensionUri.fsPath+"/media/examples/"+key+"/project/resources/sounds/";
@@ -247,12 +243,8 @@ export class ExamplePanel {
                         });
                 }
 
-
-                //create json file for build
-                const json = fs.readFileSync(this._extensionUri.fsPath+"/media/examples/"+key+"/project/_build.json").toString();
-                const str = json.replace(/##NAME##/gi,title);
-
-                fs.writeFileSync(fullpath+'/wowcubeapp-build.json',str);
+                //copy build json
+                fs.copyFileSync(this._extensionUri.fsPath+"/media/examples/"+key+"/project/wowcubeapp-build.json",fullpath+'/wowcubeapp-build.json');
 
                 //create vscode-related configs
                 fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_launch.json",fullpath+'/.vscode/launch.json');
@@ -367,6 +359,9 @@ export class ExamplePanel {
             var prev = -1;
             var next = -1;
             var hasProject:boolean = false;
+            var reqSDK:string = "1.0.0";
+            var correctSDK:boolean = false;
+            var versionClass:string = "neutral-blue";
 
             if(fs.existsSync(info)===false)
             {
@@ -397,6 +392,22 @@ export class ExamplePanel {
                         next = meta.next_key;
 
                         hasProject = meta.has_project;
+
+                        reqSDK = meta.sdk_min_version;
+                        
+                        const vc = Version.compare(reqSDK,Configuration.getCurrentVersion());
+
+                        //if the version is lesser or equal the one that is currently used, OK
+                        if(vc<=0)
+                        {
+                            correctSDK = true;
+                        }
+                        else
+                        {
+                            correctSDK = false;
+                            versionClass = "negative";
+                        }
+
                         this._panel.title = title;
                     }
                     catch(e)
@@ -449,9 +460,12 @@ export class ExamplePanel {
                 <body>
                     <script type="text/javascript" src="${scriptUri}" nonce="${nonce}"></script>
                       
-                    <div style="padding:0px;">
-                        <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:30px;">${title}</div>
-                        <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">${desc}</div>
+                    <div style="padding:0px;max-height: 77px;overflow: hidden;">
+                        <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:30px;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;">${title}</div>
+                        <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;">${desc}</div>
+
+                        <div class='${versionClass}' id="t3" style="position: absolute;right: 10px;top: 0;font-size: 12px;">SDK version ${reqSDK}</div>
+
                         <div class="separator"></div>
 
                         <div class="view" style="padding:26px;margin-top: 10px; margin-bottom: 10px;">`;

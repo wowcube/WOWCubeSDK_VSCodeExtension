@@ -3,5 +3,6 @@
     "desc":"This is a getting-started example",
     "prev_key":-1,
     "next_key":2,
-    "has_project":true
+    "has_project":true,
+    "sdk_min_version":"1.0.0"
 }

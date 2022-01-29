@@ -1,8 +1,8 @@
 {
-    "name": "##NAME##",
+    "name": "Example2",
     "version": "1.0.0",
-    "sourceFile" : "src/##NAME##.pwn",
-    "scriptFile" : "binary/##NAME##.amx",
+    "sourceFile" : "src/main.pwn",
+    "scriptFile" : "binary/main.amx",
     "appIcon":"resources/appIcon.png",
     "soundAssetsDir":"resources/sounds",
     "imageAssetsDir":"resources/images"
