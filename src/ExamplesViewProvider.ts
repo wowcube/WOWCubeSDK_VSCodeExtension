@@ -7,6 +7,8 @@ import { Uri } from "vscode";
 import {Configuration} from './Configuration';
 import {Output} from "./Output";
 import { ExamplePanel } from './ExamplePanel';
+import { DocumentPanel } from './DocumentPanel';
+import { throws } from 'assert';
 
 export class ExamplesViewProvider implements vscode.WebviewViewProvider
 {
@@ -18,6 +20,8 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 	private closeEmitter = Output.terminalClose();
 	onDidClose?: vscode.Event<number> = this.closeEmitter.event;
 	private _channel: vscode.OutputChannel = Output.channel();
+
+	public docs:Array<[string, Array<string>]> = [];
 
 	constructor(private readonly _extensionUri: vscode.Uri,)
     {
@@ -60,12 +64,50 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
                         ExamplePanel.createOrShow(Configuration.context.extensionUri,data.value);
 					}
 					break;
+				case 'docSelected':
+					{
+						DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,data.value.folder, data.value.file);
+					}
+					break;					
 			}
 		});
 	}
 
+	private getDocumentation()
+	{
+		var topics:Array<[string, Array<string>]> = new Array<[string, Array<string>]>();
+		
+		var sourceDocs = this._extensionUri.fsPath+"/media/docs/";
+
+		//fetch docs folder for topics
+         if(fs.existsSync(sourceDocs)===true)
+                {
+                    fs.readdirSync(sourceDocs).forEach(folder => 
+                        {
+							topics.push([folder,new Array<string>()]);
+                        });
+
+					for(var i=0;i<topics.length;i++)
+					{
+						var path = sourceDocs+topics[i][0];
+
+						if(fs.existsSync(path)===true)
+						{
+							fs.readdirSync(path).forEach(file => 
+								{
+									topics[i][1].push(file);
+								});	
+						}
+					}
+                }
+		
+		return topics;
+	}
+
 	private _getHtmlForWebview(webview: vscode.Webview) 
 	{
+		this.docs = this.getDocumentation();
+
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examplesview.js'));
 
 		// Do the same for the stylesheet.
@@ -107,13 +149,31 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
                         <ul class="nested">
                         </ul>
                     </li>
-
                     <li><span class="caret">Documentation</span>
-                        <ul class="nested">
-                        </ul>
-                    </li>
+                        <ul class="nested">`;
 
-                </ul> 
+					for(var i=0;i<this.docs.length;i++)
+					{
+						var topic = this.docs[i][0];
+
+						body+=`<li><span class="caret">${topic}</span>
+							   <ul class="nested">`;
+
+						for(var j=0;j<this.docs[i][1].length;j++)
+						{
+							var item = this.docs[i][1][j];
+							item = item.substring(0,item.length-3);
+
+							body+=`<li class="liitem" file="${this.docs[i][1][j]}" folder="${topic}" doc="1">${item}</li>`;
+						}
+
+						body+=`</ul>
+							   </li>`;
+					}
+
+					body+=`</ul>
+					</li>
+				</ul> 
             </div>
 		</head>
 		<body>

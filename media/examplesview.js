@@ -3,23 +3,6 @@
     // @ts-ignore
     const vscode = acquireVsCodeApi();
  
-    /*
-    document.querySelector('.sdk-path-button').addEventListener('click', () => 
-    {
-        vscode.postMessage({ type: 'buttonPressed', value: "" });
-    });
-    
-    document.querySelector('.sdk-path').addEventListener('input',() =>
-    {
-        vscode.postMessage({ type: 'pathChanged', value: document.getElementById('sdkpath').value });
-    });
-
-    document.querySelector('.selector').addEventListener('change',() =>
-    {
-        vscode.postMessage({ type: 'versionChanged', value: document.getElementById('versions').value });
-    });
-    */
-
     var toggler = document.getElementsByClassName("caret");
     var items = document.getElementsByClassName("liitem");
     var i;
@@ -38,7 +21,18 @@
         items[i].addEventListener("click",function()
             {
                 var key = this.getAttribute('key');
-                vscode.postMessage({ type: 'itemSelected', value: key });
+
+                if(key!==null)
+                {
+                    vscode.postMessage({ type: 'itemSelected', value: key });
+                }
+                else
+                {
+                    var folder = this.getAttribute('folder');
+                    var file = this.getAttribute('file');
+
+                    vscode.postMessage({ type: 'docSelected', value: {folder:folder,file:file} });
+                }
             }
         );
     }
