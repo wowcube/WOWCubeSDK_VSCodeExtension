@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {Configuration} from './Configuration';
 import { Version } from "./Version";
+import { Providers } from "./Providers";
 
 export class DocumentPanel {
 
@@ -91,9 +92,16 @@ export class DocumentPanel {
                         }
                         break;
                         case 'prev':
+                            {
+                                var prev = this.getPrevDocument();
+                                DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,prev.folder,prev.file); 
+                                this.dispose();                                
+                            }
+                            break;
                         case 'next':
                             {
-                                //DocumentPanel.createOrShow(Configuration.context.extensionUri,message.value);
+                                var next = this.getNextDocument();
+                                DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,next.folder,next.file); 
                                 this.dispose();
                             }
                         break;
@@ -125,6 +133,107 @@ export class DocumentPanel {
             this._panel.webview.html = this._getHtmlForWebview(webview);  
         }
         
+        private getPrevDocument()
+        {      
+            try
+            {      
+                for(var i=0;i<Providers.examples.docs.length;i++)
+                {
+                    if(Providers.examples.docs[i][0]===this._folder)
+                    {
+                        for(var j=0;j<Providers.examples.docs[i][1].length;j++)
+                        {
+                            if(Providers.examples.docs[i][1][j]===this._file)
+                            {
+                                //found current 
+
+                                if(j===0)
+                                {
+                                    //try to find prev topic
+                                    if(i===0)
+                                    {
+                                        //first page of first topic, no prev
+                                        return {folder:"",file:""};
+                                    }
+                                    else
+                                    {
+                                        var t = Providers.examples.docs[i-1];
+
+                                        var tp = t[0];
+                                        var fl = t[1][t[1].length-1];
+
+                                        return {folder:tp,file:fl};
+                                    }
+                                }
+                                else
+                                {
+                                    var tp = Providers.examples.docs[i][0];
+                                    var fl=Providers.examples.docs[i][1][j-1];
+
+                                    return {folder:tp,file:fl};
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch(e)
+            {                
+            }
+
+            return {folder:"",file:""};
+        }
+
+        private getNextDocument()
+        {
+            try
+            {
+                for(var i=0;i<Providers.examples.docs.length;i++)
+                {
+                    if(Providers.examples.docs[i][0]===this._folder)
+                    {
+                        for(var j=0;j<Providers.examples.docs[i][1].length;j++)
+                        {
+                            if(Providers.examples.docs[i][1][j]===this._file)
+                            {
+                                //found current 
+
+                                if(j===Providers.examples.docs[i][1].length-1)
+                                {
+                                    //try to find next topic
+                                    if(i===Providers.examples.docs.length-1)
+                                    {
+                                        //last page of last topic, no next
+                                        return {folder:"",file:""};
+                                    }
+                                    else
+                                    {
+                                        var t = Providers.examples.docs[i+1];
+
+                                        var tp = t[0];
+                                        var fl = t[1][0];
+
+                                        return {folder:tp,file:fl};
+                                    }
+                                }
+                                else
+                                {
+                                    var tp = Providers.examples.docs[i][0];
+                                    var fl=Providers.examples.docs[i][1][j+1];
+
+                                    return {folder:tp,file:fl};
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            catch(e)
+            {}
+
+            return {folder:"",file:""};
+        }
+
         private _getHtmlForWebview(webview: vscode.Webview) 
         {
             var MarkdownIt = require('markdown-it');
@@ -133,8 +242,8 @@ export class DocumentPanel {
 
             var info:string = this._extensionUri.fsPath+"/media/docs/"+this._folder+"/";
 
-            var prev = -1;
-            var next = -1;
+            var prev = 1;
+            var next = 1;
 
             if(fs.existsSync(info)===false)
             {
@@ -155,8 +264,15 @@ export class DocumentPanel {
                         var contentmd = fs.readFileSync(info,'utf8');
                         content = md.render(contentmd.toString());
                         
-                        //prev = meta.prev_key;
-                        //next = meta.next_key;
+                        if(this.getPrevDocument().file==="")
+                        {
+                            prev = -1;
+                        }
+
+                        if(this.getNextDocument().file==="")
+                        {
+                        next = -1;
+                        }
 
                         this._panel.title = this._folder+' : '+this._file.substring(0,this._file.length-3);
                     }
