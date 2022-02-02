@@ -133,7 +133,7 @@
         {
           "type": "webview",
           "id": "WOWCubeSDK.settingsView",
-          "name": "SDK Settings"
+          "name": "Development Kit Settings"
         },
         {
           "type": "webview",

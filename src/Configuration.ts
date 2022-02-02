@@ -162,7 +162,7 @@ export class Configuration
                             {
                               //the value doesn't have a name, hence '' 
                                 var p:string = key.values[''].value;
-                                path = p.replace(/\\/g,'/')+'/';
+                                path = p.replace(/\\/g,'/')+'/';                                
                             }
                         }
 

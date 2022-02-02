@@ -73,6 +73,74 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 		});
 	}
 
+	private getExamples()
+	{
+		var categories:Array<string> = new Array<string>();
+
+		//Get existing categories of examples
+		var catInfoPath = Configuration.getWOWSDKPath()+'sdk/examples/categories.json';
+		const cat = require(catInfoPath);
+
+		for(var i=0;i<cat.categories.length;i++)
+		{
+			categories.push(cat.categories[i]);
+		}
+
+		//enumerate versions
+		catInfoPath = Configuration.getWOWSDKPath()+'sdk/examples/';
+
+		var versions:Array<string> = new Array<string>();
+		if(fs.existsSync(catInfoPath)===true)
+		{
+			fs.readdirSync(catInfoPath).forEach(folder => 
+				{
+					versions.push(folder);
+				});
+		}
+
+		//iterate through versions to collect all examples
+		var examples: Map<string,Array<string>> = new Map<string,Array<string>>();
+		var names: Map<string,string> = new Map<string,string>();
+
+		for(var i=0;i<versions.length;i++)
+		{
+			for(var j=0;j<categories.length;j++)
+			{
+				var path = Configuration.getWOWSDKPath()+'sdk/examples/'+versions[i]+'/'+categories[j]+'/';
+
+				if(fs.existsSync(path))
+				{
+					fs.readdirSync(path).forEach(exampleFolder => 
+						{
+							var key = categories[j]+'/'+exampleFolder;
+
+							if(examples.has(key)===false)
+							{
+								examples.set(key, new Array<string>());
+								examples.get(key)?.push(versions[i]);
+
+								try
+								{
+									const info = require(path+'/'+exampleFolder+'/info.json');
+									names.set(key,info.name);
+								}
+								catch(e)
+								{
+									names.set(key,"Unnamed Example "+exampleFolder);
+								}
+							}
+							else
+							{
+								examples.get(key)?.push(versions[i]);
+							}
+						});
+				}
+			}
+		}
+
+		return categories;
+	}
+
 	private getDocumentation()
 	{
 		var topics:Array<[string, Array<string>]> = new Array<[string, Array<string>]>();
@@ -106,8 +174,10 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 
 	private _getHtmlForWebview(webview: vscode.Webview) 
 	{
-		this.docs = this.getDocumentation();
+		var examples = this.getExamples();
 
+		this.docs = this.getDocumentation();
+	
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examplesview.js'));
 
 		// Do the same for the stylesheet.
@@ -134,7 +204,17 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
             <div>
                 <ul id="myUL">
                     <li><span class="caret">Built-in Examples</span>
-                        <ul class="nested">
+                        <ul class="nested">`;
+
+						for(var i=0;i<examples.length;i++)
+						{
+							body+=`<li><span class="caret">${examples[i]}</span>
+							   <ul class="nested">`;
+							
+							   body+=`</ul>
+							   </li>`;
+						}
+						/*
                             <li><span class="caret">Basics</span>
                             <ul class="nested">
                                 <li class="liitem" key="1">Example 1</li>
@@ -143,8 +223,11 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
                                 <li class="liitem" key="4">Example 4</li>
                             </ul>
                             </li>
-                        </ul>
-                    </li>                
+						*/
+
+                    body+=` </ul>
+                    </li>      
+					
                     <li><span class="caret">Online Examples</span>
                         <ul class="nested">
                         </ul>

@@ -107,7 +107,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 							var canSelectFiles = false;
 							var canSelectFolders = true;
 
-							var title = 'Select WOWCube SDK Folder';
+							var title = 'Select WOWCube Development Kit Folder';
 
 							switch(p)
 							{
@@ -115,7 +115,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 								{
 									canSelectFiles = true;
 									canSelectFolders = false;
-									title ='Select WOWCube SDK Application';
+									title ='Select WOWCube Development Kit Application';
 								}
 								break;
 
@@ -313,18 +313,18 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			<link href="${styleVSCodeUri}" rel="stylesheet">
 			<link href="${styleMainUri}" rel="stylesheet">
 			
-			<title>SDK Settings</title>
+			<title>Development Kit Settings</title>
 		</head>
 		<body>
 			<br/>
-			<div>SDK Path</div>
+			<div>Path To WOWCube Development Kit</div>
 			<div>
 			<input  class='sdk-path' id='sdkpath' value='${path}'></input>
 			<button class='sdk-path-button'>...</button>
 			</div>
 			<div id='path_err' class="${err_class}">
 				<div class="negative">Required files can not be found at that path!</div>
-				<div class="negative">Please provide a path to <strong>WOWCube SDK version 2.4.0</strong> or later</div>
+				<div class="negative">Please provide a path to <strong>WOWCube Development Kit version 2.4.0</strong> or later</div>
 				<div class="negative">and make sure you have selected supported SDK version.</div>
 			</div>
 			<br/>
