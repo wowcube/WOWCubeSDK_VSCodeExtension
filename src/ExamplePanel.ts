@@ -145,7 +145,15 @@ export class ExamplePanel {
 
             try
             {
-            var info:string = this._extensionUri.fsPath+"/media/examples/"+key;
+
+            var ex = Providers.examples.examples.e;
+            var availableVersions = ex.get(this._key);
+    
+            var currVersion = "0.9";//Configuration.getCurrentVersion();
+    
+            var info:string = Configuration.getWOWSDKPath()+"/sdk/examples/"+currVersion+'/'+this._key;
+
+            //var info:string = this._extensionUri.fsPath+"/media/examples/"+key;
             var minfo:string = info;
 
             var title:string = "Untitled Project";
@@ -214,7 +222,8 @@ export class ExamplePanel {
                 fs.copyFileSync(iconFilename,fullpath+'/resources/appIcon.png');
 
                 //copy project files
-                var sourcePrj = this._extensionUri.fsPath+"/media/examples/"+key+"/project/src/";
+                //var sourcePrj = this._extensionUri.fsPath+"/media/examples/"+key+"/project/src/";
+                var sourcePrj = Configuration.getWOWSDKPath()+"/sdk/examples/"+currVersion+'/'+this._key+"/project/src/";
                 if(fs.existsSync(sourcePrj)===true)
                 {
                     fs.readdirSync(sourcePrj).forEach(file => 
@@ -224,8 +233,11 @@ export class ExamplePanel {
                 }
 
                 //copy resources
-                var sourceImg = this._extensionUri.fsPath+"/media/examples/"+key+"/project/resources/images/";
-                var sourceSnd = this._extensionUri.fsPath+"/media/examples/"+key+"/project/resources/sounds/";
+                //var sourceImg = this._extensionUri.fsPath+"/media/examples/"+key+"/project/resources/images/";
+                //var sourceSnd = this._extensionUri.fsPath+"/media/examples/"+key+"/project/resources/sounds/";
+
+                var sourceImg = Configuration.getWOWSDKPath()+"/sdk/examples/"+currVersion+'/'+this._key+"/project/resources/images/";
+                var sourceSnd = Configuration.getWOWSDKPath()+"/sdk/examples/"+currVersion+'/'+this._key+"/project/resources/sounds/";
 
                 if(fs.existsSync(sourceImg)===true)
                 {
@@ -244,7 +256,9 @@ export class ExamplePanel {
                 }
 
                 //copy build json
-                fs.copyFileSync(this._extensionUri.fsPath+"/media/examples/"+key+"/project/wowcubeapp-build.json",fullpath+'/wowcubeapp-build.json');
+                //fs.copyFileSync(this._extensionUri.fsPath+"/media/examples/"+key+"/project/wowcubeapp-build.json",fullpath+'/wowcubeapp-build.json');
+
+                fs.copyFileSync(Configuration.getWOWSDKPath()+"/sdk/examples/"+currVersion+'/'+this._key+"/project/wowcubeapp-build.json",fullpath+'/wowcubeapp-build.json');
 
                 //create vscode-related configs
                 fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_launch.json",fullpath+'/.vscode/launch.json');
@@ -351,7 +365,12 @@ export class ExamplePanel {
             var md = new MarkdownIt();
             var content: string = "";
 
-            var info:string = this._extensionUri.fsPath+"/media/examples/"+this._key;
+            var ex = Providers.examples.examples.e;
+            var availableVersions = ex.get(this._key);
+
+            var currVersion = "0.9";//Configuration.getCurrentVersion();
+
+            var info:string = Configuration.getWOWSDKPath()+"/sdk/examples/"+currVersion+'/'+this._key;
             var minfo:string = info;
 
             var title:string = "No title";

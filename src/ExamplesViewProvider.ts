@@ -22,6 +22,7 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 	private _channel: vscode.OutputChannel = Output.channel();
 
 	public docs:Array<[string, Array<string>]> = [];
+	public examples:any;
 
 	constructor(private readonly _extensionUri: vscode.Uri,)
     {
@@ -138,7 +139,7 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 			}
 		}
 
-		return categories;
+		return {c:categories,e:examples,n:names};
 	}
 
 	private getDocumentation()
@@ -174,10 +175,16 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 
 	private _getHtmlForWebview(webview: vscode.Webview) 
 	{
-		var examples = this.getExamples();
+		//get examples
+		this.examples = this.getExamples();
+		var categories:Array<string> = this.examples.c;
+		var articles = this.examples.e;
+		var names = this.examples.n;
 
+		//get docs
 		this.docs = this.getDocumentation();
 	
+		//setup web page
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examplesview.js'));
 
 		// Do the same for the stylesheet.
@@ -206,24 +213,34 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
                     <li><span class="caret">Built-in Examples</span>
                         <ul class="nested">`;
 
-						for(var i=0;i<examples.length;i++)
+						for(var i=0;i<categories.length;i++)
 						{
-							body+=`<li><span class="caret">${examples[i]}</span>
+							body+=`<li><span class="caret">${categories[i]}</span>
 							   <ul class="nested">`;
 							
+							   articles.forEach((value: Array<string>, key: string) => 
+							   {
+									if(key.indexOf(categories[i]+'/')===0)
+									{
+										try
+										{
+											if(names.has(key))
+											{
+												var articleName = names.get(key);
+												body+=`<li class="liitem" key="${key}">${articleName}</li>`;
+											}
+											else
+											{
+												body+=`<li class="liitem" key="${key}">Unnamed Article</li>`;
+											}
+										}
+										catch(e){}
+									}
+							    });
+
 							   body+=`</ul>
 							   </li>`;
 						}
-						/*
-                            <li><span class="caret">Basics</span>
-                            <ul class="nested">
-                                <li class="liitem" key="1">Example 1</li>
-                                <li class="liitem" key="2">Example 2</li>
-                                <li class="liitem" key="3">Example 3</li>
-                                <li class="liitem" key="4">Example 4</li>
-                            </ul>
-                            </li>
-						*/
 
                     body+=` </ul>
                     </li>      
