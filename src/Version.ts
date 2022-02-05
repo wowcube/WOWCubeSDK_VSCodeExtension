@@ -12,18 +12,36 @@ export class Version
         {
             if(v1===v2) { return 0; }
 
-            var v1t = v1.split('.');
-            var v2t = v2.split('.');
- 
-            if(v1t.length===3 && v2t.length===3)
+            if((/(?<maj>\d{1,2})\.(?<min>\d{1,2})(\-(?<build>\d{1,4}))?/.test(v1)) &&
+               (/(?<maj>\d{1,2})\.(?<min>\d{1,2})(\-(?<build>\d{1,4}))?/.test(v2)))
             {
-                const maj1 = parseInt(v1t[0]);
-                const min1 = parseInt(v1t[1]);
-                const build1 = parseInt(v1t[2]);
 
-                const maj2 = parseInt(v2t[0]);
-                const min2 = parseInt(v2t[1]);
-                const build2 = parseInt(v2t[2]);
+                var v1r = /(?<maj>\d{1,2})\.(?<min>\d{1,2})(\-(?<build>\d{1,4}))?/.exec(v1);
+                var v2r = /(?<maj>\d{1,2})\.(?<min>\d{1,2})(\-(?<build>\d{1,4}))?/.exec(v1);
+
+                var maj1s = v1r?.groups?.maj;
+                var min1s = v1r?.groups?.min;
+                var build1s = v1r?.groups?.build;
+
+                var maj2s = v2r?.groups?.maj;
+                var min2s = v2r?.groups?.min;
+                var build2s = v2r?.groups?.build;
+
+                if(typeof(maj1s)==='undefined') maj1s = '0';
+                if(typeof(min1s)==='undefined') min1s = '0';
+                if(typeof(build1s)==='undefined') build1s = '0';
+
+                if(typeof(maj2s)==='undefined') maj2s = '0';
+                if(typeof(min2s)==='undefined') min2s = '0';
+                if(typeof(build2s)==='undefined') build2s = '0';
+
+                const maj1 = parseInt(maj1s);
+                const min1 = parseInt(min1s);
+                const build1 = parseInt(build1s);
+
+                const maj2 = parseInt(maj2s);
+                const min2 = parseInt(min2s);
+                const build2 = parseInt(build2s);
 
                 if(maj1>maj2)
                 {

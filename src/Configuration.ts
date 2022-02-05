@@ -269,8 +269,8 @@ export class Configuration
 
             for(var i=0;i<dirs.length;i++)
             {
-                //version format is NN.NNNN.NNNNN
-                if (/^\d{1,2}\.\d{1,4}\.\d{1,4}$/.test(dirs[i])) 
+                //version format is NN.NNNN-NNNN
+                if(/(?<maj>\d{1,2})\.(?<min>\d{1,2})(\-(?<build>\d{1,4}))?/.test(dirs[i]))
                 {
                     // Successful match
                     Configuration._detectedSDKVersions.push(dirs[i]);

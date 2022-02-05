@@ -18,6 +18,8 @@ export class ExamplePanel {
     private _disposables: vscode.Disposable[] = [];
 
     private readonly _key:string = "";
+    private _version:string = "";
+    private  _forceVersion:string="";
 
     public static createOrShow(extensionUri: vscode.Uri,exampleKey:string) 
     { 
@@ -27,8 +29,15 @@ export class ExamplePanel {
         // If we already have a panel, show it.      
         if(ExamplePanel.panels.has(exampleKey))
         {
-            ExamplePanel.panels.get(exampleKey)?._panel.reveal(column);
-            return;
+            if(ExamplePanel.panels.get(exampleKey)?._version===Configuration.getCurrentVersion()) 
+            {
+                 ExamplePanel.panels.get(exampleKey)?._panel.reveal(column);
+                return;
+            }
+            else
+            {
+                ExamplePanel.panels.get(exampleKey)?._panel.dispose();
+            }
         }
 
         // Otherwise, create a new panel. 
@@ -40,15 +49,46 @@ export class ExamplePanel {
             getWebviewOptions(extensionUri),
         );
 
-        ExamplePanel.panels.set(exampleKey,new ExamplePanel(panel, extensionUri,exampleKey));
+        ExamplePanel.panels.set(exampleKey,new ExamplePanel(panel, extensionUri,exampleKey,""));
     }
 
-    private constructor(panel: vscode.WebviewPanel,
-        extensionUri: vscode.Uri, key:string) 
+    public static createOrShowForce(extensionUri: vscode.Uri,exampleKey:string,forceVersion:string) 
+    { 
+        const column = vscode.window.activeTextEditor
+        ? vscode.window.activeTextEditor.viewColumn: undefined;
+
+        // If we already have a panel, show it.      
+        if(ExamplePanel.panels.has(exampleKey))
+        {
+            if(ExamplePanel.panels.get(exampleKey)?._version===forceVersion) 
+            {
+                 ExamplePanel.panels.get(exampleKey)?._panel.reveal(column);
+                return;
+            }
+            else
+            {
+                ExamplePanel.panels.get(exampleKey)?._panel.dispose();
+            }
+        }
+
+        // Otherwise, create a new panel. 
+        const panel = vscode.window.createWebviewPanel
+        (
+            ExamplePanel.viewType,
+            'WOWCube SDK Document',
+            column || vscode.ViewColumn.Two,
+            getWebviewOptions(extensionUri),
+        );
+
+        ExamplePanel.panels.set(exampleKey,new ExamplePanel(panel, extensionUri,exampleKey,forceVersion));
+    }
+
+    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, key:string, forceVersion:string) 
         {    
             this._panel = panel;    
             this._extensionUri = extensionUri;
             this._key = key;
+            this._forceVersion = forceVersion;
 
         // Set the webview's initial html content    
             this._update();
@@ -130,6 +170,12 @@ export class ExamplePanel {
                                 this.dispose();
                             }
                         break;
+                        case 'versionChanged':
+                            {
+                                ExamplePanel.createOrShowForce(Configuration.context.extensionUri,this._key,message.value);
+                                this.dispose();
+                            }
+                            break;
                     }
                 },
                 null,
@@ -149,11 +195,33 @@ export class ExamplePanel {
             var ex = Providers.examples.examples.e;
             var availableVersions = ex.get(this._key);
     
-            var currVersion = "0.9";//Configuration.getCurrentVersion();
+            var currVersion = Configuration.getCurrentVersion();
     
-            var info:string = Configuration.getWOWSDKPath()+"/sdk/examples/"+currVersion+'/'+this._key;
+            if(this._forceVersion!=="")
+            {
+                currVersion = this._forceVersion;
+            }
 
-            //var info:string = this._extensionUri.fsPath+"/media/examples/"+key;
+            //check if document is available for this version
+            var available:boolean = false;
+            this._version= currVersion;
+
+            for(var i=0;i<availableVersions.length;i++)
+            {
+                if(availableVersions[i]===currVersion)
+                {
+                    available = true;
+                    break;
+                }
+            }
+
+            if(available===false)
+            {
+                //there is no document for this version, so take a first available one
+                this._version = availableVersions[0];
+            }
+
+            var info:string = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key;
             var minfo:string = info;
 
             var title:string = "Untitled Project";
@@ -199,7 +267,7 @@ export class ExamplePanel {
                 path = path.replace(/\\/g, "/");
                 if(!path.endsWith("/")) { path+='/';}
 
-                fullpath = path + title;
+                fullpath = path + title+"("+this._version+")";
                 ret.path = fullpath;
 
                 if(fs.existsSync(fullpath))
@@ -222,8 +290,7 @@ export class ExamplePanel {
                 fs.copyFileSync(iconFilename,fullpath+'/resources/appIcon.png');
 
                 //copy project files
-                //var sourcePrj = this._extensionUri.fsPath+"/media/examples/"+key+"/project/src/";
-                var sourcePrj = Configuration.getWOWSDKPath()+"/sdk/examples/"+currVersion+'/'+this._key+"/project/src/";
+                var sourcePrj = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+"/project/src/";
                 if(fs.existsSync(sourcePrj)===true)
                 {
                     fs.readdirSync(sourcePrj).forEach(file => 
@@ -233,11 +300,8 @@ export class ExamplePanel {
                 }
 
                 //copy resources
-                //var sourceImg = this._extensionUri.fsPath+"/media/examples/"+key+"/project/resources/images/";
-                //var sourceSnd = this._extensionUri.fsPath+"/media/examples/"+key+"/project/resources/sounds/";
-
-                var sourceImg = Configuration.getWOWSDKPath()+"/sdk/examples/"+currVersion+'/'+this._key+"/project/resources/images/";
-                var sourceSnd = Configuration.getWOWSDKPath()+"/sdk/examples/"+currVersion+'/'+this._key+"/project/resources/sounds/";
+                var sourceImg = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+"/project/resources/images/";
+                var sourceSnd = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+"/project/resources/sounds/";
 
                 if(fs.existsSync(sourceImg)===true)
                 {
@@ -256,9 +320,7 @@ export class ExamplePanel {
                 }
 
                 //copy build json
-                //fs.copyFileSync(this._extensionUri.fsPath+"/media/examples/"+key+"/project/wowcubeapp-build.json",fullpath+'/wowcubeapp-build.json');
-
-                fs.copyFileSync(Configuration.getWOWSDKPath()+"/sdk/examples/"+currVersion+'/'+this._key+"/project/wowcubeapp-build.json",fullpath+'/wowcubeapp-build.json');
+                fs.copyFileSync(Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+"/project/wowcubeapp-build.json",fullpath+'/wowcubeapp-build.json');
 
                 //create vscode-related configs
                 fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_launch.json",fullpath+'/.vscode/launch.json');
@@ -368,9 +430,33 @@ export class ExamplePanel {
             var ex = Providers.examples.examples.e;
             var availableVersions = ex.get(this._key);
 
-            var currVersion = "0.9";//Configuration.getCurrentVersion();
+            var currVersion = Configuration.getCurrentVersion();
 
-            var info:string = Configuration.getWOWSDKPath()+"/sdk/examples/"+currVersion+'/'+this._key;
+            if(this._forceVersion!=="")
+            {
+                currVersion = this._forceVersion;
+            }
+
+            //check if document is available for this version
+            var available:boolean = false;
+            this._version = currVersion;
+
+            for(var i=0;i<availableVersions.length;i++)
+            {
+                if(availableVersions[i]===currVersion)
+                {
+                    available = true;
+                    break;
+                }
+            }
+
+            if(available===false)
+            {
+                //there is no document for this version, so take a first available one
+                this._version = availableVersions[0];
+            }
+
+            var info:string = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key;
             var minfo:string = info;
 
             var title:string = "No title";
@@ -378,7 +464,6 @@ export class ExamplePanel {
             var prev = -1;
             var next = -1;
             var hasProject:boolean = false;
-            var reqSDK:string = "1.0.0";
             var correctSDK:boolean = false;
             var versionClass:string = "neutral-blue";
 
@@ -411,10 +496,8 @@ export class ExamplePanel {
                         next = meta.next_key;
 
                         hasProject = meta.has_project;
-
-                        reqSDK = meta.sdk_min_version;
                         
-                        const vc = Version.compare(reqSDK,Configuration.getCurrentVersion());
+                        const vc = Version.compare(this._version,Configuration.getCurrentVersion());
 
                         //if the version is lesser or equal the one that is currently used, OK
                         if(vc<=0)
@@ -483,7 +566,33 @@ export class ExamplePanel {
                         <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:30px;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;">${title}</div>
                         <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;">${desc}</div>
 
-                        <div class='${versionClass}' id="t3" style="position: absolute;right: 10px;top: 0;font-size: 12px;">SDK version ${reqSDK}</div>
+                        <!--<div class='${versionClass}' id="t3" style="position: absolute;right: 10px;top: 0;font-size: 12px;">SDK version ${this._version}</div>-->
+
+                        <div class='${versionClass}' id="t3" style="position: absolute;right: 10px;top: 0;font-size: 12px;">`;
+
+                        if(available===false)
+                        {
+                            ret+=`<select id="versions" class='selector_docs no_version'>`;
+                        }
+                        else
+                        {
+                            ret+=`<select id="versions" class='selector_docs'>`;
+                        }
+
+                        for(var i=0;i<availableVersions.length;i++)
+                        {
+                            if(availableVersions[i]!==this._version)
+                            {
+                                ret+=`<option value="${availableVersions[i]}">SDK version ${availableVersions[i]}</option>`;
+                            }
+                            else
+                            {
+                                ret+=`<option value="${availableVersions[i]}" selected>SDK version ${availableVersions[i]}</option>`;
+                            }
+                        }
+
+                        ret+=`</select>
+                        </div>
 
                         <div class="separator"></div>
 
