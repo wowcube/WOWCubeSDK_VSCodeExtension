@@ -19,8 +19,9 @@ export class DocumentPanel {
     private readonly _key:string = "";
     private readonly _folder:string = "";
     private readonly _file:string = "";
+    private readonly _version:string = "";
 
-    public static createOrShowDoc(extensionUri: vscode.Uri,folder:string,file:string) 
+    public static createOrShowDoc(extensionUri: vscode.Uri,folder:string,file:string, sdkVersion:string) 
     { 
         const column = vscode.window.activeTextEditor
         ? vscode.window.activeTextEditor.viewColumn: undefined;
@@ -43,17 +44,18 @@ export class DocumentPanel {
             getWebviewOptions(extensionUri),
         );
 
-        DocumentPanel.panels.set(exampleKey,new DocumentPanel(panel, extensionUri,folder,file));
+        DocumentPanel.panels.set(exampleKey,new DocumentPanel(panel, extensionUri,folder,file,sdkVersion));
     }
 
     private constructor(panel: vscode.WebviewPanel,
-        extensionUri: vscode.Uri, folder:string, file:string) 
+        extensionUri: vscode.Uri, folder:string, file:string,version:string) 
         {    
             this._panel = panel;    
             this._extensionUri = extensionUri;
             this._key = '___'+folder+'___'+file;
             this._file = file;
             this._folder = folder;
+            this._version = version;
 
         // Set the webview's initial html content    
             this._update();
@@ -94,14 +96,14 @@ export class DocumentPanel {
                         case 'prev':
                             {
                                 var prev = this.getPrevDocument();
-                                DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,prev.folder,prev.file); 
+                                DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,prev.folder,prev.file,this._version); 
                                 this.dispose();                                
                             }
                             break;
                         case 'next':
                             {
                                 var next = this.getNextDocument();
-                                DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,next.folder,next.file); 
+                                DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,next.folder,next.file,this._version); 
                                 this.dispose();
                             }
                         break;
@@ -240,7 +242,7 @@ export class DocumentPanel {
             var md = new MarkdownIt();
             var content: string = "";
 
-            var info:string = this._extensionUri.fsPath+"/media/docs/"+this._folder+"/";
+            var info:string = Configuration.getWOWSDKPath()+'sdk/docs/'+this._version+'/'+this._folder+'/';
 
             var prev = 1;
             var next = 1;
@@ -274,7 +276,7 @@ export class DocumentPanel {
                         next = -1;
                         }
 
-                        this._panel.title = this._folder+' : '+this._file.substring(0,this._file.length-3);
+                        this._panel.title = "WOWCube SDK "+this._version+' / '+this._folder+' / '+this._file.substring(0,this._file.length-3);
                     }
                     catch(e)
                     {

@@ -583,11 +583,11 @@ export class ExamplePanel {
                         {
                             if(availableVersions[i]!==this._version)
                             {
-                                ret+=`<option value="${availableVersions[i]}">SDK version ${availableVersions[i]}</option>`;
+                                ret+=`<option value="${availableVersions[i]}">SDK Version ${availableVersions[i]}</option>`;
                             }
                             else
                             {
-                                ret+=`<option value="${availableVersions[i]}" selected>SDK version ${availableVersions[i]}</option>`;
+                                ret+=`<option value="${availableVersions[i]}" selected>SDK Version ${availableVersions[i]}</option>`;
                             }
                         }
 

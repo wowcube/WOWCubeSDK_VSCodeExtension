@@ -24,6 +24,8 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 	public docs:Array<[string, Array<string>]> = [];
 	public examples:any;
 
+	private _currentDocsVersion:string = "";
+
 	constructor(private readonly _extensionUri: vscode.Uri,)
     {
 
@@ -67,7 +69,7 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 					break;
 				case 'docSelected':
 					{
-						DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,data.value.folder, data.value.file);
+						DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,data.value.folder, data.value.file,this._currentDocsVersion);
 					}
 					break;					
 			}
@@ -145,10 +147,32 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 	private getDocumentation()
 	{
 		var topics:Array<[string, Array<string>]> = new Array<[string, Array<string>]>();
-		
-		var sourceDocs = this._extensionUri.fsPath+"/media/docs/";
 
-		//fetch docs folder for topics
+		this._currentDocsVersion = Configuration.getCurrentVersion();
+
+		var sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/'+this._currentDocsVersion+'/';
+		var sourceDocsRoot = Configuration.getWOWSDKPath()+'sdk/docs/';
+
+		//check if we have documentation of needed version
+		if(fs.existsSync(sourceDocsRoot)===true)
+		{
+			if(fs.existsSync(sourceDocs)===false)
+			{
+				//current version doesn't have its own docs. Let's look for a "base" version
+
+				var v1r = /(?<maj>\d{1,2})\.(?<min>\d{1,2})(\-(?<build>\d{1,4}))?/.exec(this._currentDocsVersion);
+
+                var majs = v1r?.groups?.maj;
+                var mins = v1r?.groups?.min;
+
+				this._currentDocsVersion = majs+'.'+mins;
+
+				//this must MUST be present. If there is no path of a such, it means that DevKit folder structure is incomplete! 
+				sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/'+this._currentDocsVersion+'/';
+			}
+		}
+
+		 //fetch docs folder for topics
          if(fs.existsSync(sourceDocs)===true)
                 {
                     fs.readdirSync(sourceDocs).forEach(folder => 
@@ -243,13 +267,8 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 						}
 
                     body+=` </ul>
-                    </li>      
-					
-                    <li><span class="caret">Online Examples</span>
-                        <ul class="nested">
-                        </ul>
-                    </li>
-                    <li><span class="caret">Documentation</span>
+                    </li>      					
+                    <li><span class="caret">Documentation (SDK Version ${this._currentDocsVersion})</span>
                         <ul class="nested">`;
 
 					for(var i=0;i<this.docs.length;i++)
@@ -273,6 +292,10 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 
 					body+=`</ul>
 					</li>
+					<li><span class="caret">Online Resources</span>
+					<ul class="nested">
+					</ul>
+				</li>
 				</ul> 
             </div>
 		</head>
