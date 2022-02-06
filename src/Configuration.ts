@@ -397,7 +397,7 @@ export class Configuration
             return "";
         }
 
-        ret+='bin/';
+        ret+='sdk/tools/';
         return ret;
     }
 

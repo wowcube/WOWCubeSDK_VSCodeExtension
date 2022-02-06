@@ -211,13 +211,15 @@ export class WizardPanel {
 
                 //create json file for build
                 const json = fs.readFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/_build.json").toString();
-                const str = json.replace(/##NAME##/gi,name);
+                var str = json.replace(/##NAME##/gi,name);
+                str = str.replace(/##SDKVERSION##/gi,Configuration.getCurrentVersion());
 
                 fs.writeFileSync(fullpath+'/wowcubeapp-build.json',str);
 
                 //create vscode-related configs
                 fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_launch.json",fullpath+'/.vscode/launch.json');
                 fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_tasks.json",fullpath+'/.vscode/tasks.json');
+                fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_extensions.json",fullpath+'/.vscode/extensions.json');
 
             }
             catch(error)

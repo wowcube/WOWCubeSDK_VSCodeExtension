@@ -325,6 +325,7 @@ export class ExamplePanel {
                 //create vscode-related configs
                 fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_launch.json",fullpath+'/.vscode/launch.json');
                 fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_tasks.json",fullpath+'/.vscode/tasks.json');
+                fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_extensions.json",fullpath+'/.vscode/extensions.json');
 
             }
             catch(error)

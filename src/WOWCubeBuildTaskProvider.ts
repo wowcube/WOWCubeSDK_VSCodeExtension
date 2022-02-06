@@ -5,6 +5,7 @@ import * as cp from 'child_process';
 import { error } from 'console';
 import { rejects } from 'assert';
 import {Configuration} from './Configuration';
+import { Project } from './Project';
 import {Providers} from './Providers';
 import {Output} from './Output';
 
@@ -139,12 +140,30 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
     {
 		return new Promise<void>((resolve,reject) => 
         {
+			this._channel.clear();
 			this._channel.appendLine('Compiling cub file...\r\n');
 
 			const build_json = require(this.workspace+'/wowcubeapp-build.json');
 
 			this._channel.appendLine('Project name: '+build_json.name);
-			this._channel.appendLine('Project version: '+build_json.version+'\r\n');
+			this._channel.appendLine('Project version: '+build_json.version);
+
+			if(typeof(build_json.sdkVersion)!=='undefined')
+			{
+				this._channel.appendLine('SDK version: '+build_json.sdkVersion+'\r\n');
+			}
+			else
+			{
+				this._channel.appendLine("\r\nNOTE: SDK version is missing from the build file");
+				if(Project.setSDKVersion(this.workspace,Configuration.getCurrentVersion()))
+				{
+					this._channel.appendLine("SDK version is set to '"+Configuration.getCurrentVersion()+"'\r\n");
+				}
+				else
+				{
+					this._channel.appendLine("Failed to modify the build file, please make sure the file exists and can be written!\r\n");
+				}
+			}
 
 			var pawnpath = Configuration.getPawnPath();
 			var command = '"'+pawnpath+ Configuration.getPawnCC()+'"';

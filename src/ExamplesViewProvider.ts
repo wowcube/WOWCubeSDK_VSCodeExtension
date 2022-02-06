@@ -33,7 +33,10 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 
      public reload()
      {
-        vscode.window.showInformationMessage("This feature is not implemented yet");
+		if(typeof(this._view)!=='undefined')
+		{
+			this._view.webview.html = this._getHtmlForWebview(this._view.webview);
+		}
      }
 
 	 public async resolveWebviewView( webviewView: vscode.WebviewView, context: vscode.WebviewViewResolveContext,_token: vscode.CancellationToken,) 
@@ -200,110 +203,149 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 	private _getHtmlForWebview(webview: vscode.Webview) 
 	{
 		//get examples
-		this.examples = this.getExamples();
-		var categories:Array<string> = this.examples.c;
-		var articles = this.examples.e;
-		var names = this.examples.n;
+		try
+		{
+			this.examples = this.getExamples();
+			var categories:Array<string> = this.examples.c;
+			var articles = this.examples.e;
+			var names = this.examples.n;
 
-		//get docs
-		this.docs = this.getDocumentation();
-	
-		//setup web page
-		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examplesview.js'));
+			//get docs
+			this.docs = this.getDocumentation();
+		
+			//setup web page
+			const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examplesview.js'));
 
-		// Do the same for the stylesheet.
-		const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'reset.css'));
-		const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'vscode.css'));
-		const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'main.css'));
-        const styleExamplesUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examples.css'));
+			// Do the same for the stylesheet.
+			const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'reset.css'));
+			const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'vscode.css'));
+			const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'main.css'));
+			const styleExamplesUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examples.css'));
 
-		// Use a nonce to only allow a specific script to be run.
-		const nonce = getNonce();
+			// Use a nonce to only allow a specific script to be run.
+			const nonce = getNonce();
 
-		var body:string = `<!DOCTYPE html>
-		<html lang="en">
-		<head>
-			<meta charset="UTF-8">
-			<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
-			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<link href="${styleResetUri}" rel="stylesheet">
-			<link href="${styleVSCodeUri}" rel="stylesheet">
-			<link href="${styleMainUri}" rel="stylesheet">
-			<link href="${styleExamplesUri}" rel="stylesheet">
+			var body:string = `<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<link href="${styleResetUri}" rel="stylesheet">
+				<link href="${styleVSCodeUri}" rel="stylesheet">
+				<link href="${styleMainUri}" rel="stylesheet">
+				<link href="${styleExamplesUri}" rel="stylesheet">
 
-			<title>Code Examples</title>
-            <div>
-                <ul id="myUL">
-                    <li><span class="caret">Built-in Examples</span>
-                        <ul class="nested">`;
+				<title>Code Examples</title>
+			</head>
+			<body>
+			<div>
+			<ul id="myUL">
+				<li><span class="caret">Built-in Examples</span>
+					<ul class="nested">`;
 
-						for(var i=0;i<categories.length;i++)
-						{
-							body+=`<li><span class="caret">${categories[i]}</span>
-							   <ul class="nested">`;
-							
-							   articles.forEach((value: Array<string>, key: string) => 
-							   {
-									if(key.indexOf(categories[i]+'/')===0)
-									{
-										try
-										{
-											if(names.has(key))
-											{
-												var articleName = names.get(key);
-												body+=`<li class="liitem" key="${key}">${articleName}</li>`;
-											}
-											else
-											{
-												body+=`<li class="liitem" key="${key}">Unnamed Article</li>`;
-											}
-										}
-										catch(e){}
-									}
-							    });
-
-							   body+=`</ul>
-							   </li>`;
-						}
-
-                    body+=` </ul>
-                    </li>      					
-                    <li><span class="caret">Documentation (SDK Version ${this._currentDocsVersion})</span>
-                        <ul class="nested">`;
-
-					for(var i=0;i<this.docs.length;i++)
+					for(var i=0;i<categories.length;i++)
 					{
-						var topic = this.docs[i][0];
-
-						body+=`<li><span class="caret">${topic}</span>
-							   <ul class="nested">`;
-
-						for(var j=0;j<this.docs[i][1].length;j++)
+						body+=`<li><span class="caret">${categories[i]}</span>
+						<ul class="nested">`;
+						
+						articles.forEach((value: Array<string>, key: string) => 
 						{
-							var item = this.docs[i][1][j];
-							item = item.substring(0,item.length-3);
-
-							body+=`<li class="liitem" file="${this.docs[i][1][j]}" folder="${topic}" doc="1">${item}</li>`;
-						}
+								if(key.indexOf(categories[i]+'/')===0)
+								{
+									try
+									{
+										if(names.has(key))
+										{
+											var articleName = names.get(key);
+											body+=`<li class="liitem" key="${key}">${articleName}</li>`;
+										}
+										else
+										{
+											body+=`<li class="liitem" key="${key}">Unnamed Article</li>`;
+										}
+									}
+									catch(e){}
+								}
+							});
 
 						body+=`</ul>
-							   </li>`;
+						</li>`;
+					}
+
+				body+=` </ul>
+				</li>      					
+				<li><span class="caret">Documentation (SDK Version ${this._currentDocsVersion})</span>
+					<ul class="nested">`;
+
+				for(var i=0;i<this.docs.length;i++)
+				{
+					var topic = this.docs[i][0];
+
+					body+=`<li><span class="caret">${topic}</span>
+						<ul class="nested">`;
+
+					for(var j=0;j<this.docs[i][1].length;j++)
+					{
+						var item = this.docs[i][1][j];
+						item = item.substring(0,item.length-3);
+
+						body+=`<li class="liitem" file="${this.docs[i][1][j]}" folder="${topic}" doc="1">${item}</li>`;
 					}
 
 					body+=`</ul>
-					</li>
-					<li><span class="caret">Online Resources</span>
-					<ul class="nested">
-					</ul>
-				</li>
-				</ul> 
-            </div>
-		</head>
-		<body>
-			<script nonce="${nonce}" src="${scriptUri}"></script>
-		</body>
-		</html>`;
+						</li>`;
+				}
 
-		return body;
+				body+=`</ul>
+				</li>
+				<li><span class="caret">Online Resources</span>
+				<ul class="nested">
+				</ul>
+			</li>
+			</ul> 
+		</div>			
+				<script nonce="${nonce}" src="${scriptUri}"></script>
+			</body>
+			</html>`;
+
+			return body;
+		}
+		catch(e)
+		{
+			//setup web page
+
+			// Do the same for the stylesheet.
+			const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'reset.css'));
+			const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'vscode.css'));
+			const styleMainUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'main.css'));
+			const styleExamplesUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examples.css'));
+
+			// Use a nonce to only allow a specific script to be run.
+			const nonce = getNonce();
+
+			var body:string = `<!DOCTYPE html>
+			<html lang="en">
+			<head>
+				<meta charset="UTF-8">
+				<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+				<meta name="viewport" content="width=device-width, initial-scale=1.0">
+				<link href="${styleResetUri}" rel="stylesheet">
+				<link href="${styleVSCodeUri}" rel="stylesheet">
+				<link href="${styleMainUri}" rel="stylesheet">
+				<link href="${styleExamplesUri}" rel="stylesheet">
+
+				<title>Code Examples</title>
+			</head>
+			<body>
+				<div>
+				<br/>		
+				No documents found			
+				</div>	
+			</body>
+			</html>`;
+
+			return body;
+		}
 	}
 }

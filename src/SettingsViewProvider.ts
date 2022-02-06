@@ -6,6 +6,7 @@ import * as path from 'path';
 import { Uri } from "vscode";
 import {Configuration} from './Configuration';
 import {Output} from "./Output";
+import { Providers } from './Providers';
 
 export class SettingsViewProvider implements vscode.WebviewViewProvider
 {
@@ -84,12 +85,13 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 					{
 						Configuration.setWOWSDKPath(data.value);	
 						webviewView.webview.postMessage({ type: 'checkPath',value:true });
+						Providers.examples.reload();
 					}
 					break;
 				case 'versionChanged':
 					{
 						Configuration.setCurrentVersion(data.value);
-
+	
 						if(this.validateSDKPath(Configuration.getWOWSDKPath())===false)
 						{
 							webviewView.webview.postMessage({ type: 'pathError',value:true });
@@ -98,6 +100,8 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 						{
 							webviewView.webview.postMessage({ type: 'pathError',value:false });
 						}
+
+						Providers.examples.reload();
 
 					}
 					break;
