@@ -49,3 +49,8 @@
 ### 1.3.0
 * Added WOWCube SDK version selection support
 * Improved support for custom pathes defined in wowcube-build file
+
+### 1.4.0
+* Added support for versioned examples and documentation 
+* Added support for new SDK folders structure
+* Minor bugfixes and improvements

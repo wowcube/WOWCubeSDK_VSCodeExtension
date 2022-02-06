@@ -74,7 +74,12 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 					{
 						DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,data.value.folder, data.value.file,this._currentDocsVersion);
 					}
-					break;					
+					break;		
+				case 'urlSelected':
+					{
+						vscode.env.openExternal(vscode.Uri.parse(data.value));
+					}
+					break;										
 			}
 		});
 	}
@@ -200,6 +205,32 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 		return topics;
 	}
 
+	private getOnlineResources()
+	{
+		var sites:Array<[string, string]> = new Array<[string, string]>();
+
+		try
+		{
+		var sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/';
+
+		 //fetch docs folder for topics
+         if(fs.existsSync(sourceDocs)===true)
+                {
+					const res = require(sourceDocs+"online-resources.json").resources;
+
+					for(var i=0;i<res.length;i++)
+					{
+						sites.push([res[i].name, res[i].url]);
+					}
+                }
+			}
+			catch(e)
+			{
+			}
+
+		return sites;
+	}
+
 	private _getHtmlForWebview(webview: vscode.Webview) 
 	{
 		//get examples
@@ -213,6 +244,9 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 			//get docs
 			this.docs = this.getDocumentation();
 		
+			//get online resources
+			var sites = this.getOnlineResources();
+
 			//setup web page
 			const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examplesview.js'));
 
@@ -300,8 +334,13 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 				body+=`</ul>
 				</li>
 				<li><span class="caret">Online Resources</span>
-				<ul class="nested">
-				</ul>
+				<ul class="nested">`;
+
+				for(var i=0;i<sites.length;i++)
+				{
+					body+=`<li class="liitem" url="${sites[i][1]}">${sites[i][0]}</li>`;
+				}
+				body+=`</ul>
 			</li>
 			</ul> 
 		</div>			

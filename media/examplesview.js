@@ -21,7 +21,14 @@
         items[i].addEventListener("click",function()
             {
                 var key = this.getAttribute('key');
+                var url = this.getAttribute('url');
 
+                if(url!==null)
+                {
+                    vscode.postMessage({ type: 'urlSelected', value: url });
+                    return;
+                }
+                
                 if(key!==null)
                 {
                     vscode.postMessage({ type: 'itemSelected', value: key });

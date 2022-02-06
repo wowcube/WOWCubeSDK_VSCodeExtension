@@ -38,7 +38,7 @@ https://code.visualstudio.com/docs/customization/colorizer
 
 ## Known Issues
 
-This version of extension is NOT FOR PUBLIC release and must only be used for a purpose of internal testing.
+Although the extension can be used on Linux, it provides limited functionality and DOES NOT support any bluetooth-related features. 
 
 ## Release Notes
 
@@ -93,3 +93,8 @@ This version of extension is NOT FOR PUBLIC release and must only be used for a 
 ### 1.3.0
 * Added WOWCube SDK version selection support
 * Improved support for custom pathes defined in wowcube-build file
+
+### 1.4.0
+* Added support for versioned examples and documentation 
+* Added support for new SDK folders structure
+* Minor bugfixes and improvements
