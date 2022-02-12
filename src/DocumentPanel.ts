@@ -376,7 +376,9 @@ export class DocumentPanel {
                         next = -1;
                         }
 
-                        this._panel.title = "WOWCube SDK "+this._version+' / '+this._folder+' / '+this._file.substring(0,this._file.length-3);
+                        var fname = this._file.substring(0,this._file.length-3);
+
+                        this._panel.title = "WOWCube SDK "+this._version+' / '+this._folder.substring(this._folder.indexOf('.')+1)+' / '+fname.substring(fname.indexOf('.')+1);
                     }
                     catch(e)
                     {
