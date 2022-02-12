@@ -196,7 +196,12 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 						{
 							fs.readdirSync(path).forEach(file => 
 								{
-									topics[i][1].push(file);
+								  var ext = file.substring(file.lastIndexOf('.'));
+
+								  if(ext==='.md')
+								  {
+										topics[i][1].push(file);
+								  }
 								});	
 						}
 					}

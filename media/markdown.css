@@ -21,6 +21,16 @@ p, ol, ul, pre {
 	margin-top: 0;
 }
 
+h1
+{
+	margin-bottom: 18px;
+}
+
+h2
+{
+	line-height: 33px;
+}
+
 h2, h3, h4, h5, h6 {
 	font-weight: normal;
 	margin-bottom: 0.2em;
@@ -198,6 +208,11 @@ pre.hljs code > div {
 	padding: 16px;
 	border-radius: 3px;
 	overflow: auto;
+}
+
+pre
+{
+	white-space: pre-wrap;
 }
 
 pre code {

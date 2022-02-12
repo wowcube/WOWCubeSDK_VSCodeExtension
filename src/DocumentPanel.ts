@@ -6,6 +6,7 @@ import * as path from 'path';
 import {Configuration} from './Configuration';
 import { Version } from "./Version";
 import { Providers } from "./Providers";
+import { runTests } from "@vscode/test-electron";
 
 export class DocumentPanel {
 
@@ -236,13 +237,79 @@ export class DocumentPanel {
             return {folder:"",file:""};
         }
 
+        private _createTempMediaFolder():string
+        {
+            try
+            {
+                var tempmedia:string = this._extensionUri.fsPath+"/media/temp/";
+
+                if(fs.existsSync(tempmedia)===false)
+                {
+                    fs.mkdirSync(tempmedia);
+                }
+
+                tempmedia+=this._version+'/';
+
+                if(fs.existsSync(tempmedia)===false)
+                {
+                    fs.mkdirSync(tempmedia);
+                }
+
+                tempmedia+=this._folder+'/';
+
+                if(fs.existsSync(tempmedia)===false)
+                {
+                    fs.mkdirSync(tempmedia);
+                }
+
+                return tempmedia;
+            }
+            catch(e)
+            {
+            }
+
+            return "";
+        }
+
         private _getHtmlForWebview(webview: vscode.Webview) 
         {
             var MarkdownIt = require('markdown-it');
-            var md = new MarkdownIt();
+            var md = new MarkdownIt({
+                html: true
+              });
             var content: string = "";
-
+            var tempfolder: string = "";
             var info:string = Configuration.getWOWSDKPath()+'sdk/docs/'+this._version+'/'+this._folder+'/';
+
+            //Look for external resources and copy them into extension temp folder
+            if(fs.existsSync(info)===true)
+                {                    
+                    fs.readdirSync(info).forEach(file => 
+                        {
+                            var ext = file.substring(file.lastIndexOf('.'));
+
+                            if(ext!=='.md')
+                            {
+                                tempfolder = this._createTempMediaFolder();
+
+                                if(tempfolder!=="")
+                                {
+                                  try
+                                  {
+                                    fs.copyFileSync(info+file,tempfolder+file);
+                                  }
+                                  catch(e)
+                                  {
+
+                                  }
+                                }
+                            }
+                        });
+                }
+
+            const imgUri = webview.asWebviewUri(      
+                vscode.Uri.joinPath(this._extensionUri, "media/temp", "Cascade.png")
+            );
 
             var prev = 1;
             var next = 1;
@@ -264,8 +331,41 @@ export class DocumentPanel {
                     try
                     {
                         var contentmd = fs.readFileSync(info,'utf8');
+
+                        //split md file into lines 
+                        var lines = contentmd.split('\n');
+
+                        //search for ![alt_name](/Users/apple 1/WOWCubeSDK/media/temp/0.9/Graphics/Cascade.png) tag and exteract full filename and path
+                        var re = /[!][[](?<name>[\s\S]+)][(](?<path>[\s\S]+)[)]/g;
+                        var m;
+                        var toReplace:Array<string> = new Array<string>();
+
+                        lines.forEach(line => {
+
+                            m = re.exec(line);
+                            if(m)
+                            {
+                                toReplace.push(m[2]);
+                            }
+                        });
+
+                        //render md context
                         content = md.render(contentmd.toString());
-                        
+
+                        //replace pathes with secure alternatives provided by VSCode
+                        if(tempfolder!=='')
+                        {
+                        toReplace.forEach(element => {       
+                            
+                            var name = element.substring(element.lastIndexOf('/')+1);
+                            var fullpath = tempfolder+name;
+
+                            const imgUri = webview.asWebviewUri(vscode.Uri.file(fullpath));
+
+                            content = content.replace(new RegExp(element,'g'),`${imgUri}`);
+                        });
+                        }
+
                         if(this.getPrevDocument().file==="")
                         {
                             prev = -1;
@@ -285,6 +385,9 @@ export class DocumentPanel {
                 }
             }
                     
+            //replace all img src in generated content
+
+
             const styleResetUri = webview.asWebviewUri(      
                 vscode.Uri.joinPath(this._extensionUri, "media", "reset.css")   
             );
@@ -319,7 +422,7 @@ export class DocumentPanel {
                 <head>
                     <meta charset="utf-8" />
                     <meta name="viewport" content="width=device-width, initial-scale=1" />
-                    <link href="${styleResetUri}" rel="stylesheet">
+                   <link href="${styleResetUri}" rel="stylesheet">
                     <link href="${styleVSCodeUri}" rel="stylesheet"> 
                     <link href="${styleMainCodeUri}" rel="stylesheet"> 
                     <link href="${styleMDUri}" rel="stylesheet"> 
