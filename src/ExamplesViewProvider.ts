@@ -320,15 +320,14 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 				for(var i=0;i<this.docs.length;i++)
 				{
 					var topic = this.docs[i][0];
-
-					body+=`<li><span class="caret">${topic}</span>
+					body+=`<li><span class="caret">${topic.substring(topic.indexOf('.')+1)}</span>
 						<ul class="nested">`;
 
 					for(var j=0;j<this.docs[i][1].length;j++)
 					{
 						var item = this.docs[i][1][j];
 						item = item.substring(0,item.length-3);
-
+						item = item.substring(item.indexOf('.')+1);
 						body+=`<li class="liitem" file="${this.docs[i][1][j]}" folder="${topic}" doc="1">${item}</li>`;
 					}
 
