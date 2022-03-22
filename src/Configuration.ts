@@ -343,12 +343,12 @@ export class Configuration
         {
             case 'darwin': //mac
             case 'linux':
-                return 'wowcube-sdk';
+                return 'WOWCube Emulator';
             case 'win32': //windows
-                return 'wowcube-sdk.exe';
+                return 'WOWCube Emulator.exe';
             default:
             //unsupported os
-            return 'wowcube-sdk';
+            return 'WOWCube Emulator';
         }
     }
 

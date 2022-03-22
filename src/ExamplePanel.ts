@@ -425,7 +425,9 @@ export class ExamplePanel {
         private _getHtmlForWebview(webview: vscode.Webview) 
         {
             var MarkdownIt = require('markdown-it');
-            var md = new MarkdownIt();
+            var md = new MarkdownIt({
+                html: true
+              });
             var content: string = "";
 
             var ex = Providers.examples.examples.e;
@@ -575,7 +577,7 @@ export class ExamplePanel {
                         {
                             ret+=`<select id="versions" class='selector_docs no_version'>`;
                         }
-                        else
+                        else 
                         {
                             ret+=`<select id="versions" class='selector_docs'>`;
                         }

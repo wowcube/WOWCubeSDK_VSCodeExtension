@@ -98,3 +98,7 @@ Although the extension can be used on Linux, it provides limited functionality a
 * Added support for versioned examples and documentation 
 * Added support for new SDK folders structure
 * Minor bugfixes and improvements
+
+### 1.5.0
+* WOWCube Development Kit support
+* Minor bugfixes and improvements

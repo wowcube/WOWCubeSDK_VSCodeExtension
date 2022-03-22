@@ -47,7 +47,7 @@ export class WOWCubeBuildTaskProvider implements vscode.TaskProvider
 		if (action) 
 		{
 			const definition: WOWCubeBuildTaskDefinition = <any>_task.definition;
-			return this.getTask(definition.action, definition.flags ? definition.flags : [], definition);
+			return this.getTask(definition.action, <any>definition.target, definition);
 		}
 		return undefined;
 	}

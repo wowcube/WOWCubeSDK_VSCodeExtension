@@ -60,7 +60,19 @@ ONTICK()
 {
     currentTime = abi_GetTime();
     deltaTime = currentTime - previousTime;
+            
+    // Detect shake and quit application
+    if (0 == abi_cubeN) 
+        {
+        abi_checkShake();
+        }
 
+    previousTime = currentTime;
+}
+
+//This callback is gets called immediately after ONTICK(). Use it for calling your rendering code. 
+RENDER()
+{ 
     for (new screen = 0; screen < 3; ++screen) 
     {
         if(gameState==LEADERBOARD_SHOWN)
@@ -76,15 +88,7 @@ ONTICK()
 
         //commit to screen buffer
         abi_CMD_REDRAW(screen);
-    }            
-            
-    // Detect shake and quit application
-    if (0 == abi_cubeN) 
-        {
-        abi_checkShake();
-        }
-
-    previousTime = currentTime;
+    }     
 }
 
 //The "physics" callback. Gets called recurrently with 30ms resolution. 
@@ -108,8 +112,6 @@ ON_CHECK_ROTATE()
     gameState=GAME_SHOWN;
 } 
 
-//This callback is obsolete and left here for compatibility purposes only. Do not use it.
-RENDER(){}
 
 // User-defined functions
 // -----------------------------

@@ -35,6 +35,18 @@ ON_INIT()
 //Main run loop callback. Gets called recurrently by the CUB application as frequent as application code allows. 
 ONTICK()
 {
+    // detect device shake and quit application
+    // pay attention: 
+    //  detecting shakes of each module of a cube is redundant and should not be done; it is enough to choose a single module and continuously perform recurrent checks 
+    if (0 == abi_cubeN) 
+        {
+            abi_checkShake();
+        }
+}
+
+//This callback is gets called immediately after ONTICK(). Use it for calling your rendering code. 
+RENDER()
+{ 
     //fill the first screen of each module with black
     abi_CMD_FILL(0,0,0);
     //draw bitmap at the center of a screen
@@ -60,15 +72,6 @@ ONTICK()
 
     //commit to screen buffer
     abi_CMD_REDRAW(2);
-
-
-    // detect device shake and quit application
-    // pay attention: 
-    //  detecting shakes of each module of a cube is redundant and should not be done; it is enough to choose a single module and continuously perform recurrent checks 
-    if (0 == abi_cubeN) 
-        {
-            abi_checkShake();
-        }
 }
 
 //The "physics" callback. Gets called recurrently with 30ms resolution. 
@@ -90,8 +93,6 @@ ON_CHECK_ROTATE()
 {
 } 
 
-//This callback is obsolete and left here for compatibility purposes only. Do not use it.
-RENDER(){}
 
 // User-defined functions
 // -----------------------------

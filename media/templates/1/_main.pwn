@@ -30,6 +30,11 @@ ONTICK()
         } 
 }
 
+//This callback is gets called immediately after ONTICK(). Use it for calling your rendering code. 
+RENDER()
+{ 
+}
+
 //The "physics" callback. Gets called recurrently with 30ms resolution. 
 ON_PHYSICS_TICK() 
 {
@@ -48,6 +53,3 @@ ON_LOAD_GAME_DATA()
 ON_CHECK_ROTATE() 
 {
 } 
-
-//This callback is obsolete and left here for compatibility purposes only. Do not use it.
-RENDER(){}
