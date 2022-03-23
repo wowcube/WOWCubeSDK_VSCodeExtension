@@ -139,9 +139,9 @@ export class Configuration
             {
                 case 'darwin': //mac
                 {
-                    if(fs.existsSync("/Applications/WOWCube SDK.app"))
+                    if(fs.existsSync("/Applications/WOWCube Development Kit.app"))
                     {
-                        path = "/Applications/WOWCube SDK.app/Contents/";
+                        path = "/Applications/WOWCube Development Kit.app/Contents/";
                         this.setWOWSDKPath(path);
                     }
                 }
@@ -153,11 +153,11 @@ export class Configuration
 
                     path = "/";
 
-                    regedit.list('HKCU\\SOFTWARE\\WOWCube SDK', (err:any, result:any) =>
+                    regedit.list('HKCU\\SOFTWARE\\WOWCube Development Kit', (err:any, result:any) =>
                     {
                         if(err===null)
                         {
-                            var key = result['HKCU\\SOFTWARE\\WOWCube SDK'];
+                            var key = result['HKCU\\SOFTWARE\\WOWCube Development Kit'];
                             if(key.exists)
                             {
                               //the value doesn't have a name, hence '' 
@@ -211,9 +211,9 @@ export class Configuration
             {
                 case 'darwin': //mac
                 {
-                    if(fs.existsSync("/Applications/WOWCube SDK.app"))
+                    if(fs.existsSync("/Applications/WOWCube Development Kit.app"))
                     {
-                        path = "/Applications/WOWCube SDK.app/Contents/";
+                        path = "/Applications/WOWCube Development Kit.app/Contents/";
                         this.setWOWSDKPath(path);
                     }
                 }
@@ -290,6 +290,27 @@ export class Configuration
         {
            v = Configuration.getString('wowsdk.conf.wowsdkversion');
         }
+
+
+        let versionFound:Boolean = false;
+
+		for(var i=0;i<Configuration._detectedSDKVersions.length;i++)
+		{
+			if(versionFound===false)
+			{
+				if(v === Configuration._detectedSDKVersions[i])
+				{
+					versionFound = true;
+				}
+			}
+		}
+
+		if(versionFound===false)
+		{
+			//if current saved version is not in the list of versions present in the bundle, reset to the first version in the list
+			if(Configuration._detectedSDKVersions.length>0) v = Configuration._detectedSDKVersions[0];
+			Configuration.setCurrentVersion(v);
+		}
 
         return v;
     }
