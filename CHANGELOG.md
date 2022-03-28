@@ -58,3 +58,6 @@
 ### 1.5.0
 * WOWCube Development Kit support
 * Minor bugfixes and improvements
+
+### 1.5.2
+* Improved document scrolling

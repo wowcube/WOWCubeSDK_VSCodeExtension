@@ -8,6 +8,15 @@
     { 
         try
         {
+            document.getElementById('viewdiv').addEventListener('scroll', () => 
+            {
+                vscode.postMessage({ type: 'scrollChanged', value: document.getElementById('viewdiv').scrollTop });
+            });
+        }
+        catch(e){}
+        
+        try
+        {
             document.getElementById('prev_button').addEventListener('click', () => 
             {
                 var key = document.getElementById('prev_button').getAttribute('key');
@@ -25,5 +34,18 @@
             });
         }
         catch(e){}
+
+        window.addEventListener('message', event =>  
+        {
+            const message = event.data; // The json data that the extension sent
+            switch (message.type) 
+            {
+                case 'scrollTo':
+                    {
+                        document.getElementById('viewdiv').scrollTop = message.value;
+                        break;
+                    }
+            }
+        });
     };
 }());

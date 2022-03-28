@@ -21,6 +21,9 @@ export class ExamplePanel {
     private _version:string = "";
     private  _forceVersion:string="";
 
+    private _viewLoaded:Boolean = false;
+    private _scrollPos = 0;
+
     public static createOrShow(extensionUri: vscode.Uri,exampleKey:string) 
     { 
         const column = vscode.window.activeTextEditor
@@ -176,6 +179,11 @@ export class ExamplePanel {
                                 this.dispose();
                             }
                             break;
+                        case 'scrollChanged':
+                        {
+                            this._scrollPos = message.value;
+                        }
+                        break;
                     }
                 },
                 null,
@@ -419,6 +427,10 @@ export class ExamplePanel {
         private async _update() 
         {
             const webview = this._panel.webview;    
+
+            webview.postMessage({ type: 'scrollTo',value: this._scrollPos} );
+
+            if(this._viewLoaded===false)
             this._panel.webview.html = this._getHtmlForWebview(webview);  
         }
         
@@ -599,7 +611,7 @@ export class ExamplePanel {
 
                         <div class="separator"></div>
 
-                        <div class="view" style="padding:26px;margin-top: 10px; margin-bottom: 10px;">`;
+                        <div id="viewdiv" class="view" style="padding:26px;margin-top: 10px; margin-bottom: 10px;">`;
                         
                         ret+= content;
 
@@ -634,6 +646,7 @@ export class ExamplePanel {
                 </html> 
             `;  
 
+            this._viewLoaded = true;
             return ret;
             
         }

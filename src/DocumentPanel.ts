@@ -22,6 +22,9 @@ export class DocumentPanel {
     private readonly _file:string = "";
     private readonly _version:string = "";
 
+    private _viewLoaded:Boolean = false;
+    private _scrollPos = 0;
+
     public static createOrShowDoc(extensionUri: vscode.Uri,folder:string,file:string, sdkVersion:string) 
     { 
         const column = vscode.window.activeTextEditor
@@ -108,6 +111,11 @@ export class DocumentPanel {
                                 this.dispose();
                             }
                         break;
+                        case 'scrollChanged':
+                            {
+                                this._scrollPos = message.value;
+                            }
+                            break;
                     }
                 },
                 null,
@@ -133,6 +141,10 @@ export class DocumentPanel {
         private async _update() 
         {
             const webview = this._panel.webview;    
+
+            webview.postMessage({ type: 'scrollTo',value: this._scrollPos} );
+
+            if(this._viewLoaded===false)
             this._panel.webview.html = this._getHtmlForWebview(webview);  
         }
         
@@ -435,7 +447,7 @@ export class DocumentPanel {
                       
                     <div style="padding:0px;max-height: 77px;overflow: hidden;">
 
-                        <div class="view" style="padding:26px;margin-top: 10px; margin-bottom: 10px; top:0px;">`;
+                        <div id="viewdiv" class="view" style="padding:26px;margin-top: 10px; margin-bottom: 10px; top:0px;">`;
                         
                         ret+= content;
 
@@ -465,6 +477,7 @@ export class DocumentPanel {
                 </html> 
             `;  
 
+            this._viewLoaded = true;
             return ret;
             
         }
