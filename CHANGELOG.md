@@ -40,7 +40,7 @@
 * Minor UI tweaks and fixes
 
 ### 1.2.0
-* Introduced new "Run Cubelet" feature
+* Introduced new "Run Cubeapp" feature
 
 ### 1.2.2
 * Fix for 'No task to run on cube' issue
@@ -61,3 +61,6 @@
 
 ### 1.5.2
 * Improved document scrolling
+
+### 1.5.3
+* Bugfixes

@@ -1,16 +1,16 @@
 # WOWCube SDK VisualStudio Code Extension README
 
-This extension is designed for WOWCube cubelet application developers. It simplifies WOWCube device content management and makes overall process of development of the apps more enjoyable.
+This extension is designed for WOWCube cubeapp application developers. It simplifies WOWCube device content management and makes overall process of development of the apps more enjoyable.
 
 ## Features
 
-* New Cubelet application wizard
-* Cubelet application compiler and builder
+* New Cubeapp application wizard
+* Cubeapp application compiler and builder
 * Automatic install and run on selected WOWCube device
 * Automatic install and run on WOWCube Emulator 
 * Paired WOWCube device detection
 * WOWCube device basic information display
-* Installed cubelet applications management 
+* Installed cubeapp applications management 
 
 ## Requirements
 
@@ -84,7 +84,7 @@ Although the extension can be used on Linux, it provides limited functionality a
 * Minor UI tweaks and fixes
 
 ### 1.2.0
-* Introduced new "Run Cubelet" feature
+* Introduced new "Run Cubeapp" feature
 
 ### 1.2.2
 * Fix for 'No task to run on cube' issue
@@ -105,3 +105,6 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 1.5.2
 * Improved document scrolling
+
+### 1.5.3
+* Bugfixes

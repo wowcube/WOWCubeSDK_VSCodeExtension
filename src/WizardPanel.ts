@@ -30,7 +30,7 @@ export class WizardPanel {
         // Otherwise, create a new panel. 
         const panel = vscode.window.createWebviewPanel(
             WizardPanel.viewType,
-            'WOWCube Cubelet Project Wizard',
+            'WOWCube Cubeapp Project Wizard',
             column || vscode.ViewColumn.Two,
             getWebviewOptions(extensionUri),
         );
@@ -348,14 +348,14 @@ export class WizardPanel {
                     <link href="${styleResetUri}" rel="stylesheet">
                     <link href="${styleVSCodeUri}" rel="stylesheet"> 
                     <link href="${styleMainCodeUri}" rel="stylesheet"> 
-                    <title>New Cubelet Wizard</title>
+                    <title>New Cubeapp Wizard</title>
                 </head>
                 <body>
                     <script type="text/javascript" src="${scriptUri}" nonce="${nonce}"></script>
                       
                     <div style="padding:0px;">
-                        <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:24px;">New Cubelet Wizard</div>
-                        <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Create new WOWCube cubelet application project from template</div>
+                        <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:24px;">New Cubeapp Wizard</div>
+                        <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Create new WOWCube cubeapp application project from template</div>
                         <div class="separator"></div>
 
                         <div class="view">
@@ -381,24 +381,24 @@ export class WizardPanel {
                             <div class="items">
                                 <div id="i1" class="item">
                                     <div style="margin:5px;"><strong>Empty project</strong></div>
-                                    <div class="itemdesc">Creates an empty project with a bare minimum of functions needed to build WOWCube cubelet application</div>
+                                    <div class="itemdesc">Creates an empty project with a bare minimum of functions needed to build WOWCube cubeapp application</div>
                                 </div>
 
                                 <div id="i2" class="item">
-                                    <div style="margin:5px;"><strong>Basic cubelet</strong></div>
-                                    <div class="itemdesc">Creates a project of WOWCube cubelet application with basic rendering support</div>
+                                    <div style="margin:5px;"><strong>Basic cubeapp</strong></div>
+                                    <div class="itemdesc">Creates a project of WOWCube cubeapp application with basic rendering support</div>
                                     <div class="itemdesc">Demonstrates principles of work with a compound multi-screen device</div>
                                 </div>
 
                                 <div id="i3" class="item">
-                                    <div style="margin:5px;"><strong>Basic cubelet with resources</strong></div>
-                                    <div class="itemdesc">Creates a project of WOWCube cubelet application with some resources</div>
+                                    <div style="margin:5px;"><strong>Basic cubeapp with resources</strong></div>
+                                    <div class="itemdesc">Creates a project of WOWCube cubeapp application with some resources</div>
                                     <div class="itemdesc">Demonstrates how to find and use application resources</div>
                                 </div>
 
                                 <div id="i4" class="item">
-                                    <div style="margin:5px;"><strong>Basic cubelet with splash screens</strong></div>
-                                    <div class="itemdesc">Creates a project of WOWCube cubelet application with in-game splash screens support</div>
+                                    <div style="margin:5px;"><strong>Basic cubeapp with splash screens</strong></div>
+                                    <div class="itemdesc">Creates a project of WOWCube cubeapp application with in-game splash screens support</div>
                                     <div class="itemdesc">Demonstrates the use of in-game splash screens</div>
                                 </div>
                             </div>

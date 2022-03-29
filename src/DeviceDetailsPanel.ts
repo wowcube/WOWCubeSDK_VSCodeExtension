@@ -115,7 +115,7 @@ export class DeviceDetailsPanel {
                                     openLabel: 'Select CUB File',
                                     canSelectFiles: true,
                                     canSelectFolders: false,
-                                    filters: { 'Cubelets': ['cub', 'CUB'],'All Files':['*.*'] }
+                                    filters: { 'Cubeapps': ['cub', 'CUB'],'All Files':['*.*'] }
                                 };
                                
                                vscode.window.showOpenDialog(options).then(fileUri => 
@@ -734,7 +734,7 @@ export class DeviceDetailsPanel {
                                     {
                                     if(s.length>0) 
                                     {
-                                        //reject all lines that contain no cubelet name
+                                        //reject all lines that contain no cubeapp name
                                         const ext = ".cub";
                                         const ss:string = s.toLowerCase();
 
@@ -838,12 +838,12 @@ export class DeviceDetailsPanel {
                             else
                                 vscode.window.showErrorMessage("Unable to delete this app");
 
-                                this._channel.appendLine("Failed to delete the cubelet");
+                                this._channel.appendLine("Failed to delete the cubeapp");
                         }
                     else
                         { 
                             this._panel.webview.postMessage({ type: 'deleteAppItem',value: {name:name}});
-                            this._channel.appendLine("Cubelet successfully deleted");
+                            this._channel.appendLine("Cubeapp successfully deleted");
                         }
 
                         this._panel.webview.postMessage({ type: 'endRequest'});
@@ -912,11 +912,11 @@ export class DeviceDetailsPanel {
                             else
                                 vscode.window.showErrorMessage("Unable to run this app");
 
-                                this._channel.appendLine("Failed to start the cubelet");
+                                this._channel.appendLine("Failed to start the cubeapp");
                         }
                         else
                         {
-                            this._channel.appendLine("Cubelet started");
+                            this._channel.appendLine("Cubeapp started");
                         }
 
                         this._panel.webview.postMessage({ type: 'endRequest'});

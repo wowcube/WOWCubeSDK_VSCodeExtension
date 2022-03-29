@@ -212,9 +212,23 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				includepath=currDir;
 			}
 
-			command+=' -X100000 -d0 -O3 -v2 -i"'+includepath+'" ';
+			var vers = Configuration.getCurrentVersion().split('.');
+
+			var maj = '0';
+			var min = '1';
+
+			if(vers.length===2)
+			{
+				maj = vers[0];
+				min = vers[1];
+			}
+
+			//command+=' -X100000 -d0 -O3 -v2 -i"'+includepath+'" ';
+			command+=' -X120000 -d0 -O3 -v2 -i"'+includepath+'" ';
 			command+='-o"'+destfile+'" ';
-			command+='"'+sourcefile+'"';
+			command+='"'+sourcefile+'"';	
+			command+=' ABI_VERSION_MAJOR='+maj;
+			command+=' ABI_VERSION_MINOR='+min;
 
 			if(pawnpath.length===0)
 			{
@@ -393,7 +407,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				}
 				else
 				{
-					this._channel.appendLine('Failed to start cubelet application on selected device.\r\n');
+					this._channel.appendLine('Failed to start cubeapp application on selected device.\r\n');
 
 					this.closeEmitter.fire(0);
 					resolve();

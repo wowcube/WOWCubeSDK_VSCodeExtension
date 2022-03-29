@@ -60,13 +60,13 @@ export class WizardViewProvider implements vscode.WebviewViewProvider
 				<link href="${styleVSCodeUri}" rel="stylesheet">
 				<link href="${styleMainUri}" rel="stylesheet">
 				
-				<title>New Cubelet Wizard</title>
+				<title>New Cubeapp Wizard</title>
 			</head>
 			<body>
 				<br/>
-				<div><strong>New Cubelet Wizard</strong> helps to create a scaffold of a new WOWCube cubelet application project</div>
+				<div><strong>New Cubeapp Wizard</strong> helps to create a scaffold of a new WOWCube cubeapp application project</div>
 				<br/>
-				<button class="open-wizard-button">Open New Cubelet Wizard</button>
+				<button class="open-wizard-button">Open New Cubeapp Wizard</button>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 			</html>`;
