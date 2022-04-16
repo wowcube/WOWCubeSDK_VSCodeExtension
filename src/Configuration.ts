@@ -379,6 +379,7 @@ export class Configuration
         switch(p)
         {
             case 'darwin': //mac
+                return 'wowcube-loader.app/Contents/MacOS/wowcube-loader';
             case 'linux':
                 return 'wowcube-loader';
             case 'win32': //windows

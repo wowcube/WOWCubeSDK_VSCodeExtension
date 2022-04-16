@@ -64,3 +64,6 @@
 
 ### 1.5.3
 * Bugfixes
+
+### 1.6.0
+* New WOWCube Development Kit bluetooth bridging app support

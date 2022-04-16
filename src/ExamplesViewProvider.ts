@@ -123,6 +123,8 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 				{
 					fs.readdirSync(path).forEach(exampleFolder => 
 						{
+							if(exampleFolder==='.DS_Store') return;
+
 							var key = categories[j]+'/'+exampleFolder;
 
 							if(examples.has(key)===false)
