@@ -34,6 +34,11 @@ export class WizardViewProvider implements vscode.WebviewViewProvider
                             vscode.commands.executeCommand('WOWCubeSDK.openWizard');
 							break;
 						}
+				case 'buttonAdHocPressed':
+					{
+						vscode.commands.executeCommand('WOWCubeSDK.openAdHocSharing');
+						break;
+					}
 			}
 		});
 	}
@@ -67,6 +72,10 @@ export class WizardViewProvider implements vscode.WebviewViewProvider
 				<div><strong>New Cubeapp Wizard</strong> helps to create a scaffold of a new WOWCube cubeapp application project</div>
 				<br/>
 				<button class="open-wizard-button">Open New Cubeapp Wizard</button>
+				<br/>
+				<div>Share your cubeapp applications with your friends and team members with <strong>Ad-Hoc Sharing</strong></div>
+				<br/>
+				<button class="share-adhoc-button">Share Ad-Hoc Cubeapp</button>
 				<script nonce="${nonce}" src="${scriptUri}"></script>
 			</body>
 			</html>`;

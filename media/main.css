@@ -48,6 +48,14 @@ body {
 	margin: 0 auto;
 }
 
+.share-adhoc-button
+{
+	display: block;
+	max-width: 300px;
+	border: none;
+	margin: 0 auto;
+}
+
 .bt-scan-button
 {
 	display: block;

@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { getNonce } from "./getNonce";
 //import { WebAppPanel } from './WebAppPanel';
 import { WizardPanel } from './WizardPanel';
+import { AdHocPanel } from './AdHocPanel';
 import { DeviceDetailsPanel } from './DeviceDetailsPanel';
 import { WizardViewProvider } from './WizardViewProvider';
 import { BTDeviceViewProvider } from './BTDeviceViewProvider';
@@ -57,6 +58,12 @@ export async function activate(context: vscode.ExtensionContext)
 		vscode.commands.registerCommand('WOWCubeSDK.openWizard', () => 
 		{
 			WizardPanel.createOrShow(context.extensionUri);
+		}));
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('WOWCubeSDK.openAdHocSharing', () =>
+		{
+			AdHocPanel.createOrShow(context.extensionUri);
 		}));
 
 	context.subscriptions.push(

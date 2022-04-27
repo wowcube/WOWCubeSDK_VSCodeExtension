@@ -20,6 +20,7 @@
     "onView:WOWCubeSDK.wizardView",
     "onView:WOWCubeSDK.btdeviceView",
     "onCommand:WOWCubeSDK.openWizard",
+    "onCommand:WOWCubeSDK.openAdHocSharing",
     "onCommand:WOWCubeSDK.scanDevices",
     "onCommand:config.commands.configureViewOnWindowOpen",
     "onCommand:workbench.action.tasks.runTask"
@@ -147,6 +148,10 @@
         "command": "WOWCubeSDK.openWizard",
         "title": "Open New Cubeapp Wizard"
       },
+      {
+        "command": "WOWCubeSDK.openAdHocSharing",
+        "title": "Open Share Ad-Hoc Cubeapp"
+      }, 
       {
         "command": "WOWCubeSDK.openDeviceDetails",
         "title": "Open WOWCube device details"
