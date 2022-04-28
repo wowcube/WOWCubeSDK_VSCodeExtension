@@ -4,6 +4,7 @@ import { getNonce } from "./getNonce";
 import * as fs from 'fs';
 import * as path from 'path';
 import { Uri } from "vscode";
+import {Output} from "./Output";
 import {Configuration} from './Configuration';
 import * as FormData from "form-data";
 
@@ -11,15 +12,28 @@ export class AdHocPanel {
 
     public static currentPanel: AdHocPanel | undefined;
     public static readonly viewType = "WOWCubeSDK.openAdHocSharing";
+    private static workspace:string | undefined;
 
     private readonly _panel: vscode.WebviewPanel;  
     private readonly _extensionUri: vscode.Uri;  
     private _disposables: vscode.Disposable[] = [];
+    
+    private _cubfile:string = "";
+    private _icon:string = "";
+    private _appname:string = "";
+
+    private writeEmitter = Output.terminal();
+	onDidWrite: vscode.Event<string> = this.writeEmitter.event;
+	private closeEmitter = Output.terminalClose();
+	onDidClose?: vscode.Event<number> = this.closeEmitter.event;
+	private _channel: vscode.OutputChannel = Output.channel();
 
     public static createOrShow(extensionUri: vscode.Uri) 
     { 
         const column = vscode.window.activeTextEditor
         ? vscode.window.activeTextEditor.viewColumn: undefined;
+
+        AdHocPanel.workspace = (vscode.workspace.workspaceFolders && (vscode.workspace.workspaceFolders.length > 0)) ? vscode.workspace.workspaceFolders[0].uri.fsPath : "";
 
         // If we already have a panel, show it.      
         if (AdHocPanel.currentPanel) 
@@ -86,9 +100,14 @@ export class AdHocPanel {
                         break;
                         case 'generate':
                             {
-                                this.uploadAdHoc();
+                                this.uploadAdHoc(message.value);
                             }
                         break;
+                        case 'close':
+                            {
+                                AdHocPanel.kill();
+                            }
+                        break; 
                     }
                 },
                 null,
@@ -129,7 +148,8 @@ export class AdHocPanel {
             });
         }
 
-        public async uploadAdHoc()
+        //upload cubeapp file with given description
+        public async uploadAdHoc(value:string)
         {
             var ret = {url:'',desc:''};
             try
@@ -138,10 +158,10 @@ export class AdHocPanel {
 
                 const formData = new FormData();
 
-                formData.append('name',"Test APP");
-                formData.append('description',"This is a test description");
-                formData.append('icon',fs.createReadStream("/Users/thryl/Examples/ex1/resources/appIcon.png"));
-                formData.append('file',fs.createReadStream("/Users/thryl/Examples/ex1/binary/Example1.cub"));
+                formData.append('name',this._appname);
+                formData.append('description',value);
+                formData.append('icon',fs.createReadStream(this._icon));
+                formData.append('file',fs.createReadStream(this._cubfile));
 
                 const options = {
                     host: 'wowstore.wowcube.com',
@@ -168,10 +188,16 @@ export class AdHocPanel {
             if(ret.url.length===0)
             {
               //error
+              this._channel.appendLine("Share Ad-Hoc: Unable to share this cubeapp: "+ret.desc);
+              this._channel.show(true);
+
               vscode.window.showErrorMessage("Unable to share this cubeapp: "+ret.desc);   
             }
             else
             {
+                this._channel.appendLine("Share Ad-Hoc: Cubemap file has been successfully shared");
+				this._channel.show(true);
+
                //all good, open web page and close itself
                vscode.env.openExternal(vscode.Uri.parse(ret.url));
                AdHocPanel.kill();
@@ -179,7 +205,7 @@ export class AdHocPanel {
 
             return ret;
         }
-
+ 
         public dispose() {    
             AdHocPanel.currentPanel = undefined;  
 
@@ -199,7 +225,50 @@ export class AdHocPanel {
             this._panel.webview.html = this._getHtmlForWebview(webview);  
         }
         
-        private _getHtmlForWebview(webview: vscode.Webview) {    
+        private checkFilesExist()
+        {
+            this._cubfile = "";
+            this._icon = "";
+            this._appname = "";
+
+            try
+            {
+                const build_json = require(AdHocPanel.workspace+'/wowcubeapp-build.json');
+                const output = AdHocPanel.workspace+'/binary/'+build_json.name+'.cub';
+                const icon = AdHocPanel.workspace+'/resources/appIcon.png';
+
+                if(fs.existsSync(output)===false)
+                {
+                    this._channel.appendLine("Share Ad-Hoc: Not ready to share, file '"+output+"' is not found!");
+                    this._channel.show(true);
+
+                    return false;
+                }
+
+                if(fs.existsSync(icon)===false)
+                {
+                    this._channel.appendLine("Share Ad-Hoc: Not ready to share, file '"+icon+"' is not found!");
+                    this._channel.show(true);
+
+                    return false;
+                }
+
+                this._cubfile = output;
+                this._icon = icon;
+                this._appname = build_json.name;
+            }
+            catch(error)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        private _getHtmlForWebview(webview: vscode.Webview) 
+        {    
+            var ready = this.checkFilesExist();
+
             const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
             const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
             const styleMainCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "main.css"));
@@ -207,8 +276,6 @@ export class AdHocPanel {
 
             const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "adhoc.js"));
             
-            
-
             const nonce = getNonce();  
             const baseUri = webview.asWebviewUri(vscode.Uri.joinPath(
                 this._extensionUri, 'media')
@@ -235,21 +302,35 @@ export class AdHocPanel {
                     <div style="padding:0px;">
                         <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:24px;">Share Ad-Hoc Application</div>
                         <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Generate link to share your WOWCube ad-hoc cubeapp</div>
-                        <div class="separator"></div>
-
-                        
-                        <div class="view">                        
+                        <div class="separator"></div>`;
+          
+                    if(ready===true)
+                    {
+                        ret+=`
+                        <div class="view">   
+                        <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Add some description to your ad-hoc build</div> 
+                        <div style="margin-right:10px"> 
+                        <textarea id="description" style="resize: none;height:100px;" data-role="none"></textarea>    
+                        </div               
                         </div>
                         
                         <button id="generate_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">SHARE AD-HOC CUBEAPP</button>
-                    </div>
+                    </div>`;
+                    }
+                    else
+                    {
+                        ret+=`
+                        <div class="negative" style="margin-top:30px;margin-bottom:30px;font-size:16px;">Please build your application before sharing the Ad-Hoc version of it !</div>
+                        <button id="close_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">CLOSE</button>
+                        `;
+                    }
 
+                ret+=`
                     <div id="wait" class="fullscreen topmost hidden">
                         <div class="centered">
                             <div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
                         </div>
                     <div>
-
                 </body>
                 </html> 
             `;  

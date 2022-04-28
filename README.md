@@ -14,7 +14,7 @@ This extension is designed for WOWCube cubeapp application developers. It simpli
 
 ## Requirements
 
- WOWCube SDK version 2.3.4-alpha5 or later must be installed on the computer.
+ WOWCube Development Kit version 2.5.0 alpha2 or later must be installed on the computer.
 
 ## Extension Settings
 
@@ -111,3 +111,6 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 1.6.0
 * New WOWCube Development Kit bluetooth bridging app support
+
+### 1.7.0
+* Added Ad-Hoc cubeapp file sharing 

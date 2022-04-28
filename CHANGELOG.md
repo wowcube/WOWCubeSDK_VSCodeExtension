@@ -67,3 +67,6 @@
 
 ### 1.6.0
 * New WOWCube Development Kit bluetooth bridging app support
+
+### 1.7.0
+* Added Ad-Hoc cubeapp file sharing 
