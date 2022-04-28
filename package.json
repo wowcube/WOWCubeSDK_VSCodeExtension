@@ -151,7 +151,7 @@
       {
         "command": "WOWCubeSDK.openAdHocSharing",
         "title": "Open Share Ad-Hoc Cubeapp"
-      }, 
+      },
       {
         "command": "WOWCubeSDK.openDeviceDetails",
         "title": "Open WOWCube device details"
@@ -185,6 +185,7 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
+    "form-data": "^4.0.0",
     "markdown-it": "^12.3.2",
     "regedit": "^5.0.0"
   }
