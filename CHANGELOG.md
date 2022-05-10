@@ -70,3 +70,6 @@
 
 ### 1.7.0
 * Added Ad-Hoc cubeapp file sharing 
+
+### 1.8.0
+* Improved fetching for device general information 

@@ -114,3 +114,6 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 1.7.0
 * Added Ad-Hoc cubeapp file sharing 
+
+### 1.8.0
+* Improved fetching for device general information 

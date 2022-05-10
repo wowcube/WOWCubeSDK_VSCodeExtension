@@ -180,7 +180,7 @@ export class DeviceDetailsPanel {
                                     }
                                     else
                                     {
-                                        this.doGetDeviceInfo(device.mac);
+                                        this.doGetDeviceInfoAll(device.mac);
                                         Providers.btdevices.showWait(true);
                                     }
                                 }
@@ -316,7 +316,6 @@ export class DeviceDetailsPanel {
                         this._panel.webview.postMessage({ type: 'startRequest'});
                         Providers.btdevices.showWait(true);
 
-                        //this.doGetDeviceInfo(device.mac);
                         this.doGetDeviceInfoAll(device.mac);
                     }
                     else
