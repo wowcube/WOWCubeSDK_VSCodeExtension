@@ -50,9 +50,9 @@ class TemplateItem
                 vscode.postMessage({ type: 'error', value: "Invalid project name"}); ret = false;
             }
 
-            if(name.length>64)
+            if(name.length>60)
             {
-                vscode.postMessage({ type: 'error', value: "Project name must be 64 characters long or less"}); ret = false;
+                vscode.postMessage({ type: 'error', value: "Project name must be 60 characters long or less"}); ret = false;
             }
         }   
         

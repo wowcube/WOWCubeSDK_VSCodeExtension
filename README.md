@@ -117,3 +117,6 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 1.8.0
 * Improved fetching for device general information 
+
+### 1.9.0
+* Improved management and handling of versions of WOWCubeSDK 

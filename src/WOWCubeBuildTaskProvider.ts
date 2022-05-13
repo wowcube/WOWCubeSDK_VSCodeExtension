@@ -142,6 +142,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
         {
 			this._channel.clear();
 			this._channel.appendLine('Compiling cub file...\r\n');
+			const initialVersion = Configuration.getCurrentVersion();
 
 			const build_json = require(this.workspace+'/wowcubeapp-build.json');
 
@@ -150,14 +151,48 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 			if(typeof(build_json.sdkVersion)!=='undefined')
 			{
-				this._channel.appendLine('SDK version: '+build_json.sdkVersion+'\r\n');
+				this._channel.appendLine('Target SDK version: '+build_json.sdkVersion+'\r\n');
+
+				if(build_json.sdkVersion!==Configuration.getCurrentVersion())
+				{
+					this._channel.appendLine("NOTE: Target SDK version of the application ("+build_json.sdkVersion+") differs from current SDK version ("+Configuration.getCurrentVersion()+")");
+					
+					var versions  = Configuration.getVersions();
+					var detected:boolean = false;
+
+					for(var i=0;i<versions.length;i++)
+					{
+						if(versions[i]===build_json.sdkVersion)
+						{
+							detected = true;
+							break;
+						}
+					}      
+
+					if(detected===false)
+					{
+						this._channel.appendLine("NOTE: SDK version "+build_json.sdkVersion+" is not installed. Please install required version of SDK or change application Target SDK version to one of the following:\r\n");
+						for(var i=0;i<versions.length;i++)
+						{
+							this._channel.appendLine("\tVersion "+versions[i]);
+						}    
+						
+						this._channel.appendLine('\r\nFailed to compile.\r\n');
+						return;
+					}
+					else
+					{
+						this._channel.appendLine("\r\nNOTE: Building with SDK version "+build_json.sdkVersion+"\r\n");
+						Configuration.setCurrentVersion(build_json.sdkVersion);
+					}
+				}
 			}
 			else
 			{
 				this._channel.appendLine("\r\nNOTE: SDK version is missing from the build file");
 				if(Project.setSDKVersion(this.workspace,Configuration.getCurrentVersion()))
 				{
-					this._channel.appendLine("SDK version is set to '"+Configuration.getCurrentVersion()+"'\r\n");
+					this._channel.appendLine("Target SDK version is set to '"+Configuration.getCurrentVersion()+"'\r\n");
 				}
 				else
 				{
@@ -229,6 +264,9 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			command+='"'+sourcefile+'"';	
 			command+=' ABI_VERSION_MAJOR='+maj;
 			command+=' ABI_VERSION_MINOR='+min;
+
+			//return version value in case it was changed
+			Configuration.setCurrentVersion(initialVersion);
 
 			if(pawnpath.length===0)
 			{
