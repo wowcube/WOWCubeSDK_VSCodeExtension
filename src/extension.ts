@@ -11,6 +11,7 @@ import { BTDeviceViewProvider } from './BTDeviceViewProvider';
 import { SettingsViewProvider } from './SettingsViewProvider';
 import { ExamplesViewProvider } from './ExamplesViewProvider';
 import { WOWCubeBuildTaskProvider } from './WOWCubeBuildTaskProvider';
+import { WOWCubeProjectProvider } from './WOWCubeProjectProvider';
 import {Configuration} from './Configuration';
 import {Providers} from './Providers';
 
@@ -77,6 +78,9 @@ export async function activate(context: vscode.ExtensionContext)
 
 			DeviceDetailsPanel.createOrShow(context.extensionUri);
 		}));	
+
+		context.subscriptions.push(vscode.window.registerCustomEditorProvider(WOWCubeProjectProvider.viewType, Providers.project));
+
 }
 
 // this method is called when your extension is deactivated

@@ -6,7 +6,7 @@
   "version": "1.9.0",
   "publisher": "cubios-inc",
   "engines": {
-    "vscode": "^1.62.0"
+    "vscode": "^1.64.0"
   },
   "extensionKind": [
     "ui",
@@ -143,6 +143,17 @@
         }
       ]
     },
+    "customEditors": [
+			{
+				"viewType": "WOWCubeSDK.projectPanel",
+				"displayName": "WOWCube Cubeapp Project",
+				"selector": [
+					{
+						"filenamePattern": "wowcubeapp-build.json"
+					}
+				]
+			}
+		],
     "commands": [
       {
         "command": "WOWCubeSDK.openWizard",
