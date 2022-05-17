@@ -120,3 +120,6 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 1.9.0
 * Improved management and handling of versions of WOWCubeSDK 
+
+### 1.10.0
+* Added visual editor for cubeapp project file 

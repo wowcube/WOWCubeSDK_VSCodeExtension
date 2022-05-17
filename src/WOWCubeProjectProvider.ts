@@ -12,14 +12,6 @@ import {Output} from './Output';
 
  export class WOWCubeProjectProvider implements vscode.CustomTextEditorProvider {
 
-    /*
-	public static register(context: vscode.ExtensionContext): vscode.Disposable {
-		const provider = new WOWCubeProjectProvider(context);
-		const providerRegistration = vscode.window.registerCustomEditorProvider(WOWCubeProjectProvider.viewType, provider);
-		return providerRegistration;
-	}
-    */
-
     public static currentPanel: WOWCubeProjectProvider | undefined;
 	public static readonly viewType = 'WOWCubeSDK.projectPanel';
     private _view?: vscode.WebviewView;
@@ -76,12 +68,32 @@ import {Output} from './Output';
 		});
 
 		// Receive message from the webview.
-		webviewPanel.webview.onDidReceiveMessage(e => {
-			switch (e.type) {
-				case 'add':
-					return;
+		webviewPanel.webview.onDidReceiveMessage(message => {
+			switch (message.type) 
+			{
+			   case 'error':
+				   {
+					this._channel.appendLine('Project settings error: '+message.value);
+					vscode.window.showErrorMessage(message.value); 
+				   }
+			   break;
+			   case 'warn':
+				   vscode.window.showWarningMessage(message.value); 
+			   break;
+			   case 'update':
+				   {
+					var params = message.value;
 
-				case 'delete':
+					if(params!==null)
+					{
+						this.updateTextDocument(document,params);
+					}	   
+				   }
+				break;
+				case 'save':
+					{
+						document.save();
+					}
 					return;
 			}
 		});
@@ -125,26 +137,26 @@ import {Output} from './Output';
 
 					<div class="view" style="top:65px;">
 
-						<div style="display:inline-block;margin-left: 2px;font-size:14px;min-width:170px;"><strong>Basic Settings</strong></div>
+						<div style="display:inline-block;margin-left: 2px;font-size:14px;min-width:165px;"><strong>Basic Settings</strong></div>
 
 						<div style="margin-top:0px;">
-							<div style="display:inline-block;margin:10px;margin-left: 2px;margin-top:25px;font-size:14px;min-width:170px;">Application Name</div>
+							<div id="appnamet" class="" style="display:inline-block;margin:10px;margin-left: 2px;margin-top:25px;font-size:14px;min-width:170px;">Application Name</div>
 							<input id="appname" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.name}"></input>
 						</div>
 
 						<div style="margin-top:0px;">
-							<div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Application Version</div>
+							<div id="appversiont" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Application Version</div>
 							<input id="appversion" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.version}"></input>
 						</div>
 
 						<div style="margin-top:0px;">
-						<div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Target SDK Version</div>
+						<div id="targetsdkt" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Target SDK Version</div>
 						<select id="targetsdk" class='selector' style="width:calc(100% - 200px);min-width:100px;">`;
 
 						let versions = Configuration.getVersions();			
 						let version:string = json.sdkVersion;//Configuration.getCurrentVersion();
 			
-						var version_found:boolean = false;
+						var versionFound:boolean = false;
 
 						for(var i=0;i<versions.length;i++)
 						{
@@ -155,13 +167,13 @@ import {Output} from './Output';
 							else
 							{
 								body+=`<option value="`+versions[i]+`" selected>`+versions[i]+`</option>`;
-								version_found = true;
+								versionFound = true;
 							}
 						}
 
 						body+=`</select>`;
 
-						if(!version_found)
+						if(!versionFound)
 						{
 						body+=`<div class="negative" style="display:block;margin-left: 185px;font-size:14px;">Application target SDK version ${version} is not installed.`;
 						}
@@ -171,27 +183,27 @@ import {Output} from './Output';
 						<div style="display:inline-block;margin-left: 2px;margin-top:40px;font-size:14px;min-width:170px;"><strong>Advanced Settings</strong></div>
 
 						<div style="margin-top:0px;">
-							<div style="display:inline-block;margin:10px;margin-left: 2px;margin-top:25px;font-size:14px;min-width:170px;">Cubeapp Application Icon</div>
+							<div id="appicont" style="display:inline-block;margin:10px;margin-left: 2px;margin-top:25px;font-size:14px;min-width:170px;">Cubeapp Application Icon</div>
 							<input id="appicon" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.appIcon}"></input>
 						</div>
 
 						<div style="margin-top:0px;">
-							<div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;min-width:170px;">PAWN Source File</div>
+							<div id="sourcefilet" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;min-width:170px;">PAWN Source File</div>
 							<input id="sourcefile" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.sourceFile}"></input>
 						</div>
 
 						<div style="margin-top:0px;">
-							<div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">PAWN Object File</div>
+							<div id="scriptfilet" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">PAWN Object File</div>
 							<input id="scriptfile" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.scriptFile}"></input>
 						</div>
 
 						<div style="margin-top:0px;">
-							<div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Image Resource Directory</div>
+							<div id="imagedirt" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Image Resource Directory</div>
 							<input id="imagedir" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.imageAssetsDir}"></input>
 						</div>
 
 						<div style="margin-top:0px;">
-							<div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Sound Resource Directory</div>
+							<div id="sounddirt" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Sound Resource Directory</div>
 							<input id="sounddir" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.soundAssetsDir}"></input>
 						</div>
 
