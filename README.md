@@ -14,7 +14,7 @@ This extension is designed for WOWCube cubeapp application developers. It simpli
 
 ## Requirements
 
- WOWCube Development Kit version 2.5.0 alpha2 or later must be installed on the computer.
+ WOWCube Development Kit version 2.5.0 alpha5 or later must be installed on the computer.
 
 ## Extension Settings
 
@@ -123,3 +123,6 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 1.10.0
 * Added visual editor for cubeapp project file 
+
+### 1.11.0
+* Improved new project templates support for different versions of WOWCubeSDK 

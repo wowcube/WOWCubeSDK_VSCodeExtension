@@ -140,7 +140,11 @@ export class WizardPanel {
         public generate(name:string,path:string,template:number)
         {
             var ret = {path:'',desc:''};
-            const templates = require('../media/templates/templates.json');
+
+            const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/';
+            const templates = require(templatespath+'templates.json');
+
+            //const templates = require('../media/templates/templates.json');
             var fullpath = '';
             var needDeleteFolder:boolean = false;
 
@@ -184,42 +188,43 @@ export class WizardPanel {
                 this.makeDirSync(fullpath+'/resources/images');
                 this.makeDirSync(fullpath+'/resources/sounds');
 
-                const iconFilename:string = this._extensionUri.fsPath+"/media/templates/appIcon.png";             
+                //const iconFilename:string = this._extensionUri.fsPath+"/media/templates/appIcon.png";
+                const iconFilename:string = templatespath+"appIcon.png";             
                 fs.copyFileSync(iconFilename,fullpath+'/resources/appIcon.png');
 
                 for(var i=0;i<currentTemplate.files.length; i++)
                 {
                     if(currentTemplate.files[i]==='_main.pwn')
                     {
-                        fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/"+currentTemplate.files[i],fullpath+'/src/'+name+'.pwn');
+                        fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.files[i],fullpath+'/src/'+name+'.pwn');
                     }
                     else
                     {
-                        fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/"+currentTemplate.files[i],fullpath+'/src/'+currentTemplate.files[i]);
+                        fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.files[i],fullpath+'/src/'+currentTemplate.files[i]);
                     }
                 }
             
                 for(var i=0;i<currentTemplate.images.length; i++)
                 {
-                    fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/"+currentTemplate.images[i],fullpath+'/resources/images/'+currentTemplate.images[i]);
+                    fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.images[i],fullpath+'/resources/images/'+currentTemplate.images[i]);
                 }
 
                 for(var i=0;i<currentTemplate.sounds.length; i++)
                 {
-                    fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/"+currentTemplate.sounds[i],fullpath+'/resources/sounds/'+currentTemplate.sounds[i]);
+                    fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.sounds[i],fullpath+'/resources/sounds/'+currentTemplate.sounds[i]);
                 }
 
                 //create json file for build
-                const json = fs.readFileSync(this._extensionUri.fsPath+"/media/templates/"+currentTemplate.id+"/_build.json").toString();
+                const json = fs.readFileSync(templatespath+currentTemplate.id+"/_build.json").toString();
                 var str = json.replace(/##NAME##/gi,name);
                 str = str.replace(/##SDKVERSION##/gi,Configuration.getCurrentVersion());
 
                 fs.writeFileSync(fullpath+'/wowcubeapp-build.json',str);
 
                 //create vscode-related configs
-                fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_launch.json",fullpath+'/.vscode/launch.json');
-                fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_tasks.json",fullpath+'/.vscode/tasks.json');
-                fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_extensions.json",fullpath+'/.vscode/extensions.json');
+                fs.copyFileSync(templatespath+"_launch.json",fullpath+'/.vscode/launch.json');
+                fs.copyFileSync(templatespath+"_tasks.json",fullpath+'/.vscode/tasks.json');
+                fs.copyFileSync(templatespath+"_extensions.json",fullpath+'/.vscode/extensions.json');
 
             }
             catch(error)
