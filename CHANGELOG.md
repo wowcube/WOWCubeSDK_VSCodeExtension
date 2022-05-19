@@ -79,3 +79,6 @@
 
 ### 1.10.0
 * Added visual editor for cubeapp project file 
+
+### 1.11.0
+* Improved new project templates support for different versions of WOWCubeSDK 
