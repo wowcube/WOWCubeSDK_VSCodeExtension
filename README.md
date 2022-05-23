@@ -126,3 +126,6 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 1.11.0
 * Improved new project templates support for different versions of WOWCubeSDK 
+
+### 1.12.0
+* Bugfix 

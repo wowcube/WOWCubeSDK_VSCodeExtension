@@ -82,3 +82,6 @@
 
 ### 1.11.0
 * Improved new project templates support for different versions of WOWCubeSDK 
+
+### 1.12.0
+* Bugfix 
