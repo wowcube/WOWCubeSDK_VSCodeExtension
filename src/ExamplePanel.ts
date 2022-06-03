@@ -290,15 +290,15 @@ export class ExamplePanel {
                 this.makeDirSync(fullpath+'/.vscode');
                 this.makeDirSync(fullpath+'/binary');
                 this.makeDirSync(fullpath+'/src');
-                this.makeDirSync(fullpath+'/resources');
-                this.makeDirSync(fullpath+'/resources/images');
-                this.makeDirSync(fullpath+'/resources/sounds');
+                this.makeDirSync(fullpath+'/assets');
+                this.makeDirSync(fullpath+'/assets/images');
+                this.makeDirSync(fullpath+'/assets/sounds');
 
                 const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/';
 
-                //const iconFilename:string = this._extensionUri.fsPath+"/media/templates/appIcon.png";     
-                const iconFilename:string = templatespath+"appIcon.png";             
-                fs.copyFileSync(iconFilename,fullpath+'/resources/appIcon.png');
+                //const iconFilename:string = this._extensionUri.fsPath+"/media/templates/icon.png";     
+                const iconFilename:string = templatespath+"icon.png";             
+                fs.copyFileSync(iconFilename,fullpath+'/assets/icon.png');
 
                 //copy project files
                 var sourcePrj = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+"/project/src/";
@@ -311,14 +311,14 @@ export class ExamplePanel {
                 }
 
                 //copy resources
-                var sourceImg = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+"/project/resources/images/";
-                var sourceSnd = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+"/project/resources/sounds/";
+                var sourceImg = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+"/project/assets/images/";
+                var sourceSnd = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+"/project/assets/sounds/";
 
                 if(fs.existsSync(sourceImg)===true)
                 {
                     fs.readdirSync(sourceImg).forEach(file => 
                         {
-                            fs.copyFileSync(sourceImg+file,fullpath+'/resources/images/'+file);
+                            fs.copyFileSync(sourceImg+file,fullpath+'/assets/images/'+file);
                         });
                 }
 
@@ -326,7 +326,7 @@ export class ExamplePanel {
                 {
                     fs.readdirSync(sourceSnd).forEach(file => 
                         {
-                            fs.copyFileSync(sourceImg+file,fullpath+'/resources/sounds/'+file);
+                            fs.copyFileSync(sourceImg+file,fullpath+'/assets/sounds/'+file);
                         });
                 }
 

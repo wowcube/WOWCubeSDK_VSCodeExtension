@@ -235,7 +235,7 @@ export class AdHocPanel {
             {
                 const build_json = require(AdHocPanel.workspace+'/wowcubeapp-build.json');
                 const output = AdHocPanel.workspace+'/binary/'+build_json.name+'.cub';
-                const icon = AdHocPanel.workspace+'/resources/appIcon.png';
+                const icon = AdHocPanel.workspace+'/assets/icon.png';
 
                 if(fs.existsSync(output)===false)
                 {

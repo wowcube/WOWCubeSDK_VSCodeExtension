@@ -184,13 +184,13 @@ export class WizardPanel {
                 this.makeDirSync(fullpath+'/.vscode');
                 this.makeDirSync(fullpath+'/binary');
                 this.makeDirSync(fullpath+'/src');
-                this.makeDirSync(fullpath+'/resources');
-                this.makeDirSync(fullpath+'/resources/images');
-                this.makeDirSync(fullpath+'/resources/sounds');
+                this.makeDirSync(fullpath+'/assets');
+                this.makeDirSync(fullpath+'/assets/images');
+                this.makeDirSync(fullpath+'/assets/sounds');
 
-                //const iconFilename:string = this._extensionUri.fsPath+"/media/templates/appIcon.png";
-                const iconFilename:string = templatespath+"appIcon.png";             
-                fs.copyFileSync(iconFilename,fullpath+'/resources/appIcon.png');
+                //const iconFilename:string = this._extensionUri.fsPath+"/media/templates/icon.png";
+                const iconFilename:string = templatespath+"icon.png";             
+                fs.copyFileSync(iconFilename,fullpath+'/assets/icon.png');
 
                 for(var i=0;i<currentTemplate.files.length; i++)
                 {
@@ -206,12 +206,12 @@ export class WizardPanel {
             
                 for(var i=0;i<currentTemplate.images.length; i++)
                 {
-                    fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.images[i],fullpath+'/resources/images/'+currentTemplate.images[i]);
+                    fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.images[i],fullpath+'/assets/images/'+currentTemplate.images[i]);
                 }
 
                 for(var i=0;i<currentTemplate.sounds.length; i++)
                 {
-                    fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.sounds[i],fullpath+'/resources/sounds/'+currentTemplate.sounds[i]);
+                    fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.sounds[i],fullpath+'/assets/sounds/'+currentTemplate.sounds[i]);
                 }
 
                 //create json file for build

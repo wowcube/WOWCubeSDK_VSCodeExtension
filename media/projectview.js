@@ -39,8 +39,8 @@
         if(typeof(ai.value)==='undefined' || ai.value.length==0) {ait.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a full path and filename of cubeapp application icon" }); ret = false;}
         if(typeof(sf.value)==='undefined' || sf.value.length==0) {sft.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid name for the source file" }); ret = false;}
         if(typeof(scf.value)==='undefined' || scf.value.length==0) {scft.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid name for the object file" }); ret = false;}
-        if(typeof(idir.value)==='undefined' || idir.value.length==0) {idirt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid path to image resources directory" }); ret = false;}
-        if(typeof(sdir.value)==='undefined' || sdir.value.length==0) {sdirt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid path to sound resources directory" }); ret = false;}
+        if(typeof(idir.value)==='undefined' || idir.value.length==0) {idirt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid path to image assets directory" }); ret = false;}
+        if(typeof(sdir.value)==='undefined' || sdir.value.length==0) {sdirt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid path to sound assets directory" }); ret = false;}
 
         var name = n.value;
        
