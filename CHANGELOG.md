@@ -85,3 +85,7 @@
 
 ### 1.12.0
 * Bugfix 
+
+### 1.13.0
+* Added 'SDK Files' section to Documentation & Code Examples
+* Pawn project folder names are changed

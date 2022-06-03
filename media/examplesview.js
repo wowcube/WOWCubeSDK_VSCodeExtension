@@ -22,6 +22,13 @@
             {
                 var key = this.getAttribute('key');
                 var url = this.getAttribute('url');
+                var path = this.getAttribute('path');
+
+                if(path!==null)
+                {
+                    vscode.postMessage({ type: 'fileSelected', value: path });
+                    return;
+                }
 
                 if(url!==null)
                 {

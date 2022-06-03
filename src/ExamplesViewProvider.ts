@@ -79,7 +79,15 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 					{
 						vscode.env.openExternal(vscode.Uri.parse(data.value));
 					}
-					break;										
+					break;
+				case 'fileSelected':
+					{
+						var openPath = vscode.Uri.file(data.value);
+						vscode.workspace.openTextDocument(openPath).then(doc => {
+						vscode.window.showTextDocument(doc);
+						});
+					}	
+					break;									
 			}
 		});
 	}
@@ -238,6 +246,32 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 		return sites;
 	}
 
+	private getSDKFiles()
+	{
+		var files:Array<[string,string]> = new Array<[string,string]>();
+
+		try
+		{
+			var sourceFiles = Configuration.getWOWSDKPath()+'sdk/'+this._currentDocsVersion+'/pawn/include/';
+
+			if(fs.existsSync(sourceFiles)===true)
+			{
+				fs.readdirSync(sourceFiles).forEach(file => 
+					{
+						if(file!=='.DS_Store')
+						{
+							files.push([file,sourceFiles+file]);
+						}
+					});
+			}
+		}
+		catch(e)
+		{}
+
+		files.sort();
+		return files;
+	}
+
 	private _getHtmlForWebview(webview: vscode.Webview) 
 	{
 		//get examples
@@ -253,6 +287,9 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 		
 			//get online resources
 			var sites = this.getOnlineResources();
+
+			//get sdk files
+			var files = this.getSDKFiles();
 
 			//setup web page
 			const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examplesview.js'));
@@ -336,10 +373,18 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 					body+=`</ul>
 						</li>`;
 				}
+				body+=`</ul></li>`;
 
-				body+=`</ul>
-				</li>
-				<li><span class="caret">Online Resources</span>
+				body+=`<li><span class="caret">SDK Files</span>
+				<ul class="nested">`;
+
+				for(var i=0;i<files.length;i++)
+				{
+					body+=`<li class="liitem" path="${files[i][1]}">${files[i][0]}</li>`;
+				}
+				body+=`</ul></li>`;
+
+				body+=`<li><span class="caret">Online Resources</span>
 				<ul class="nested">`;
 
 				for(var i=0;i<sites.length;i++)
