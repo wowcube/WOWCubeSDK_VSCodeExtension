@@ -133,6 +133,24 @@ body {
 	cursor: pointer;
 }
 
+.assetitem {
+    position: relative;
+    width: calc(100% - 30px);
+    margin: 4px;
+    padding: 10px;
+    background-color: var(--vscode-input-background);
+    border-width: 1px;
+    border-style: solid;
+    border-color: var(--vscode-widget-shadow);
+}
+
+.assetitem:hover
+{
+	border-width: 1px;
+	border-color: var(--vscode-focusBorder);
+	cursor: pointer;
+}
+
 .itemdesc
 {
 	color: var(--vscode-descriptionForeground);

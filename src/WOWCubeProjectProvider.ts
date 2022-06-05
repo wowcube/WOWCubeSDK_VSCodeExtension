@@ -207,6 +207,70 @@ import {Output} from './Output';
 							<input id="sounddir" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.soundAssetsDir}"></input>
 						</div>
 
+						<div style="display:inline-block;margin-left: 2px;margin-top:40px;font-size:14px;min-width:170px;"><strong>Image Assets</strong></div>
+						<div class="items" style="width:(100% - 25px); margin-top:10px;padding:10px;min-width:700px;">
+							
+						<div style="padding:5px;">
+							<div style="display:inline-block; min-width:25%;"> 
+							Resource Identifier
+							</div>
+
+							<div style="display:inline-block; min-width:calc(75% - 130px);"> 
+								Resource File Name
+							</div>
+
+							<div style="display:inline-block; min-width:120px;"> 
+								Image Pixel Depth
+							</div>						
+						</div>
+						`;
+
+						for(var i=0;i<0;i++)
+						{
+							body+=`<div class="assetitem">
+							
+								<div style="display:inline-block; min-width:25%;"> 
+									<input id="imagedir" style="display:inline-block; width: calc(100% - 20px);" value="NIKITA"></input>
+								</div>
+								<div style="display:inline-block; min-width:calc(75% - 130px);"> DDD </div>
+								<div style="display:inline-block; min-width:120px;"> 
+									<select class='selector' style="min-width:100px;">
+										<option value="-1" selected>AUTO</option>
+										<option value="0">RGB 565</option>
+										<option value="1">ARGB 6666</option>
+									</select>
+								</div>
+
+							</div>`;
+						}
+						body+=`</div>
+
+						<div style="display:inline-block;margin-left: 2px;margin-top:40px;font-size:14px;min-width:170px;"><strong>Sound Assets</strong></div>
+						<div class="items" style="width:(100% - 25px); margin-top:10px;padding:10px;min-width:700px;">
+							
+						<div style="padding:5px;">
+							<div style="display:inline-block; min-width:25%;"> 
+							Resource Identifier
+							</div>
+
+							<div style="display:inline-block; min-width:calc(75% - 130px);"> 
+								Resource File Name
+							</div>				
+						</div>
+						`;
+
+						for(var i=0;i<0;i++)
+						{
+							body+=`<div class="assetitem">
+							
+								<div style="display:inline-block; min-width:25%;"> 
+									<input id="imagedir" style="display:inline-block; width: calc(100% - 20px);" value="NIKITA"></input>
+								</div>
+								<div style="display:inline-block; min-width:calc(75% - 130px);"> DDD </div>
+							</div>`;
+						}
+
+						body+=`</div>
 					</div>
 				</div>
 
