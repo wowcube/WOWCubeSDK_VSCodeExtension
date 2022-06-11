@@ -106,6 +106,12 @@ import {Output} from './Output';
 	 */
 	private getHtmlForWebview(webview: vscode.Webview,document: vscode.TextDocument): string 
     {
+		var fn:String = document.fileName;
+		var ind = fn.lastIndexOf('/');
+		var workspace:string = fn.substring(0,ind);
+
+		Project.validateAssets(workspace);
+
 		const json = this.getDocumentAsJson(document);
 
 		// Local path to script and css for the webview
@@ -184,7 +190,7 @@ import {Output} from './Output';
 
 						<div style="margin-top:0px;">
 							<div id="appicont" style="display:inline-block;margin:10px;margin-left: 2px;margin-top:25px;font-size:14px;min-width:170px;">Cubeapp Application Icon</div>
-							<input id="appicon" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.appIcon}"></input>
+							<input id="appicon" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.appIcon.path}"></input>
 						</div>
 
 						<div style="margin-top:0px;">
@@ -196,7 +202,7 @@ import {Output} from './Output';
 							<div id="scriptfilet" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">PAWN Object File</div>
 							<input id="scriptfile" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.scriptFile}"></input>
 						</div>
-
+						<!--
 						<div style="margin-top:0px;">
 							<div id="imagedirt" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Image Resource Directory</div>
 							<input id="imagedir" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.imageAssetsDir}"></input>
@@ -206,7 +212,7 @@ import {Output} from './Output';
 							<div id="sounddirt" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Sound Resource Directory</div>
 							<input id="sounddir" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.soundAssetsDir}"></input>
 						</div>
-
+						-->
 						<div style="display:inline-block;margin-left: 2px;margin-top:40px;font-size:14px;min-width:170px;"><strong>Image Assets</strong></div>
 						<div class="items" style="width:(100% - 25px); margin-top:10px;padding:10px;min-width:700px;">
 							

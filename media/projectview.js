@@ -11,8 +11,8 @@
         let ai = document.getElementById('appicon');
         let sf = document.getElementById('sourcefile');
         let scf = document.getElementById('scriptfile');
-        let idir = document.getElementById('imagedir');
-        let sdir = document.getElementById('sounddir');
+        //let idir = document.getElementById('imagedir');
+        //let sdir = document.getElementById('sounddir');
 
         let nt = document.getElementById('appnamet');
         let vt = document.getElementById('appversiont');
@@ -20,8 +20,8 @@
         let ait = document.getElementById('appicont');
         let sft = document.getElementById('sourcefilet');
         let scft = document.getElementById('scriptfilet');
-        let idirt = document.getElementById('imagedirt');
-        let sdirt = document.getElementById('sounddirt');
+        //let idirt = document.getElementById('imagedirt');
+        //let sdirt = document.getElementById('sounddirt');
 
         var ret = true;
 
@@ -31,16 +31,16 @@
         ait.className="";
         sft.className="";
         scft.className="";
-        idirt.className="";
-        sdirt.className="";
+        //idirt.className="";
+        //sdirt.className="";
 
         if(typeof(n.value)==='undefined' || n.value.length==0) {nt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a name for the project" }); ret = false;}
         if(typeof(v.value)==='undefined' || v.value.length==0) {vt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a version of the cubeapp application" }); ret = false;}
         if(typeof(ai.value)==='undefined' || ai.value.length==0) {ait.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a full path and filename of cubeapp application icon" }); ret = false;}
         if(typeof(sf.value)==='undefined' || sf.value.length==0) {sft.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid name for the source file" }); ret = false;}
         if(typeof(scf.value)==='undefined' || scf.value.length==0) {scft.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid name for the object file" }); ret = false;}
-        if(typeof(idir.value)==='undefined' || idir.value.length==0) {idirt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid path to image assets directory" }); ret = false;}
-        if(typeof(sdir.value)==='undefined' || sdir.value.length==0) {sdirt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid path to sound assets directory" }); ret = false;}
+        //if(typeof(idir.value)==='undefined' || idir.value.length==0) {idirt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid path to image assets directory" }); ret = false;}
+        //if(typeof(sdir.value)==='undefined' || sdir.value.length==0) {sdirt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid path to sound assets directory" }); ret = false;}
 
         var name = n.value;
        
@@ -77,11 +77,11 @@
                    name:name.replace(/[\/|\\: *?"<>]/g, "_"),
                    version:v.value,
                    sdkVersion: t.value,
-                   appIcon:ai.value,
+                   appIcon:{path:ai.value},
                    sourceFile:sf.value,
                    scriptFile:scf.value,
-                   imageAssetsDir:idir.value,
-                   soundAssetsDir:sdir.value 
+                   //imageAssetsDir:idir.value,
+                   //soundAssetsDir:sdir.value 
                    };
         }
         else
@@ -99,8 +99,8 @@
             document.getElementById('appicon').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
             document.getElementById('sourcefile').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
             document.getElementById('scriptfile').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
-            document.getElementById('imagedir').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
-            document.getElementById('sounddir').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+            //document.getElementById('imagedir').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+            //document.getElementById('sounddir').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
 
             document.getElementById('targetsdk').addEventListener('change',() =>
             {
@@ -130,11 +130,11 @@
 
                         document.getElementById('appname').value = d.name;
                         document.getElementById('appversion').value = d.version;
-                        document.getElementById('appicon').value = d.appIcon;
+                        document.getElementById('appicon').value = d.appIcon.path;
                         document.getElementById('sourcefile').value = d.sourceFile;
                         document.getElementById('scriptfile').value = d.scriptFile;
-                        document.getElementById('imagedir').value = d.imageAssetsDir;
-                        document.getElementById('sounddir').value = d.soundAssetsDir;
+                        //document.getElementById('imagedir').value = d.imageAssetsDir;
+                        //document.getElementById('sounddir').value = d.soundAssetsDir;
             
                         document.getElementById('targetsdk').value = d.sdkVersion;
 
