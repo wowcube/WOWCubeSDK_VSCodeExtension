@@ -17,7 +17,7 @@ export class Project
         {
             if(/(?<maj>\d{1,2})\.(?<min>\d{1,2})(\-(?<build>\d{1,4}))?/.test(version))
             {
-                var json = require(workspace+'/wowcubeapp-build.json');
+                var json = JSON.parse(fs.readFileSync(workspace+'/wowcubeapp-build.json', 'utf-8'));//require(workspace+'/wowcubeapp-build.json');
                 json.sdkVersion = version;
 
                 var str = JSON.stringify(json);

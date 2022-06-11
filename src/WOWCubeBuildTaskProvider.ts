@@ -144,7 +144,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			this._channel.appendLine('Compiling cub file...\r\n');
 			const initialVersion = Configuration.getCurrentVersion();
 
-			const build_json = require(this.workspace+'/wowcubeapp-build.json');
+			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));//require(this.workspace+'/wowcubeapp-build.json');
 
 			this._channel.appendLine('Project name: '+build_json.name);
 			this._channel.appendLine('Project version: '+build_json.version);
@@ -338,7 +338,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			}
 
 
-			const build_json = require(this.workspace+'/wowcubeapp-build.json');
+			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));//require(this.workspace+'/wowcubeapp-build.json');
 
 			var utilspath = Configuration.getUtilsPath();
 			var command = '"'+utilspath+Configuration.getBuilder()+'"';
