@@ -11,8 +11,6 @@
         let ai = document.getElementById('appicon');
         let sf = document.getElementById('sourcefile');
         let scf = document.getElementById('scriptfile');
-        //let idir = document.getElementById('imagedir');
-        //let sdir = document.getElementById('sounddir');
 
         let nt = document.getElementById('appnamet');
         let vt = document.getElementById('appversiont');
@@ -20,8 +18,6 @@
         let ait = document.getElementById('appicont');
         let sft = document.getElementById('sourcefilet');
         let scft = document.getElementById('scriptfilet');
-        //let idirt = document.getElementById('imagedirt');
-        //let sdirt = document.getElementById('sounddirt');
 
         var ret = true;
 
@@ -31,16 +27,12 @@
         ait.className="";
         sft.className="";
         scft.className="";
-        //idirt.className="";
-        //sdirt.className="";
 
         if(typeof(n.value)==='undefined' || n.value.length==0) {nt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a name for the project" }); ret = false;}
         if(typeof(v.value)==='undefined' || v.value.length==0) {vt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a version of the cubeapp application" }); ret = false;}
         if(typeof(ai.value)==='undefined' || ai.value.length==0) {ait.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a full path and filename of cubeapp application icon" }); ret = false;}
         if(typeof(sf.value)==='undefined' || sf.value.length==0) {sft.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid name for the source file" }); ret = false;}
         if(typeof(scf.value)==='undefined' || scf.value.length==0) {scft.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid name for the object file" }); ret = false;}
-        //if(typeof(idir.value)==='undefined' || idir.value.length==0) {idirt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid path to image assets directory" }); ret = false;}
-        //if(typeof(sdir.value)==='undefined' || sdir.value.length==0) {sdirt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid path to sound assets directory" }); ret = false;}
 
         var name = n.value;
        
@@ -71,6 +63,84 @@
                 vscode.postMessage({ type: 'error', value: "Please make sure cubeapp version format is X.X.X"}); ret = false;
             }
         }
+
+        var imageAssets = new Array();
+        var soundAssets = new Array();
+
+        var imp = document.getElementsByClassName('imageassetalias');
+
+        if(typeof imp !== 'undefined')
+        {
+            for(var i=0;i<imp.length;i++)
+            {
+                try
+                {
+                    var did = 'imageassetalias'+i;
+                    var alias = document.getElementById(did).value;
+
+                    did = 'imageassetpath'+i;
+                    var pathd = document.getElementById(did);
+                    var path = pathd.innerHTML.trim();
+                    pathd.className = "";
+
+                    if(typeof(alias)==='undefined' || alias.length==0) {pathd.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide an identifier for resource '"+path+"'" }); ret = false; break;}
+                    if(alias.length>15) {pathd.className="negative"; vscode.postMessage({ type: 'error', value: "Identifier of the resource '"+path+"' must not be longer than 15 characters" }); ret = false; break;}
+
+                    did = 'imageassetpixeldepth'+i;
+                    var pd = document.getElementById(did).value; 
+
+                    if(pd.length>0)
+                    {
+                        imageAssets.push(
+                        {
+                            path:path,
+                            alias:alias,
+                            encoding:pd
+                        });
+                    }
+                    else
+                    {
+                        imageAssets.push(
+                            {
+                                path:path,
+                                alias:alias
+                            });    
+                    }
+                }
+                catch(e){}
+            }
+        }
+
+
+        imp = document.getElementsByClassName('soundassetalias');
+
+        if(typeof imp !== 'undefined')
+        {
+            for(var i=0;i<imp.length;i++)
+            {
+                try
+                {
+                    var did = 'soundassetalias'+i;
+                    var alias = document.getElementById(did).value;
+
+                    did = 'soundassetpath'+i;
+                    var pathd = document.getElementById(did);
+                    var path = pathd.innerHTML.trim();
+                    pathd.className = "";
+
+                    if(typeof(alias)==='undefined' || alias.length==0) {pathd.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide an identifier for resource '"+path+"'" }); ret = false; break;}
+                    if(alias.length>15) {pathd.className="negative"; vscode.postMessage({ type: 'error', value: "Identifier of the resource '"+path+"' must not be longer than 15 characters" }); ret = false; break;}
+
+                    soundAssets.push(
+                            {
+                                path:path,
+                                alias:alias
+                            });    
+                }
+                catch(e){}
+            }
+        }
+
         if(ret===true)
         {
             return {
@@ -80,13 +150,191 @@
                    appIcon:{path:ai.value},
                    sourceFile:sf.value,
                    scriptFile:scf.value,
-                   //imageAssetsDir:idir.value,
-                   //soundAssetsDir:sdir.value 
+                   imageAssets:imageAssets,
+                   soundAssets:soundAssets
                    };
         }
         else
         {
             return null;
+        }
+    };
+
+    function updateAssets(d)
+    {
+        var imageAssets = d.imageAssets;
+        var soundAssets = d.soundAssets;
+
+        //sound
+        var p = document.getElementById('sounditems');
+        p.innerHTML = "";
+
+        for(var i=0;i<soundAssets.length;i++)
+        {
+            var ass = soundAssets[i];
+
+            try
+            {
+                var path = ass.path;
+                var alias = ass.alias;
+
+                if(typeof path==='undefined' || typeof alias==='undefined') {continue;}
+
+                var el = document.createElement('div');
+                el.className = 'assetitem sound';
+                
+                el.innerHTML = 
+                `<div style="display:inline-block; min-width:25%;"> 
+                <input id="soundassetalias${i}" class="soundassetalias" style="display:inline-block; width: calc(100% - 40px);" value="${alias}"></input>
+                </div>
+                <div id="soundassetpath${i}" style="display:inline-block; min-width:calc(75% - 130px);">${path}</div>`;
+
+                p.appendChild(el);
+            }
+            catch(e){}
+        }
+
+        //images
+        var p = document.getElementById('imageitems');
+        p.innerHTML = "";
+
+        for(var i=0;i<imageAssets.length;i++)
+        {
+            var ass = imageAssets[i];
+
+            try
+            {
+                var path = ass.path;
+                var alias = ass.alias;
+                var encoding = ass.encoding;
+
+
+                if(typeof path==='undefined' || typeof alias==='undefined') {continue;}
+
+                if(i===0)
+                {
+                    var h = document.createElement('div');
+                    h.style.padding = '5px';
+                    h.innerHTML = `
+                    <div style="display:inline-block; min-width:25%;"> 
+                    Resource Identifier
+                    </div>
+
+                    <div style="display:inline-block; min-width:calc(75% - 130px);"> 
+                        Resource File Name
+                    </div>
+
+                    <div style="display:inline-block; min-width:120px;"> 
+                        Image Pixel Depth
+                    </div>`;
+
+                    p.appendChild(h);
+                }
+                
+                var el = document.createElement('div');
+                el.className = 'assetitem image';
+                
+                var body = 
+                `<div style="display:inline-block; min-width:25%;"> 
+				 <input id="imageassetalias${i}" class='imageassetalias' style="display:inline-block; width: calc(100% - 40px);" value="${alias}"></input>
+				 </div>
+				 <div id="imageassetpath${i}" style="display:inline-block; min-width:calc(75% - 130px);">${path} </div>
+			     <div style="display:inline-block; min-width:120px;"> 
+				 <select id='imageassetpixeldepth${i}' class='selector imagepixeldepth' tag='${i}' style="min-width:100px;">`;
+
+									if(typeof encoding === 'undefined')
+									{
+										body+=`
+										<option value="" selected>AUTO</option>
+										<option value="RGB565">RGB 565</option>
+										<option value="ARGB6666">ARGB 6666</option>
+										<option value="ARGB8888">ARGB 8888</option>
+										`;
+									}
+									else
+									{
+										if(encoding === 'RGB565')
+										{
+											body+=`
+											<option value="">AUTO</option>
+											<option value="RGB565" selected>RGB 565</option>
+											<option value="ARGB6666">ARGB 6666</option>
+											<option value="ARGB8888">ARGB 8888</option>
+											`;											
+										}
+                                        else
+										if(encoding === 'ARGB6666')
+										{
+											body+=`
+											<option value="">AUTO</option>
+											<option value="RGB565" >RGB 565</option>
+											<option value="ARGB6666" selected>ARGB 6666</option>
+											<option value="ARGB8888">ARGB 8888</option>
+											`;											
+										}
+                                        else
+										if(encoding === 'ARGB8888')
+										{
+											body+=`
+											<option value="">AUTO</option>
+											<option value="RGB565" >RGB 565</option>
+											<option value="ARGB6666">ARGB 6666</option>
+											<option value="ARGB8888" selected>ARGB 8888</option>
+											`;											
+										}
+                                        else
+                                        {
+                                            body+=`
+                                            <option value="" selected>AUTO</option>
+                                            <option value="RGB565">RGB 565</option>
+                                            <option value="ARGB6666">ARGB 6666</option>
+                                            <option value="ARGB8888">ARGB 8888</option>
+                                            `;     
+                                        }
+									}
+
+									body+=`</select>
+								                   </div>`;
+
+                 el.innerHTML = body;
+                 p.appendChild(el);
+            }
+            catch(e){}
+        }
+
+        addListeners();
+    };
+
+    function addListeners()
+    {
+        var imp = document.getElementsByClassName('selector imagepixeldepth');
+
+        if(typeof imp !== 'undefined')
+        {
+            for(var i=0;i<imp.length;i++)
+            {
+                imp[i].addEventListener('change',() => { vscode.postMessage({ type: 'update', value: validate() });});
+            }
+        }
+
+        imp = document.getElementsByClassName('imageassetalias');
+
+        if(typeof imp !== 'undefined')
+        {
+            for(var i=0;i<imp.length;i++)
+            {
+                imp[i].addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+            }
+        }
+
+        imp = document.getElementsByClassName('soundassetalias');
+
+        if(typeof imp !== 'undefined')
+        {
+            for(var i=0;i<imp.length;i++)
+            {
+                imp[i].addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+            }
         }
     };
 
@@ -99,8 +347,6 @@
             document.getElementById('appicon').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
             document.getElementById('sourcefile').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
             document.getElementById('scriptfile').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
-            //document.getElementById('imagedir').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
-            //document.getElementById('sounddir').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
 
             document.getElementById('targetsdk').addEventListener('change',() =>
             {
@@ -112,6 +358,8 @@
                 var resp = validate();
                 vscode.postMessage({ type: 'save', value: resp });
             });
+
+            addListeners();
         }
         catch(e){}
     };
@@ -133,10 +381,10 @@
                         document.getElementById('appicon').value = d.appIcon.path;
                         document.getElementById('sourcefile').value = d.sourceFile;
                         document.getElementById('scriptfile').value = d.scriptFile;
-                        //document.getElementById('imagedir').value = d.imageAssetsDir;
-                        //document.getElementById('sounddir').value = d.soundAssetsDir;
             
                         document.getElementById('targetsdk').value = d.sdkVersion;
+
+                        updateAssets(d);
 
                         validate();
                     }

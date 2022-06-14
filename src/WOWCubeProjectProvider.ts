@@ -214,7 +214,7 @@ import {Output} from './Output';
 						</div>
 						-->
 						<div style="display:inline-block;margin-left: 2px;margin-top:40px;font-size:14px;min-width:170px;"><strong>Image Assets</strong></div>
-						<div class="items" style="width:(100% - 25px); margin-top:10px;padding:10px;min-width:700px;">
+						<div id="imageitems" class="items" style="width:(100% - 25px); margin-top:10px;padding:10px;min-width:700px;">
 							
 						<div style="padding:5px;">
 							<div style="display:inline-block; min-width:25%;"> 
@@ -231,20 +231,60 @@ import {Output} from './Output';
 						</div>
 						`;
 
-						for(var i=0;i<0;i++)
+						for(var i=0;i<json.imageAssets.length;i++)
 						{
-							body+=`<div class="assetitem">
+							body+=`<div class="assetitem image">
 							
 								<div style="display:inline-block; min-width:25%;"> 
-									<input id="imagedir" style="display:inline-block; width: calc(100% - 20px);" value="NIKITA"></input>
+									<input id="imageassetalias${i}" class='imageassetalias' style="display:inline-block; width: calc(100% - 40px);" value="${json.imageAssets[i].alias}"></input>
 								</div>
-								<div style="display:inline-block; min-width:calc(75% - 130px);"> DDD </div>
+								<div id="imageassetpath${i}" style="display:inline-block; min-width:calc(75% - 130px);">${json.imageAssets[i].path} </div>
 								<div style="display:inline-block; min-width:120px;"> 
-									<select class='selector' style="min-width:100px;">
-										<option value="-1" selected>AUTO</option>
-										<option value="0">RGB 565</option>
-										<option value="1">ARGB 6666</option>
-									</select>
+									<select id='imageassetpixeldepth${i}' class='selector imagepixeldepth' tag='${i}' style="min-width:100px;">`;
+
+									if(typeof json.imageAssets[i].encoding === 'undefined')
+									{
+										body+=`
+										<option value="" selected>AUTO</option>
+										<option value="RGB565">RGB 565</option>
+										<option value="ARGB6666">ARGB 6666</option>
+										<option value="ARGB8888">ARGB 8888</option>
+										`;
+									}
+									else
+									{
+										if(json.imageAssets[i].encoding === 'RGB565')
+										{
+											body+=`
+											<option value="">AUTO</option>
+											<option value="RGB565" selected>RGB 565</option>
+											<option value="ARGB6666">ARGB 6666</option>
+											<option value="ARGB8888">ARGB 8888</option>
+											`;											
+										}
+
+										if(json.imageAssets[i].encoding === 'ARGB6666')
+										{
+											body+=`
+											<option value="">AUTO</option>
+											<option value="RGB565" >RGB 565</option>
+											<option value="ARGB6666" selected>ARGB 6666</option>
+											<option value="ARGB8888">ARGB 8888</option>
+											`;											
+										}
+
+										if(json.imageAssets[i].encoding === 'ARGB8888')
+										{
+											body+=`
+											<option value="">AUTO</option>
+											<option value="RGB565" >RGB 565</option>
+											<option value="ARGB6666">ARGB 6666</option>
+											<option value="ARGB8888" selected>ARGB 8888</option>
+											`;											
+										}
+									}
+
+									body+=`</select>
 								</div>
 
 							</div>`;
@@ -252,7 +292,7 @@ import {Output} from './Output';
 						body+=`</div>
 
 						<div style="display:inline-block;margin-left: 2px;margin-top:40px;font-size:14px;min-width:170px;"><strong>Sound Assets</strong></div>
-						<div class="items" style="width:(100% - 25px); margin-top:10px;padding:10px;min-width:700px;">
+						<div id="sounditems" class="items" style="width:(100% - 25px); margin-top:10px;padding:10px;min-width:700px;">
 							
 						<div style="padding:5px;">
 							<div style="display:inline-block; min-width:25%;"> 
@@ -265,14 +305,14 @@ import {Output} from './Output';
 						</div>
 						`;
 
-						for(var i=0;i<0;i++)
+						for(var i=0;i<json.soundAssets.length;i++)
 						{
-							body+=`<div class="assetitem">
+							body+=`<div class="assetitem sound">
 							
 								<div style="display:inline-block; min-width:25%;"> 
-									<input id="imagedir" style="display:inline-block; width: calc(100% - 20px);" value="NIKITA"></input>
+									<input id="soundassetalias${i}" class="soundassetalias" style="display:inline-block; width: calc(100% - 40px);" value="${json.soundAssets[i].alias}"></input>
 								</div>
-								<div style="display:inline-block; min-width:calc(75% - 130px);"> DDD </div>
+								<div id="soundassetpath${i}" style="display:inline-block; min-width:calc(75% - 130px);">${json.soundAssets[i].path}</div>
 							</div>`;
 						}
 

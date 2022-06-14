@@ -121,6 +121,25 @@ export class Project
                 });
             }
 
+            for(var i=0;i<json.imageAssets.length;i++)
+            {
+                var found:boolean = false;
+
+                for(var j=0;j<this.Images.length;j++)
+                {
+                    if(json.imageAssets[i].path === this.Images[j].path)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if(found===false)
+                {
+                    json.imageAssets.splice(i, 1);
+                }
+            }
+
 
             found = false;
             try
@@ -167,6 +186,25 @@ export class Project
                 missingAssets.forEach(asset => {
                     json.soundAssets.push({path:asset.path,alias:asset.alias});
                 });
+            }
+
+            for(var i=0;i<json.soundAssets.length;i++)
+            {
+                var found:boolean = false;
+
+                for(var j=0;j<this.Sounds.length;j++)
+                {
+                    if(json.soundAssets[i].path === this.Sounds[j].path)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if(found===false)
+                {
+                    json.soundAssets.splice(i, 1);
+                }
             }
 
             //save changes

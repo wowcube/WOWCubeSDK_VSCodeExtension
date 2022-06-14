@@ -401,12 +401,14 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			//this.writeEmitter.fire('Running app on selected WOWCube device...\r\n');
 			this._channel.appendLine('Running app on selected WOWCube device...\r\n');
 
+			/*
 			if(!this.createVirtualFlashDir(cubename))
 			{
 				this._channel.appendLine('Failed to run in emulator.\r\n');
 				this.closeEmitter.fire(0);
 				resolve();
 			}
+			*/
 
 			var device = Configuration.getCurrentDevice();
 
