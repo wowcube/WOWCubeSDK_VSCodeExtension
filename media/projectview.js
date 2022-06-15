@@ -230,7 +230,7 @@
 
                     p.appendChild(h);
                 }
-                
+
                 var el = document.createElement('div');
                 el.className = 'assetitem image';
                 
@@ -358,7 +358,7 @@
                 var resp = validate();
                 vscode.postMessage({ type: 'save', value: resp });
             });
-
+            
             addListeners();
         }
         catch(e){}

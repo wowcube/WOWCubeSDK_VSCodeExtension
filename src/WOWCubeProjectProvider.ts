@@ -94,7 +94,7 @@ import {Output} from './Output';
 					{
 						document.save();
 					}
-					return;
+					return;		
 			}
 		});
 
@@ -140,7 +140,9 @@ import {Output} from './Output';
                 <div style="padding:0px;">
                 	<div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:24px;">Cubeapp Project Settings</div>                    
                     <div class="separator"></div>
-
+					<div style="position: absolute;right: 20px;top: 0;font-size: 12px;">
+					<!--<button id="reload_button" style="height:10px; width:80px;font-size:10px;">RELOAD</button>-->
+					</div>
 					<div class="view" style="top:65px;">
 
 						<div style="display:inline-block;margin-left: 2px;font-size:14px;min-width:165px;"><strong>Basic Settings</strong></div>
@@ -352,8 +354,6 @@ import {Output} from './Output';
     {
 		const edit = new vscode.WorkspaceEdit();
 
-		// Just replace the entire document every time for this example extension.
-		// A more complete extension should compute minimal edits instead.
 		edit.replace(
 			document.uri,
 			new vscode.Range(0, 0, document.lineCount, 0),

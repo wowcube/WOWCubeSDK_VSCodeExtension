@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { getNonce } from "./getNonce";
 import * as os from 'os';
 import * as fs from 'fs';
+import * as cp from 'child_process';
 import * as path from 'path';
 import { Uri } from "vscode";
 import {Configuration} from './Configuration';
@@ -105,6 +106,11 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 
 					}
 					break;
+				case 'buttonCheckForUpdatesPressed':
+					{
+						this.doUpdate();
+					}
+					break;
 				case 'buttonPressed':
 						{
 							var p = os.platform();
@@ -184,6 +190,67 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 		}
 
 		this._view?.webview.postMessage({ type: 'setVersion',value:version });
+	}
+
+	private async doUpdate(): Promise<void> 
+    {
+		return new Promise<void>((resolve,reject) => 
+        {
+			this._channel.appendLine("Checking for updates...");
+			this._channel.show(true);
+
+			var utilspath = Configuration.getUtilsPath();
+			var command = '"'+utilspath+Configuration.getUpdater()+'"';
+
+			var currVersion = '0.9.0';
+			var endpoint = 'https://support.cicloud.com.au:6666';
+
+			//check -cr 0.9.0 -cho -de https://support.cicloud.com.au:6666
+
+			command+=" check -cr "+currVersion+" -de "+endpoint;
+
+			var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
+			{
+				if (error) 
+				{
+					//reject({ error, stdout, stderr });
+				}
+				if (stderr && stderr.length > 0) 
+				{
+					this._channel.appendLine(stderr);
+					this._channel.show(true);
+				}
+
+				if (stdout && stdout.length > 0) 
+				{
+					this._channel.appendLine(stdout);
+					this._channel.show(true);
+				}
+
+				if(child.exitCode===0)
+				{
+					this._channel.appendLine('Check complete.\r\n');
+
+					/*
+					if(target==='emulator')
+					{
+						this.doRunInEmulator(build_json.name+'.cub');
+					}
+					else
+					{
+						this.doRunOnDevice(build_json.name+'.cub');
+					}
+					*/
+				}
+				else
+				{
+					this._channel.appendLine('Failed to check.\r\n');
+
+					this.closeEmitter.fire(0);
+					resolve();
+				}
+			});	
+		});
 	}
 
 	private validateSDKPath(path:string)
@@ -335,7 +402,6 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			<div>SDK Version</div>
 			<select id="versions" class='selector'>`;
 
-			
 			let versions = Configuration.getVersions();			
 			let version:string = Configuration.getCurrentVersion();
 
@@ -354,6 +420,10 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			
 
 			body+=`</select>
+
+			<br/>
+			<br/>
+			<button class="share-adhoc-button">Check For Updates</button>
 
 			<script nonce="${nonce}" src="${scriptUri}"></script>
 		</body>
