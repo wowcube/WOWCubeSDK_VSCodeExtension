@@ -196,6 +196,10 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
     {
 		return new Promise<void>((resolve,reject) => 
         {
+			var out:Array<string> = new Array();
+			var err:boolean = false;
+			var re = /(?<maj>\d{1,2})\.(?<min>\d{1,2})\.(?<build>\d{1,3})/g;
+
 			this._channel.appendLine("Checking for updates...");
 			this._channel.show(true);
 
@@ -203,11 +207,17 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			var command = '"'+utilspath+Configuration.getUpdater()+'"';
 
 			var currVersion = '0.9.0';
-			var endpoint = 'https://support.cicloud.com.au:6666';
+
+			var endpoint = 'https://updates.wowcube.com';
+
+			const cm = re.exec(currVersion);
+			const currMaj = cm?.groups?.maj;
+			const currMin = cm?.groups?.min;
+			const currBuild = cm?.groups?.build;
 
 			//check -cr 0.9.0 -cho -de https://support.cicloud.com.au:6666
 
-			command+=" check -cr "+currVersion+" -de "+endpoint;
+			command+=" check -cr "+currVersion+" -cho -de "+endpoint;
 
 			var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
 			{
@@ -217,18 +227,46 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				}
 				if (stderr && stderr.length > 0) 
 				{
+					out.push(stderr);
+
 					this._channel.appendLine(stderr);
 					this._channel.show(true);
 				}
 
 				if (stdout && stdout.length > 0) 
 				{
+					out.push(stderr);
+
 					this._channel.appendLine(stdout);
 					this._channel.show(true);
 				}
 
 				if(child.exitCode===0)
 				{
+
+					out.forEach(line=>{
+                            
+						if(line.indexOf('Error:')!==-1)
+						{
+							err = true;
+						}
+						else
+						{
+							var l:string[] = line.split('\n');							
+							l.forEach(s=>
+								{
+								const match = re.exec(s);
+								if(match!==null)
+								{
+									const availMaj = match?.groups?.maj;
+									const availMin = match?.groups?.min;
+									const availBuild = match?.groups?.build;
+								}
+							});
+
+						}
+					});
+
 					this._channel.appendLine('Check complete.\r\n');
 
 					/*
@@ -244,8 +282,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				}
 				else
 				{
-					this._channel.appendLine('Failed to check.\r\n');
-
+					this._channel.appendLine('Failed to check for updates.\r\n');
 					this.closeEmitter.fire(0);
 					resolve();
 				}
