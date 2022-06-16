@@ -127,6 +127,33 @@ export class Configuration
     public static getLastPath() { return Configuration.getString('wowsdk.conf.wizard');}
     public static setLastPath(value:string) {Configuration.setString('wowsdk.conf.wizard',value);}
 
+    public static getWOWSDKContainingFolder()
+    {
+        var p = os.platform();
+        var path = Configuration.getWOWSDKPath();
+        var folder = "/";
+
+        switch(p)
+        {
+            case 'darwin'://mac
+            {
+                const fname = "/WOWCube Development Kit.app";
+                var pos = path.indexOf(fname);
+
+                folder = path.substring(0,pos);
+            }
+            break;
+            case 'win32': //windows
+            break;
+            case 'linux':
+            default:
+            //unsupported os
+            break;        
+        }
+
+        return folder;
+    }
+
     public static async getWOWSDKPathAsync():Promise<string>
     {
          var path:string = Configuration.getString('wowsdk.conf.wowsdkpath');

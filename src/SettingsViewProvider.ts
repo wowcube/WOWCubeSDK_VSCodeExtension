@@ -8,11 +8,13 @@ import { Uri } from "vscode";
 import {Configuration} from './Configuration';
 import {Output} from "./Output";
 import { Providers } from './Providers';
+import { Version } from './Version';
 
 export class SettingsViewProvider implements vscode.WebviewViewProvider
 {
 	public static readonly viewType = 'WOWCubeSDK.settingsView';
 	private _view?: vscode.WebviewView;
+	private checkingForUpdates:boolean = false;
 
 	private writeEmitter = Output.terminal();
 	onDidWrite: vscode.Event<string> = this.writeEmitter.event;
@@ -108,7 +110,11 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 					break;
 				case 'buttonCheckForUpdatesPressed':
 					{
-						this.doUpdate();
+						if(!this.checkingForUpdates)
+						{
+							this.checkingForUpdates = true;
+							this.doCheckUpdate();
+						}
 					}
 					break;
 				case 'buttonPressed':
@@ -192,13 +198,13 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 		this._view?.webview.postMessage({ type: 'setVersion',value:version });
 	}
 
-	private async doUpdate(): Promise<void> 
+	private async doCheckUpdate(): Promise<void> 
     {
 		return new Promise<void>((resolve,reject) => 
         {
 			var out:Array<string> = new Array();
 			var err:boolean = false;
-			var re = /(?<maj>\d{1,2})\.(?<min>\d{1,2})\.(?<build>\d{1,3})/g;
+			var re = /(?<maj>\d{1,2})\.(?<min>\d{1,2})\.(?<build>\d{1,4})/g;
 
 			this._channel.appendLine("Checking for updates...");
 			this._channel.show(true);
@@ -228,17 +234,11 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				if (stderr && stderr.length > 0) 
 				{
 					out.push(stderr);
-
-					this._channel.appendLine(stderr);
-					this._channel.show(true);
 				}
 
 				if (stdout && stdout.length > 0) 
 				{
 					out.push(stderr);
-
-					this._channel.appendLine(stdout);
-					this._channel.show(true);
 				}
 
 				if(child.exitCode===0)
@@ -258,32 +258,107 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 								const match = re.exec(s);
 								if(match!==null)
 								{
-									const availMaj = match?.groups?.maj;
-									const availMin = match?.groups?.min;
-									const availBuild = match?.groups?.build;
+									const aMaj = match?.groups?.maj;
+									const aMin = match?.groups?.min;
+									const aBuild = match?.groups?.build;
+
+									const ver = aMaj+'.'+aMin+'.'+aBuild;
+
+									const cmp = Version.compareWDK(currVersion,ver);
+
+									if(cmp!==2)
+									{
+										if(cmp!==-1)
+										{
+											this._channel.appendLine("WOWCube Development Kit version "+currVersion+" is up to date");
+										}
+										else
+										{
+											this._channel.appendLine("WOWCube Development Kit current version is "+currVersion+", available version is "+ver);
+											this.doUpdate();
+										}
+									}
+									else
+									{
+										this._channel.appendLine('Failed to check for updates, version string format is incorrect.\r\n');
+									}
 								}
 							});
 
 						}
 					});
 
-					this._channel.appendLine('Check complete.\r\n');
-
-					/*
-					if(target==='emulator')
-					{
-						this.doRunInEmulator(build_json.name+'.cub');
-					}
-					else
-					{
-						this.doRunOnDevice(build_json.name+'.cub');
-					}
-					*/
+					this.closeEmitter.fire(0);
+					this.checkingForUpdates = false;
+					resolve();
 				}
 				else
 				{
+					out.forEach(line=>{
+						this._channel.appendLine(line);
+					});
+
 					this._channel.appendLine('Failed to check for updates.\r\n');
 					this.closeEmitter.fire(0);
+
+					resolve();
+				}
+			});	
+		});
+	}
+
+	private async doUpdate(): Promise<void> 
+    {
+		return new Promise<void>((resolve,reject) => 
+        {
+			var out:Array<string> = new Array();
+			var err:boolean = false;
+
+			var utilspath = Configuration.getUtilsPath();
+			var command = '"'+utilspath+Configuration.getUpdater()+'"';
+
+			var currVersion = '0.9.0';
+			var wdkPath = Configuration.getWOWSDKContainingFolder();
+
+			var endpoint = 'https://updates.wowcube.com';
+
+			//check -cr 0.9.0 -chu -tf "/Applications" -de https://support.cicloud.com.au:6666
+
+			command+=" check -cr "+currVersion+" -chu -tf \""+wdkPath+"\" -de "+endpoint;
+
+			var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
+			{
+				if (error) 
+				{
+					//reject({ error, stdout, stderr });
+				}
+				if (stderr && stderr.length > 0) 
+				{
+					out.push(stderr);
+				}
+
+				if (stdout && stdout.length > 0) 
+				{
+					out.push(stderr);
+				}
+
+				if(child.exitCode===0)
+				{
+					this._channel.appendLine('Update complete\r\n');
+					this.closeEmitter.fire(0);
+
+					this.checkingForUpdates = false;
+					resolve();
+				}
+				else
+				{
+					out.forEach(line=>{
+						this._channel.appendLine(line);
+					});
+
+					this._channel.appendLine('Failed to complete the update.\r\n');
+					this.closeEmitter.fire(0);
+
 					resolve();
 				}
 			});	
