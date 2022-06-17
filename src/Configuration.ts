@@ -127,6 +127,61 @@ export class Configuration
     public static getLastPath() { return Configuration.getString('wowsdk.conf.wizard');}
     public static setLastPath(value:string) {Configuration.setString('wowsdk.conf.wizard',value);}
 
+
+    public static getWDKPrivate()
+    {
+        var p = os.platform();
+        var homedir = os.homedir();
+        var json = null;
+
+        switch(p)
+        {
+            case 'darwin'://mac
+            {
+                homedir+="/Library/WOWCube Development Kit/WDK_private";
+
+                try
+                {
+                    json = JSON.parse(fs.readFileSync(homedir, 'utf-8'));
+                }
+                catch(e)
+                {}
+            }
+            break;
+            case 'win32': //windows
+            break;
+            case 'linux':
+            default:
+            //unsupported os
+            break;        
+        }
+
+        return json;
+    }
+
+    public static getWDKGlobals()
+    {
+        var json = null;
+        try
+        {
+            var path = Configuration.getWOWSDKPath()+'sdk/globals';
+            json = JSON.parse(fs.readFileSync(path, 'utf-8'));
+
+            var pr = this.getWDKPrivate();
+
+            if(pr!==null)
+            {
+                if(typeof pr.updateEndpoint!=='undefined')
+                {
+                    json.updateEndpoint = pr.updateEndpoint;
+                }
+            }
+        }
+        catch(e){}
+
+        return json;
+    }
+
     public static getWOWSDKContainingFolder()
     {
         var p = os.platform();

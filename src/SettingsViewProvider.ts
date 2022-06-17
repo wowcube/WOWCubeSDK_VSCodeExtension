@@ -212,9 +212,16 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			var utilspath = Configuration.getUtilsPath();
 			var command = '"'+utilspath+Configuration.getUpdater()+'"';
 
-			var currVersion = '0.9.0';
+			var globals = Configuration.getWDKGlobals();
 
-			var endpoint = 'https://updates.wowcube.com';
+			if(globals===null)
+			{
+				this._channel.appendLine('Failed to complete the check, WOWCube Development Kit global parameters can not be read\r\n');
+				this.closeEmitter.fire(0);
+				resolve();
+			}
+			var currVersion = globals.currentVersion;
+			var endpoint = globals.updateEndpoint;
 
 			const cm = re.exec(currVersion);
 			const currMaj = cm?.groups?.maj;
@@ -299,8 +306,8 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 					});
 
 					this._channel.appendLine('Failed to check for updates.\r\n');
-					this.closeEmitter.fire(0);
-
+					this.closeEmitter.fire(0);	
+					this.checkingForUpdates = false;
 					resolve();
 				}
 			});	
@@ -317,10 +324,17 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			var utilspath = Configuration.getUtilsPath();
 			var command = '"'+utilspath+Configuration.getUpdater()+'"';
 
-			var currVersion = '0.9.0';
 			var wdkPath = Configuration.getWOWSDKContainingFolder();
+			var globals = Configuration.getWDKGlobals();
 
-			var endpoint = 'https://updates.wowcube.com';
+			if(globals===null)
+			{
+				this._channel.appendLine('Failed to complete the update, WOWCube Development Kit global parameters can not be read\r\n');
+				this.closeEmitter.fire(0);
+				resolve();
+			}
+			var currVersion = globals.currentVersion;
+			var endpoint = globals.updateEndpoint;
 
 			//check -cr 0.9.0 -chu -tf "/Applications" -de https://support.cicloud.com.au:6666
 
