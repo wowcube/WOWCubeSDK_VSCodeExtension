@@ -149,6 +149,16 @@ export class Configuration
             }
             break;
             case 'win32': //windows
+            {
+                homedir+="/AppData/Local/WOWCube Development Kit/WDK_private";
+
+                try
+                {
+                    json = JSON.parse(fs.readFileSync(homedir, 'utf-8'));
+                }
+                catch(e)
+                {}
+            }
             break;
             case 'linux':
             default:
