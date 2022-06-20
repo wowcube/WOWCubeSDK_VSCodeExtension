@@ -89,3 +89,7 @@
 ### 1.13.0
 * Added 'SDK Files' section to Documentation & Code Examples
 * Pawn project folder names are changed
+
+### 1.14.0
+* Added user interface for project assets management
+* Added support for WOWCube Development Kit updates checker
