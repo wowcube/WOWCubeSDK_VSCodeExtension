@@ -258,13 +258,22 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				min = vers[1];
 			}
 
-			//command+=' -X100000 -d0 -O3 -v2 -i"'+includepath+'" ';
-			command+=' -X120000 -d0 -O3 -v2 -i"'+includepath+'" ';
+
+			if(this.target==='emulator')
+			{
+				command+=' -d3 -v2 -i"'+includepath+'" ';
+			}
+			else
+			{
+				command+=' -d1 -O3 -v2 -i"'+includepath+'" ';
+			}
+
 			command+='-o"'+destfile+'" ';
 			command+='"'+sourcefile+'"';	
 			command+=' ABI_VERSION_MAJOR='+maj;
 			command+=' ABI_VERSION_MINOR='+min;
-
+			
+			
 			//return version value in case it was changed
 			Configuration.setCurrentVersion(initialVersion);
 
