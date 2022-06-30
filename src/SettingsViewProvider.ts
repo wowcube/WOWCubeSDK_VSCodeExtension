@@ -210,7 +210,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			this._channel.show(true);
 
 			var utilspath = Configuration.getUtilsPath();
-			var command = '"'+utilspath+Configuration.getUpdater()+'"';
+			var command = '"'+utilspath+Configuration.getUpdater().cli+'"';
 
 			var globals = Configuration.getWDKGlobals();
 
@@ -245,7 +245,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 
 				if (stdout && stdout.length > 0) 
 				{
-					out.push(stderr);
+					out.push(stdout);
 				}
 
 				if(child.exitCode===0)
@@ -322,7 +322,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			var err:boolean = false;
 
 			var utilspath = Configuration.getUtilsPath();
-			var command = '"'+utilspath+Configuration.getUpdater()+'"';
+			var command = '"'+utilspath+Configuration.getUpdater().ui+'"';
 
 			var wdkPath = Configuration.getWOWSDKContainingFolder();
 			var globals = Configuration.getWDKGlobals();
@@ -353,12 +353,12 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 
 				if (stdout && stdout.length > 0) 
 				{
-					out.push(stderr);
+					out.push(stdout);
 				}
 
 				if(child.exitCode===0)
 				{
-					this._channel.appendLine('Update complete\r\n');
+					this._channel.appendLine('Done\r\n');
 					this.closeEmitter.fire(0);
 
 					this.checkingForUpdates = false;

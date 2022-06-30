@@ -488,14 +488,14 @@ export class Configuration
         switch(p)
         {
             case 'darwin': //mac
-                return 'wow-updater.app/Contents/MacOS/wow-updater';
+                return {cli:'wow-updater.app/Contents/MacOS/wow-updater',ui:'wow-updater.app/Contents/MacOS/wow-updater'};
             case 'linux':
-                return 'wow-updater';
+                return {cli:'wow-updater',ui:'wow-updater'};
             case 'win32': //windows
-                return 'wow-updater.exe';
+                return {cli:'wow-update_cli.exe',ui:'wow-update.exe'};
             default:
             //unsupported os
-            return 'wowcube-updater';
+            return {cli:'wow-updater',ui:'wow-updater'};
         }
     }
 
