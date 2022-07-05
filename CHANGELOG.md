@@ -98,3 +98,6 @@
 * Improved support for WOWCube Development Kit updates checker
 * The size of a cubeapp is not limited anymore
 * Compilation of cubeapps for running on emulator is now done with full debug information and dynamic checking
+
+### 1.16.0
+* Improved support for WOWCube Development Kit updates checker

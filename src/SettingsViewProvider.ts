@@ -181,6 +181,9 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 						}
 			}
 		});
+
+		//check for updates every time extension starts
+		this.doCheckUpdate();
 	}
 
 	private refreshVersionSelector()
@@ -259,35 +262,41 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 						}
 						else
 						{
-							var l:string[] = line.split('\n');							
+							var l:string[] = line.split('\n');	
+							let started:boolean = false;
+
 							l.forEach(s=>
 								{
-								const match = re.exec(s);
-								if(match!==null)
+								if(!started)
 								{
-									const aMaj = match?.groups?.maj;
-									const aMin = match?.groups?.min;
-									const aBuild = match?.groups?.build;
-
-									const ver = aMaj+'.'+aMin+'.'+aBuild;
-
-									const cmp = Version.compareWDK(currVersion,ver);
-
-									if(cmp!==2)
+									const match = re.exec(s);
+									if(match!==null)
 									{
-										if(cmp!==-1)
+										const aMaj = match?.groups?.maj;
+										const aMin = match?.groups?.min;
+										const aBuild = match?.groups?.build;
+
+										const ver = aMaj+'.'+aMin+'.'+aBuild;
+
+										const cmp = Version.compareWDK(currVersion,ver);
+
+										if(cmp!==2)
 										{
-											this._channel.appendLine("WOWCube Development Kit version "+currVersion+" is up to date");
+											if(cmp!==-1)
+											{
+												this._channel.appendLine("WOWCube Development Kit version "+currVersion+" is up to date");
+											}
+											else
+											{
+												this._channel.appendLine("WOWCube Development Kit current version is "+currVersion+", available version is "+ver);
+												this.doUpdate();
+												started = true;
+											}
 										}
 										else
 										{
-											this._channel.appendLine("WOWCube Development Kit current version is "+currVersion+", available version is "+ver);
-											this.doUpdate();
+											this._channel.appendLine('Failed to check for updates, version string format is incorrect.\r\n');
 										}
-									}
-									else
-									{
-										this._channel.appendLine('Failed to check for updates, version string format is incorrect.\r\n');
 									}
 								}
 							});
