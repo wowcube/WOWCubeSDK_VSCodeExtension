@@ -110,9 +110,12 @@ import {Output} from './Output';
 		var ind = fn.lastIndexOf('/');
 		var workspace:string = fn.substring(0,ind);
 
-		Project.validateAssets(workspace);
+		if(Project.validateAssets(workspace))
+		{
+			this.updateTextDocument(document, Project.Json); 
+		}
 
-		const json = this.getDocumentAsJson(document);
+		const json = Project.Json;//this.getDocumentAsJson(document);
 
 		// Local path to script and css for the webview
 		const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'reset.css'));

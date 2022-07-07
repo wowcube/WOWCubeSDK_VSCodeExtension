@@ -9,6 +9,7 @@ export class Project
 {
     public static Images: Array<Asset> = new Array<Asset>();
     public static Sounds: Array<Asset> = new Array<Asset>();
+    public static Json:any;
 
     //sets SDK version to currently opened project file
     public static setSDKVersion(workspace:string, version:string):boolean
@@ -104,6 +105,11 @@ export class Project
                     if(a.path===b.path)
                     {
                         found = true;
+                        if(typeof a.alias === 'undefined')
+                        {
+                            json.imageAssets[i].alias = b.alias;
+                        }
+
                         break;
                     }
                 }
@@ -171,6 +177,12 @@ export class Project
                     if(a.path===b.path)
                     {
                         found = true;
+
+                        if(typeof a.alias === 'undefined')
+                        {
+                            json.imageAssets[i].alias = b.alias;
+                        }
+
                         break;
                     }
                 }
@@ -207,10 +219,21 @@ export class Project
                 }
             }
 
+            //final path, check aliases
+            for(var i=0;i<json.soundAssets.length;i++)
+            {
+                if(typeof json.soundAssets[i].alias === 'undefined')
+                {
+                    //json.soundAssets[i].alias = json.soundAssets[i].
+                }
+            }
+
             //save changes
             var str = JSON.stringify(json);
             fs.writeFileSync(workspace+'/wowcubeapp-build.json',str);
 
+            Project.Json = json;
+            
             return true;
         }
         catch(e)

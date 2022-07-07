@@ -145,3 +145,6 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 1.16.0
 * Improved support for WOWCube Development Kit updates checker
+
+### 1.17.0
+* Improved handling of Cubeapp project file settings
