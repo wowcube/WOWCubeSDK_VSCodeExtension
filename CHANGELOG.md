@@ -104,3 +104,6 @@
 
 ### 1.17.0
 * Improved handling of Cubeapp project file settings
+
+### 1.17.1
+* Windows compatibility fix

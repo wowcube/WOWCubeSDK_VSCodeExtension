@@ -108,6 +108,12 @@ import {Output} from './Output';
     {
 		var fn:String = document.fileName;
 		var ind = fn.lastIndexOf('/');
+
+		if(ind===-1)
+		{
+			ind = fn.lastIndexOf('\\');
+		}
+
 		var workspace:string = fn.substring(0,ind);
 
 		if(Project.validateAssets(workspace))
