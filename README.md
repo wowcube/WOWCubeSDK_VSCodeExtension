@@ -151,3 +151,6 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 1.17.1
 * Windows compatibility fix
+
+### 1.17.2
+* Improved handling of Cubeapp project file settings

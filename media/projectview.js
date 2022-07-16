@@ -384,6 +384,28 @@
             
                         document.getElementById('targetsdk').value = d.sdkVersion;
 
+                        var sel = document.getElementById("targetsdk");
+                        var found = false;
+
+                        for (i = 0; i < sel.length; i++) 
+                        {
+                            if(sel.options[i].value === d.sdkVersion)
+                            {
+                              found = true;
+                              break;           
+                            }
+                        }
+
+                        if(found)
+                        {
+                            document.getElementById('targetsdkwarn').style.display = 'none';
+                        }
+                        else
+                        {
+                            document.getElementById('targetsdkwarn').style.display = 'block';
+                            document.getElementById('targetsdkwarn').innerHTML = 'Application target SDK version '+d.sdkVersion+' is not installed.';
+                        }
+                        
                         updateAssets(d);
 
                         validate();

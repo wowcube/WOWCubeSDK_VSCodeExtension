@@ -341,11 +341,10 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			this._channel.appendLine('Validating project file');
 
 			//pre-process json file
-			if(Project.validateAssets(this.workspace)===false)
+			if(Project.validateAssets(this.workspace,true)===false)
 			{
-				this._channel.appendLine('Project file can not be built or validated!\r\n');
+				this._channel.appendLine('Project file failed to validate, the project may have build or runtime errors! Please check the project file.\r\n');
 			}
-
 
 			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));//require(this.workspace+'/wowcubeapp-build.json');
 

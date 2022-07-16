@@ -39,6 +39,7 @@ import {Output} from './Output';
 		webviewPanel.webview.options = {
 			enableScripts: true,
 		};
+
 		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview,document);
 
 		function updateWebview() {
@@ -92,6 +93,7 @@ import {Output} from './Output';
 				break;
 				case 'save':
 					{
+						const text = document.getText();
 						document.save();
 					}
 					return;		
@@ -115,13 +117,19 @@ import {Output} from './Output';
 		}
 
 		var workspace:string = fn.substring(0,ind);
-
-		if(Project.validateAssets(workspace))
+	
+		if(Project.validateAssets(workspace,false))
 		{
-			this.updateTextDocument(document, Project.Json); 
+			const v1 = JSON.stringify(JSON.parse(document.getText()));
+			const v2 = JSON.stringify(Project.Json);
+
+			if(v1!==v2)
+			{
+				this.updateTextDocument(document, Project.Json); 
+			}
 		}
 
-		const json = Project.Json;//this.getDocumentAsJson(document);
+		const json = Project.Json;
 
 		// Local path to script and css for the webview
 		const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this.context.extensionUri, 'media', 'reset.css'));
@@ -171,7 +179,7 @@ import {Output} from './Output';
 						<select id="targetsdk" class='selector' style="width:calc(100% - 200px);min-width:100px;">`;
 
 						let versions = Configuration.getVersions();			
-						let version:string = json.sdkVersion;//Configuration.getCurrentVersion();
+						let version:string = json.sdkVersion;
 			
 						var versionFound:boolean = false;
 
@@ -192,7 +200,11 @@ import {Output} from './Output';
 
 						if(!versionFound)
 						{
-						body+=`<div class="negative" style="display:block;margin-left: 185px;font-size:14px;">Application target SDK version ${version} is not installed.`;
+							body+=`<div class="negative" id="targetsdkwarn" style="display:block;margin-left: 185px;font-size:14px;">Application target SDK version ${version} is not installed.`;
+						}
+						else
+						{
+							body+=`<div class="negative" id="targetsdkwarn" style="display:none;margin-left: 185px;font-size:14px;">`;
 						}
 
 						body+=`</div>

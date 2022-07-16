@@ -33,7 +33,7 @@ export class Project
         return false;
     }
 
-    public static validateAssets(workspace:string):boolean
+    public static validateAssets(workspace:string,autosave:boolean):boolean
     {
         try
         {
@@ -219,19 +219,12 @@ export class Project
                 }
             }
 
-            //final path, check aliases
-            for(var i=0;i<json.soundAssets.length;i++)
-            {
-                if(typeof json.soundAssets[i].alias === 'undefined')
-                {
-                    //json.soundAssets[i].alias = json.soundAssets[i].
-                }
-            }
-
             //save changes
-            var str = JSON.stringify(json);
-            fs.writeFileSync(workspace+'/wowcubeapp-build.json',str);
-
+            var str = JSON.stringify(json,null,2);
+            if(autosave===true)
+            {
+                fs.writeFileSync(workspace+'/wowcubeapp-build.json',str);
+            }
             Project.Json = json;
             
             return true;
