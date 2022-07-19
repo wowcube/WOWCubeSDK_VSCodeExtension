@@ -8,7 +8,9 @@
         let n = document.getElementById('appname');
         let v = document.getElementById('appversion');
         let t = document.getElementById('targetsdk');
+        let b = document.getElementById('badge');
         let ai = document.getElementById('appicon');
+        let aibg = document.getElementById('appiconbg');
         let sf = document.getElementById('sourcefile');
         let scf = document.getElementById('scriptfile');
 
@@ -148,10 +150,12 @@
                    version:v.value,
                    sdkVersion: t.value,
                    appIcon:{path:ai.value},
+                   appIconBg:{path:aibg.value},
                    sourceFile:sf.value,
                    scriptFile:scf.value,
                    imageAssets:imageAssets,
-                   soundAssets:soundAssets
+                   soundAssets:soundAssets,
+                   appFlags:b.value
                    };
         }
         else
@@ -345,10 +349,16 @@
             document.getElementById('appname').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
             document.getElementById('appversion').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
             document.getElementById('appicon').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+            document.getElementById('appiconbg').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
             document.getElementById('sourcefile').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
             document.getElementById('scriptfile').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
 
             document.getElementById('targetsdk').addEventListener('change',() =>
+            {
+               vscode.postMessage({ type: 'update', value: validate() });
+            });
+
+            document.getElementById('badge').addEventListener('change',() =>
             {
                vscode.postMessage({ type: 'update', value: validate() });
             });
@@ -379,9 +389,28 @@
                         document.getElementById('appname').value = d.name;
                         document.getElementById('appversion').value = d.version;
                         document.getElementById('appicon').value = d.appIcon.path;
+
+                        if(typeof d.appIconBg!=='undefined')
+                        {
+                            if(typeof d.appIconBg.path!=='undefined')
+                            {
+                                document.getElementById('appiconbg').value = d.appIconBg.path;
+                            }
+                            else
+                            {
+                                document.getElementById('appiconbg').value = "";
+                            }
+                        }
+                        else
+                        {
+                            document.getElementById('appiconbg').value = "";
+                        }
+
                         document.getElementById('sourcefile').value = d.sourceFile;
                         document.getElementById('scriptfile').value = d.scriptFile;
-            
+
+                        document.getElementById('badge').value = d.appFlags;
+
                         document.getElementById('targetsdk').value = d.sdkVersion;
 
                         var sel = document.getElementById("targetsdk");

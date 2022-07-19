@@ -40,6 +40,22 @@ export class Project
             //load current project file
             var json = JSON.parse(fs.readFileSync(workspace+'/wowcubeapp-build.json', 'utf-8'));// require(workspace+'/wowcubeapp-build.json');
 
+            //check icon 
+            if(typeof json.appIcon!=='undefined' && typeof json.appIcon.path==='undefined')
+            {
+                //old project format? 
+
+                var v = json.appIcon;
+                json.appIcon = {path:v, encoding:'ARGB6666'};
+            }
+
+            //check app flags
+
+            if(typeof json.appFlags==='undefined')
+            {
+                json.appFlags = '0';
+            }
+            
             //fetch images
             var imagedir = workspace+'/assets/images';
             var sounddir = workspace+'/assets/sounds';
@@ -53,10 +69,13 @@ export class Project
                     {
                         var asset:Asset = new Asset();
 
-                        asset.path = 'assets/images/'+file;
-                        asset.alias = file.substring(0,15);
+                        if(file!=='.DS_Store')
+                        {
+                            asset.path = 'assets/images/'+file;
+                            asset.alias = file.substring(0,15);
 
-                        this.Images.push(asset);
+                            this.Images.push(asset);
+                        }
                     });
             }
 
@@ -67,10 +86,13 @@ export class Project
                     {
                         var asset:Asset = new Asset();
 
-                        asset.path = 'assets/sounds/'+file;
-                        asset.alias = file.substring(0,15);
+                        if(file!=='.DS_Store')
+                        {
+                            asset.path = 'assets/sounds/'+file;
+                            asset.alias = file.substring(0,15);
 
-                        this.Sounds.push(asset);
+                            this.Sounds.push(asset);
+                        }
                     });
             }
 

@@ -154,3 +154,9 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 1.17.2
 * Improved handling of Cubeapp project file settings
+
+### 1.18.0
+* Support for icon background image file setting
+* Support for Cubeapp application badge setting
+* Improved compatibility with earlier formats of project file
+* Improved handling of Cubeapp project file settings

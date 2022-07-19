@@ -87,6 +87,17 @@ import {Output} from './Output';
 
 					if(params!==null)
 					{
+						//handle appIconBg
+						if(typeof params.appIconBg!=='undefined')
+						{
+							if(typeof params.appIconBg.path!=='undefined')
+							{
+								if(params.appIconBg.path.length===0)
+								{
+									delete params.appIconBg;
+								}
+							}
+						}
 						this.updateTextDocument(document,params);
 					}	   
 				   }
@@ -214,9 +225,47 @@ import {Output} from './Output';
 						<div style="margin-top:0px;">
 							<div id="appicont" style="display:inline-block;margin:10px;margin-left: 2px;margin-top:25px;font-size:14px;min-width:170px;">Cubeapp Application Icon</div>
 							<input id="appicon" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.appIcon.path}"></input>
-						</div>
+						</div>`;
 
-						<div style="margin-top:0px;">
+						if(typeof json.appIconBg!== 'undefined')
+						{
+							if(typeof json.appIconBg.path !== 'undefined')
+							{
+								body+=`<div style="margin-top:0px;">
+								<div id="appicontbg" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;min-width:170px;">Icon Background <i style="font-size:10px;">(optional)</i></div>
+								<input id="appiconbg" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.appIconBg.path}"></input>
+								</div>`;	
+							}
+							else
+							{
+								body+=`<div style="margin-top:0px;">
+								<div id="appicontbg" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;min-width:170px;">Icon Background <i style="font-size:10px;">(optional)</i></div>
+								<input id="appiconbg" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value=""></input>
+								</div>`;	
+							}
+						}
+						else
+						{
+							body+=`<div style="margin-top:0px;">
+							<div id="appicontbg" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;min-width:170px;">Icon Background <i style="font-size:10px;">(optional)</i></div>
+							<input id="appiconbg" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value=""></input>
+							</div>`;		
+						}
+
+
+						body+=`<div style="margin-top:0px;">
+						<div id="badget" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Application Badge</div>
+						<select id="badge" class='selector' style="width:calc(100% - 200px);min-width:100px;">`;
+
+							if(json.appFlags==='0') {body+=`<option value="0" selected>None (default)</option>`;} else {body+=`<option value="0">None (default)</option>`;}
+							if(json.appFlags==='1') {body+=`<option value="1" selected>Demo</option>`;} else {body+=`<option value="1">Demo</option>`;}
+							if(json.appFlags==='2') {body+=`<option value="2" selected>Coming Soon</option>`;} else {body+=`<option value="2">Coming Soon</option>`;}
+
+						body+=`</select>
+						</div>`;
+
+
+						body+=`<div style="margin-top:20px;">
 							<div id="sourcefilet" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;min-width:170px;">PAWN Source File</div>
 							<input id="sourcefile" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.sourceFile}"></input>
 						</div>
