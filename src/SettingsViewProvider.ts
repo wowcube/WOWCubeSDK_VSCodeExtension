@@ -254,6 +254,12 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				if(child.exitCode===0)
 				{
 
+				   if(out.length===0)
+				   {
+					this._channel.appendLine("WOWCube Development Kit version "+currVersion+" is up to date");
+				   }
+				   else
+				   {
 					out.forEach(line=>{
                             
 						if(line.indexOf('Error:')!==-1)
@@ -303,7 +309,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 
 						}
 					});
-
+				}
 					this.closeEmitter.fire(0);
 					this.checkingForUpdates = false;
 					resolve();

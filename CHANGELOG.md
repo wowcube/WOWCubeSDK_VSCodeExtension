@@ -116,3 +116,6 @@
 * Support for Cubeapp application badge setting
 * Improved compatibility with earlier formats of project file
 * Improved handling of Cubeapp project file settings
+
+### 1.18.1
+* Minor change in updater output
