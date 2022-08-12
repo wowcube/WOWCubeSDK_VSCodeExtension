@@ -326,7 +326,7 @@ export class ExamplePanel {
                 {
                     fs.readdirSync(sourceSnd).forEach(file => 
                         {
-                            fs.copyFileSync(sourceImg+file,fullpath+'/assets/sounds/'+file);
+                            fs.copyFileSync(sourceSnd+file,fullpath+'/assets/sounds/'+file);
                         });
                 }
 

@@ -163,3 +163,6 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 1.18.1
 * Minor change in updater output
+
+### 1.18.2
+* Minor bugfix
