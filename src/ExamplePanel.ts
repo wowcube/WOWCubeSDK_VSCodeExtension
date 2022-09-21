@@ -441,7 +441,46 @@ export class ExamplePanel {
             if(this._viewLoaded===false)
             this._panel.webview.html = this._getHtmlForWebview(webview);  
         }
-        
+ 
+        private _createTempMediaFolder():string
+        {
+            try
+            {
+                var tempmedia:string = this._extensionUri.fsPath+"/media/temp/";
+
+                if(fs.existsSync(tempmedia)===false)
+                {
+                    fs.mkdirSync(tempmedia);
+                }
+
+                tempmedia+=this._version+'/';
+
+                if(fs.existsSync(tempmedia)===false)
+                {
+                    fs.mkdirSync(tempmedia);
+                }
+
+                var key:string = this._key.replace('/','_');
+                key = key.replace('\\','_');
+
+                tempmedia+=key+'/';
+
+                if(fs.existsSync(tempmedia)===false)
+                {
+                    fs.mkdirSync(tempmedia);
+                }
+
+                return tempmedia;
+            }
+            catch(e)
+            {
+                var t;
+                t=0;
+            }
+
+            return "";
+        }
+
         private _getHtmlForWebview(webview: vscode.Webview) 
         {
             var MarkdownIt = require('markdown-it');
@@ -449,6 +488,7 @@ export class ExamplePanel {
                 html: true
               });
             var content: string = "";
+            var tempfolder: string = "";
 
             var ex = Providers.examples.examples.e;
             var availableVersions = ex.get(this._key);
@@ -479,7 +519,7 @@ export class ExamplePanel {
                 this._version = availableVersions[0];
             }
 
-            var info:string = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key;
+            var info:string = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+'/';
             var minfo:string = info;
 
             var title:string = "No title";
@@ -489,6 +529,32 @@ export class ExamplePanel {
             var hasProject:boolean = false;
             var correctSDK:boolean = false;
             var versionClass:string = "neutral-blue";
+
+             //Look for external resources and copy them into extension temp folder
+             if(fs.existsSync(info)===true)
+             {                    
+                 fs.readdirSync(info).forEach(file => 
+                     {
+                         var ext = file.substring(file.lastIndexOf('.'));
+
+                         if(ext!=='.md' && ext!=='.json' && ext!=='.DS_Store' && ext!=='project')
+                         {
+                             tempfolder = this._createTempMediaFolder();
+
+                             if(tempfolder!=="")
+                             {
+                               try
+                               {
+                                 fs.copyFileSync(info+file,tempfolder+file);
+                               }
+                               catch(e)
+                               {
+
+                               }
+                             }
+                         }
+                     });
+             }
 
             if(fs.existsSync(info)===false)
             {
@@ -508,8 +574,39 @@ export class ExamplePanel {
                     try
                     {
                         var contentmd = fs.readFileSync(info,'utf8');
+
+                        //split md file into lines 
+                        var lines = contentmd.split('\n');
+
+                        var re = /[!][[](?<name>[\s\S]+)][(](?<path>[\s\S]+)[)]/g;
+                        var m;
+                        var toReplace:Array<string> = new Array<string>();
+
+                        lines.forEach(line => {
+
+                            m = re.exec(line);
+                            if(m)
+                            {
+                                toReplace.push(m[2]);
+                            }
+                        });
+
                         content = md.render(contentmd.toString());
 
+                         //replace pathes with secure alternatives provided by VSCode
+                         if(tempfolder!=='')
+                         {
+                         toReplace.forEach(element => {       
+                             
+                             var name = element.substring(element.lastIndexOf('/')+1);
+                             var fullpath = tempfolder+name;
+ 
+                             const imgUri = webview.asWebviewUri(vscode.Uri.file(fullpath));
+ 
+                             content = content.replace(new RegExp(element,'g'),`${imgUri}`);
+                         });
+                         }
+                         
                         const meta = require(minfo);
 
                         title = meta.name;
@@ -586,7 +683,7 @@ export class ExamplePanel {
                     <script type="text/javascript" src="${scriptUri}" nonce="${nonce}"></script>
                       
                     <div style="padding:0px;max-height: 77px;overflow: hidden;">
-                        <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:30px;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;">${title}</div>
+                        <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:30px;line-height: 35px;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;">${title}</div>
                         <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;text-overflow: ellipsis;overflow: hidden;white-space: nowrap;">${desc}</div>
 
                         <!--<div class='${versionClass}' id="t3" style="position: absolute;right: 10px;top: 0;font-size: 12px;">SDK version ${this._version}</div>-->

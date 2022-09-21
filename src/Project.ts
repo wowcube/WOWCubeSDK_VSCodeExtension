@@ -165,6 +165,7 @@ export class Project
                 if(found===false)
                 {
                     json.imageAssets.splice(i, 1);
+                    i--;
                 }
             }
 
@@ -238,6 +239,7 @@ export class Project
                 if(found===false)
                 {
                     json.soundAssets.splice(i, 1);
+                    i--;
                 }
             }
 

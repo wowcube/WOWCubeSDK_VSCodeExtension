@@ -119,3 +119,6 @@
 
 ### 1.18.1
 * Minor change in updater output
+
+### 1.18.2
+* Minor bugfix
