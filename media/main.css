@@ -227,12 +227,20 @@ body {
 	width: 60px;
 }
 
-.bt-run-btn
+.bt-clearsaves-btn
 {
 	position: absolute;
-	top:5px;
-	right: 85px;
-	width: 40px;
+    top: 5px;
+    right: 77px;
+    width: 78px;
+}
+
+.bt-run-btn
+{
+    position: absolute;
+    top: 5px;
+    right: 180px;
+    width: 40px;
 }
 
 .gap-bottom

@@ -122,3 +122,9 @@
 
 ### 1.18.2
 * Minor bugfix
+
+### 1.19.0
+* Ability to clear cubeapp local data
+* Support for embedded images in example projects documentation
+* Imporved handling of sound assets
+* Minor bugfixes

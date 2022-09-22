@@ -277,6 +277,56 @@ export class DeviceDetailsPanel {
                                 }
                             }
                         break;
+
+                        case 'clearappdata':
+                            {
+                                var device = Configuration.getCurrentDevice();
+                                if(device===null)
+                                {
+                                    this._panel.webview.postMessage({ type: 'endRequest'});
+                                    Providers.btdevices.showWait(false);
+
+                                    vscode.window.showWarningMessage("WOWCube device is not selected"); 
+                                }
+                                else
+                                {
+                                    if(Configuration.isDeviceBusy(device.mac)===true)
+                                    {
+                                        vscode.window.showWarningMessage("Device '"+device.name+"' is busy, please try again later");   
+                                    }
+                                    else
+                                    {
+                                        var appname = message.value.replace('\r','');
+                                        if(appname!==null)
+                                        {
+                                            vscode.window.showInformationMessage(
+                                                "Application data of '"+appname+"' will be cleared from the device",
+                                                ...["Clear Application Data", "Cancel"]
+                                            ).then((answer)=>
+                                            {
+                                                if(answer==="Clear Application Data")
+                                                {
+                                                    this.doClearAppData(device.mac,appname);
+                                                    Providers.btdevices.showWait(true); 
+                                                }
+                                                else
+                                                {
+                                                    this._panel.webview.postMessage({ type: 'endRequest'});
+                                                    Providers.btdevices.showWait(false);
+                                                }
+                                            });
+                                        }
+                                        else
+                                        {
+                                            this._panel.webview.postMessage({ type: 'endRequest'});
+                                            Providers.btdevices.showWait(false);
+
+                                            vscode.window.showWarningMessage("Unable to clear application data");   
+                                        }
+                                    }   
+                                }
+                            }
+                        break;
                     }
                 },
                 null,
@@ -843,6 +893,79 @@ export class DeviceDetailsPanel {
                         { 
                             this._panel.webview.postMessage({ type: 'deleteAppItem',value: {name:name}});
                             this._channel.appendLine("Cubeapp successfully deleted");
+                        }
+
+                        this._panel.webview.postMessage({ type: 'endRequest'});
+                        Providers.btdevices.showWait(false);
+
+                    resolve();
+                });	
+            });
+        }
+
+        private async doClearAppData(mac:string, name:string): Promise<void>
+        {
+            return new Promise<void>((resolve) =>
+            {
+                var out:Array<string> = new Array();
+                var err:boolean = false;
+                var info:Array<string> = new Array();
+                var utilspath = Configuration.getUtilsPath();
+                var command = '"'+utilspath+Configuration.getLoader()+'"';
+    
+                command+=" rm -s -n ";
+                command+=name;
+                command+=" -a ";
+                command+=mac;
+    
+                var s:string = "Clearing '"+name+"' data...";
+
+                this._channel.appendLine(s);
+                this._channel.show(true);
+
+                Configuration.setDeviceBusy(mac,true);
+                var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
+                {    
+                    Configuration.setDeviceBusy(mac,false);
+                    if (stderr && stderr.length > 0) 
+                    {
+                        out.push(stderr);
+                    }
+    
+                    if (stdout && stdout.length > 0) 
+                    {
+                        out.push(stdout);
+                    }
+    
+                    if(child.exitCode===0)
+                    {
+                        out.forEach(line=>{
+                            
+                            line = line.replace('\n','');
+    
+                            if(line.indexOf('Error:')!==-1)
+                            {
+                                err = true;
+                            }
+                        });
+                    }
+                    else
+                    {
+                        err = true;
+                    }
+    
+                    if(err)
+                        { 
+                            if(out.length>0)
+                                vscode.window.showErrorMessage("Unable to clear the data: "+out[0]);   
+                            else
+                                vscode.window.showErrorMessage("Unable to clear the data");
+
+                                this._channel.appendLine("Failed to clear the data");
+                        }
+                    else
+                        { 
+                            this._channel.appendLine("Cubeapp data successfully cleared");
                         }
 
                         this._panel.webview.postMessage({ type: 'endRequest'});

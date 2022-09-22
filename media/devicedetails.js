@@ -69,7 +69,17 @@ class AppList
             window.dispatchEvent(new CustomEvent('runpressed',{detail:app.name}));
         });
 
+        const b3 = document.createElement('button');
+        b3.className = 'bt-clearsaves-btn';
+        b3.innerHTML = 'Clear Data';
+
+        b3.addEventListener('click',()=>
+        {
+            window.dispatchEvent(new CustomEvent('clearsavespressed',{detail:app.name}));
+        });
+
         d.appendChild(b2);
+        d.appendChild(b3);
         d.appendChild(b);
         this.el.appendChild(d);
 
@@ -227,6 +237,12 @@ class AppList
     {        
         showWait(true);
         vscode.postMessage({ type: 'runapp', value: e.detail }); 
+    });
+
+    window.addEventListener('clearsavespressed', (e)=>
+    {        
+        showWait(true);
+        vscode.postMessage({ type: 'clearappdata', value: e.detail }); 
     });
 
     // Handle messages sent from the extension to the webview
