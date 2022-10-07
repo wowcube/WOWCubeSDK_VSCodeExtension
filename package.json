@@ -3,10 +3,15 @@
   "displayName": "WOWCubeSDK",
   "description": "WOWCube SDK extension for developing Pawn applications for WOWCube device",
   "icon": "media/icon.png",
-  "version": "1.19.0",
+  "version": "1.20.0",
   "publisher": "cubios-inc",
   "engines": {
     "vscode": "^1.64.0"
+  },
+  "repository": 
+  {
+    "type": "git",
+    "url": "https://github.com/wowcube/WOWCubeSDK_VSCodeExtension.git"
   },
   "extensionKind": [
     "ui",

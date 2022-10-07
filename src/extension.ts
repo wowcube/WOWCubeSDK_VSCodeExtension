@@ -2,7 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { getNonce } from "./getNonce";
-//import { WebAppPanel } from './WebAppPanel';
+
 import { WizardPanel } from './WizardPanel';
 import { AdHocPanel } from './AdHocPanel';
 import { DeviceDetailsPanel } from './DeviceDetailsPanel';
@@ -26,11 +26,14 @@ export async function activate(context: vscode.ExtensionContext)
 	await Configuration.init();
 	Configuration.context = context;
 	
+	//initialize providers
 	Providers.init(context.extensionUri);
 
+	//register build task
 	const workspaceRoot = (vscode.workspace.workspaceFolders && (vscode.workspace.workspaceFolders.length > 0)) ? vscode.workspace.workspaceFolders[0].uri.fsPath : "";
 	buildTask = vscode.tasks.registerTaskProvider(WOWCubeBuildTaskProvider.wowCubeBuildScriptType, new WOWCubeBuildTaskProvider(workspaceRoot));
 
+	//add subscriptions
 	context.subscriptions.push(
 			vscode.window.registerWebviewViewProvider(WizardViewProvider.viewType, Providers.wizard));
 

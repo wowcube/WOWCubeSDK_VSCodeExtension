@@ -18,7 +18,7 @@ export class Project
         {
             if(/(?<maj>\d{1,2})\.(?<min>\d{1,2})(\-(?<build>\d{1,4}))?/.test(version))
             {
-                var json = JSON.parse(fs.readFileSync(workspace+'/wowcubeapp-build.json', 'utf-8'));//require(workspace+'/wowcubeapp-build.json');
+                var json = JSON.parse(fs.readFileSync(workspace+'/wowcubeapp-build.json', 'utf-8'));
                 json.sdkVersion = version;
 
                 var str = JSON.stringify(json);
@@ -38,7 +38,7 @@ export class Project
         try
         {
             //load current project file
-            var json = JSON.parse(fs.readFileSync(workspace+'/wowcubeapp-build.json', 'utf-8'));// require(workspace+'/wowcubeapp-build.json');
+            var json = JSON.parse(fs.readFileSync(workspace+'/wowcubeapp-build.json', 'utf-8'));
 
             //check icon 
             if(typeof json.appIcon!=='undefined' && typeof json.appIcon.path==='undefined')

@@ -128,3 +128,6 @@
 * Support for embedded images in example projects documentation
 * Imporved handling of sound assets
 * Minor bugfixes
+
+### 1.20.0
+* Minor UI tweaks

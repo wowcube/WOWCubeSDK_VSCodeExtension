@@ -22,8 +22,6 @@ export class Configuration
         {
             const conf = vscode.workspace.getConfiguration();
             ret = conf.get(key) as string;
-
-            //ret = vscode.workspace.getConfiguration().get(key) as string;
         }
         catch(e)
         {
@@ -41,8 +39,6 @@ export class Configuration
         }
         catch(e)
         {
-            var t;
-            t=0;
         }
     }
 

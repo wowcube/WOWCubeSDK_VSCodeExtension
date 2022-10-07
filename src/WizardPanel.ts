@@ -144,7 +144,6 @@ export class WizardPanel {
             const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/';
             const templates = require(templatespath+'templates.json');
 
-            //const templates = require('../media/templates/templates.json');
             var fullpath = '';
             var needDeleteFolder:boolean = false;
 

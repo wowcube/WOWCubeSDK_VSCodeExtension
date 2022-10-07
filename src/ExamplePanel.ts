@@ -334,11 +334,6 @@ export class ExamplePanel {
                 fs.copyFileSync(Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+"/project/wowcubeapp-build.json",fullpath+'/wowcubeapp-build.json');
 
                 //create vscode-related configs
-
-                //fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_launch.json",fullpath+'/.vscode/launch.json');
-                //fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_tasks.json",fullpath+'/.vscode/tasks.json');
-                //fs.copyFileSync(this._extensionUri.fsPath+"/media/templates/_extensions.json",fullpath+'/.vscode/extensions.json');
-
                 fs.copyFileSync(templatespath+"_launch.json",fullpath+'/.vscode/launch.json');
                 fs.copyFileSync(templatespath+"_tasks.json",fullpath+'/.vscode/tasks.json');
                 fs.copyFileSync(templatespath+"_extensions.json",fullpath+'/.vscode/extensions.json');

@@ -10,11 +10,13 @@ This extension is designed for WOWCube cubeapp application developers. It simpli
 * Automatic install and run on WOWCube Emulator 
 * Paired WOWCube device detection
 * WOWCube device basic information display
-* Installed cubeapp applications management 
+* Installed cubeapp applications management
+* Installed cubeapp data management
+* Built-in WOWCube Development Kit updater  
 
 ## Requirements
 
- WOWCube Development Kit version 2.5.0 alpha5 or later must be installed on the computer.
+ WOWCube Development Kit version 0.9.0 or later must be installed on the computer.
 
 ## Extension Settings
 
@@ -172,3 +174,6 @@ Although the extension can be used on Linux, it provides limited functionality a
 * Support for embedded images in example projects documentation
 * Imporved handling of sound assets
 * Minor bugfixes
+
+### 1.20.0
+* Minor UI tweaks

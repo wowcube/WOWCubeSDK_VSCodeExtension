@@ -144,7 +144,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			this._channel.appendLine('Compiling cub file...\r\n');
 			const initialVersion = Configuration.getCurrentVersion();
 
-			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));//require(this.workspace+'/wowcubeapp-build.json');
+			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));
 
 			this._channel.appendLine('Project name: '+build_json.name);
 			this._channel.appendLine('Project version: '+build_json.version);
@@ -346,7 +346,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				this._channel.appendLine('Project file failed to validate, the project may produce build or runtime errors! Please check the project file.\r\n');
 			}
 
-			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));//require(this.workspace+'/wowcubeapp-build.json');
+			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));
 
 			var utilspath = Configuration.getUtilsPath();
 			var command = '"'+utilspath+Configuration.getBuilder()+'"';
@@ -379,7 +379,6 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 				if(child.exitCode===0)
 				{
-					//this.writeEmitter.fire('Build complete.\r\n\r\n');
 					this._channel.appendLine('Build complete.\r\n');
 
 					if(target==='emulator')
@@ -406,17 +405,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 	{
 		return new Promise<void>((resolve,reject) => 
         {
-			//this.writeEmitter.fire('Running app on selected WOWCube device...\r\n');
 			this._channel.appendLine('Running app on selected WOWCube device...\r\n');
-
-			/*
-			if(!this.createVirtualFlashDir(cubename))
-			{
-				this._channel.appendLine('Failed to run in emulator.\r\n');
-				this.closeEmitter.fire(0);
-				resolve();
-			}
-			*/
 
 			var device = Configuration.getCurrentDevice();
 

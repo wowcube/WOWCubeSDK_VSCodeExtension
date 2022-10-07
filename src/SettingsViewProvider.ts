@@ -231,8 +231,6 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			const currMin = cm?.groups?.min;
 			const currBuild = cm?.groups?.build;
 
-			//check -cr 0.9.0 -cho -de https://support.cicloud.com.au:6666
-
 			command+=" check -cr "+currVersion+" -cho -de "+endpoint;
 
 			var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
@@ -350,8 +348,6 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			}
 			var currVersion = globals.currentVersion;
 			var endpoint = globals.updateEndpoint;
-
-			//check -cr 0.9.0 -chu -tf "/Applications" -de https://support.cicloud.com.au:6666
 
 			command+=" check -cr "+currVersion+" -chu -tf \""+wdkPath+"\" -de "+endpoint;
 
@@ -536,7 +532,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			</div>
 			<div id='path_err' class="${err_class}">
 				<div class="negative">Required files can not be found at that path!</div>
-				<div class="negative">Please provide a path to <strong>WOWCube Development Kit version 2.5.0 alpha5</strong> or later</div>
+				<div class="negative">Please download, install and provide a path to the most recent version of <strong>WOWCube Development Kit</strong></div>
 				<div class="negative">and make sure you have selected supported SDK version.</div>
 			</div>
 			<br/>
