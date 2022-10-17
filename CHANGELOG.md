@@ -131,3 +131,6 @@
 
 ### 1.20.0
 * Minor UI tweaks
+
+### 1.20.1
+* Minor bugfix for correct badge assignment

@@ -413,6 +413,38 @@ export class Configuration
         catch(e){}
     }
 
+    public static getCC(language:string)
+    {
+        var p = os.platform();
+        switch(p)
+        {
+            case 'darwin': //mac
+            case 'linux':
+                {
+                    switch(language)
+                    {
+                        case 'cpp':
+                            return 'em++';
+                        default:
+                            return '';
+                    }
+                }
+            case 'win32': //windows
+                {
+                    switch(language)
+                    {
+                        case 'cpp':
+                            return 'em++.bat';
+                        default:
+                            return '';
+                    }
+                }
+            default:
+            //unsupported os
+            return '';
+        }
+    }
+
     public static getPawnCC()
     {
         var p = os.platform();
@@ -499,6 +531,34 @@ export class Configuration
     {
         Configuration.setString('wowsdk.conf.wowsdkpath',value);
         Configuration._lastSetSDKPath = value;
+    }
+
+    public static getCompilerPath(language:string)
+    {
+        var p = os.platform();
+        var homedir = os.homedir();
+
+        switch(p)
+        {
+            case 'darwin'://mac
+            {
+                homedir+="/Library/WOWCube Development Kit/Tools/";
+                homedir+=language+'/';
+            }
+            break;
+            case 'win32': //windows
+            {
+                homedir+="/WOWCube Development Kit/Tools/";
+                homedir+=language+'/';
+            }
+            break;
+            case 'linux':
+            default:
+            //unsupported os
+            break;        
+        }
+
+        return homedir;
     }
 
     public static getPawnPath()

@@ -117,8 +117,27 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			this.fileWatcher.onDidDelete(() => this.doBuild());
 		}
 		*/	
+					//pre-process json file
+		if(Project.validateAssets(this.workspace,true)===false)
+		{
+			this._channel.appendLine('Project file failed to validate, the project may produce build or runtime errors! Please check the project file.\r\n');
+			return;
+		}
 
-		this.doCompile(this.action);
+		switch(Project.CurrentLanguage)
+		{
+			case 'pawn':
+				{
+					this.doCompilePawn(this.action);
+				}
+				break;
+			case 'cpp':
+				{
+					this.doCompileCpp(this.action);
+				}
+				break;
+
+		}
 	}
 
 	close(): void 
@@ -136,7 +155,238 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 		this._channel.show(true);
 	}
 
-	private doCompile(action:string): Promise<void> 
+	private doCompileCpp(action:string): Promise<void> 
+    {
+		return new Promise<void>((resolve,reject) => 
+        {
+			this._channel.clear();
+			this._channel.appendLine('Compiling cub file...\r\n');
+			const initialVersion = Configuration.getCurrentVersion();
+
+			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));
+
+			this._channel.appendLine('Project name: '+build_json.name);
+			this._channel.appendLine('Project version: '+build_json.version);
+
+			if(typeof(build_json.sdkVersion)!=='undefined')
+			{
+				this._channel.appendLine('Target SDK version: '+build_json.sdkVersion+'\r\n');
+
+				if(build_json.sdkVersion!==Configuration.getCurrentVersion())
+				{
+					this._channel.appendLine("NOTE: Target SDK version of the application ("+build_json.sdkVersion+") differs from current SDK version ("+Configuration.getCurrentVersion()+")");
+					
+					var versions  = Configuration.getVersions();
+					var detected:boolean = false;
+
+					for(var i=0;i<versions.length;i++)
+					{
+						if(versions[i]===build_json.sdkVersion)
+						{
+							detected = true;
+							break;
+						}
+					}      
+
+					if(detected===false)
+					{
+						this._channel.appendLine("NOTE: SDK version "+build_json.sdkVersion+" is not installed. Please install required version of SDK or change application Target SDK version to one of the following:\r\n");
+						for(var i=0;i<versions.length;i++)
+						{
+							this._channel.appendLine("\tVersion "+versions[i]);
+						}    
+						
+						this._channel.appendLine('\r\nFailed to compile.\r\n');
+						return;
+					}
+					else
+					{
+						this._channel.appendLine("\r\nNOTE: Building with SDK version "+build_json.sdkVersion+"\r\n");
+						Configuration.setCurrentVersion(build_json.sdkVersion);
+					}
+				}
+			}
+			else
+			{
+				this._channel.appendLine("\r\nNOTE: SDK version is missing from the build file");
+				if(Project.setSDKVersion(this.workspace,Configuration.getCurrentVersion()))
+				{
+					this._channel.appendLine("Target SDK version is set to '"+Configuration.getCurrentVersion()+"'\r\n");
+				}
+				else
+				{
+					this._channel.appendLine("Failed to modify the build file, please make sure the file exists and can be written!\r\n");
+				}
+			}
+
+			var compilerpath = Configuration.getCompilerPath("cpp");
+
+
+			//compilerpath = "d:/WOW/WOWCube Development Kit/sdk/tools/cpp/";
+			compilerpath+='em/upstream/emscripten/';
+			
+			
+
+			var command = '"'+compilerpath+ Configuration.getCC("cpp")+'"';
+
+			var sourcefile = this.workspace+'/'+build_json.sourceFile;
+
+			var currDir = this.workspace+"\\src";	
+
+			var srcdir:string = build_json.sourceFile;
+			var pos = srcdir.indexOf('/');
+			if(pos!==-1)
+			{
+				if(srcdir.substring(0,pos)!=='src')
+				{
+					this._channel.appendLine('NOTE: Non-standard source files folder name is used. Please consider using `src` as a name of the folder.\r\n');
+				}
+				currDir = this.workspace+"\\"+srcdir.substring(0,pos);
+			}
+
+			var builddir:string = this.workspace+"/binary";
+			pos = build_json.scriptFile.indexOf('/');
+			if(pos!==-1)
+			{
+				if(build_json.scriptFile.substring(0,pos)!=='binary')
+				{
+					this._channel.appendLine('NOTE: Non-standard intermediary binary files folder name is used. Please consider using `binary` as a name of the folder.\r\n');
+				}
+
+				builddir = this.workspace+"/"+build_json.scriptFile.substring(0,pos);
+			}
+
+			var destfile = this.workspace+'/'+build_json.scriptFile;
+
+			this.makeDirSync(builddir);
+
+			//-X$100000 -d0 -O3 -v2 -i../PawnLibs -DSource ladybug.pwn
+
+			var includepath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/cpp/';
+
+			/*
+			if(Configuration.isWindows())
+			{
+				//This is weird, but it seems that pawncc treats include directories differently on different platforms
+				//On windows, it auto-searches for "standard" include folder on level up bin/ folder
+				//On mac, it does the opposite - auto-searches for inc files in source folder, but does not know where the "standard" folder is 
+				
+				includepath=currDir;
+			}
+			*/
+
+			var vers = Configuration.getCurrentVersion().split('.');
+
+			var maj = '0';
+			var min = '1';
+
+			if(vers.length===2)
+			{
+				maj = vers[0];
+				min = vers[1];
+			}
+
+
+			if(this.target==='emulator')
+			{
+			}
+			else
+			{
+				//command+=" -v";
+				command+=' -std=c++11';
+				command+=' -g0';
+				command+=' -O3';
+			}
+
+			//C:/Users/Dev/emsdk/upstream/emscripten/em++.bat -std=c++11 -g0 -O3 -s STRICT=1 -s WASM=1 -s INITIAL_MEMORY=131072 -s TOTAL_STACK=65536 -s ERROR_ON_UNDEFINED_SYMBOLS=0 -ID:\WOW\WasmLibs\cpp 
+			//--no-entry -o D:\WOW\binary\WorkAndRelax.wasm D:\WOW\WorkAndRelax\src\work_relax.cpp D:\WOW\WasmLibs\cpp\AppManager.cpp D:\WOW\WasmLibs\cpp\native.cpp D:\WOW\WasmLibs\cpp\Screen.cpp D:\WOW\WasmLibs\cpp\GuiObjects.cpp
+
+			
+			
+			command+=' -s STRICT=1';
+			command+=' -s WASM=1';
+			command+=' -s INITIAL_MEMORY=131072';
+			command+=' -s TOTAL_STACK=65536';
+			command+=' -s ERROR_ON_UNDEFINED_SYMBOLS=0';
+			command+=' -ID:/WOW/WasmLibs/cpp';
+			command+=' --no-entry';
+			command+=' -o D:/WOW/binary/c1.wasm';
+			
+
+			
+			command+=' D:/WOW/WorkAndRelax/src/work_relax.cpp';
+			command+=' D:/WOW/WasmLibs/cpp/AppManager.cpp';
+			command+=' D:/WOW/WasmLibs/cpp/native.cpp';
+			command+=' D:/WOW/WasmLibs/cpp/Screen.cpp';
+			command+=' D:/WOW/WasmLibs/cpp/GuiObjects.cpp';
+			
+
+			//command+='-o"'+destfile+'" ';
+			//command+='"'+sourcefile+'"';	
+			//command+=' ABI_VERSION_MAJOR='+maj;
+			//command+=' ABI_VERSION_MINOR='+min;
+			
+			
+			//return version value in case it was changed
+			Configuration.setCurrentVersion(initialVersion);
+
+			if(compilerpath.length===0)
+			{
+				vscode.window.showErrorMessage("C++ Compiler support package for WOWCube SDK is not detected.\nPlease make sure WOWCube SDK is installed, it is up to date and C++ support package for WOWCube SDK is installed"); 
+				this._channel.appendLine('C++ Compiler support package for WOWCube SDK is not detected.\r\n\r\n');
+
+				this.closeEmitter.fire(0);
+				resolve();
+				return;
+			}
+
+			var child:cp.ChildProcess = cp.exec(command, { cwd: ""}, (error, stdout, stderr) => 
+			{
+				if (error) 
+				{
+					//reject({ error, stdout, stderr });
+				}
+				if (stderr && stderr.length > 0) 
+				{
+					this._channel.appendLine(stderr);
+					this._channel.show(true);
+				}
+
+				if (stdout && stdout.length > 0) 
+				{
+					this._channel.appendLine(stdout);
+					this._channel.show(true);
+				}
+
+				const date = new Date();
+				this.setSharedState(date.toTimeString() + ' ' + date.toDateString());
+
+				if(child.exitCode===0)
+				{
+					this._channel.appendLine('File compiled successfully.\r\n');
+
+					if(action==='compile')
+					{
+						this.closeEmitter.fire(0);
+						resolve();
+					}
+					else
+					{
+						//this.doBuild(this.target);
+					}
+				}
+				else
+				{
+					this._channel.appendLine('Failed to compile.\r\n');
+
+					this.closeEmitter.fire(0);
+					resolve();
+				}
+			});	
+		});
+	}
+
+	private doCompilePawn(action:string): Promise<void> 
     {
 		return new Promise<void>((resolve,reject) => 
         {
@@ -340,11 +590,13 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			this._channel.appendLine('Building cub file...');
 			this._channel.appendLine('Validating project file');
 
+			/*
 			//pre-process json file
 			if(Project.validateAssets(this.workspace,true)===false)
 			{
 				this._channel.appendLine('Project file failed to validate, the project may produce build or runtime errors! Please check the project file.\r\n');
 			}
+			*/
 
 			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));
 

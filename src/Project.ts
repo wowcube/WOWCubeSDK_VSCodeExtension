@@ -11,6 +11,8 @@ export class Project
     public static Sounds: Array<Asset> = new Array<Asset>();
     public static Json:any;
 
+    public static CurrentLanguage:string = 'pawn';
+
     //sets SDK version to currently opened project file
     public static setSDKVersion(workspace:string, version:string):boolean
     {
@@ -50,10 +52,19 @@ export class Project
             }
 
             //check app flags
-
             if(typeof json.appFlags==='undefined')
             {
                 json.appFlags = '0';
+            }
+            
+            //check language
+            if(typeof json.language==='undefined')
+            {
+                Project.CurrentLanguage = "pawn";
+            }
+            else
+            {
+                Project.CurrentLanguage = json.language;
             }
             
             //fetch images
@@ -241,6 +252,13 @@ export class Project
                     json.soundAssets.splice(i, 1);
                     i--;
                 }
+            }
+
+            var v:any = json.appFlags;
+            if(typeof(v) === 'string' || v instanceof String)
+            {
+                //New format of project file requres appFlags to be an integer.
+                json.appFlags = parseInt(json.appFlags);
             }
 
             //save changes

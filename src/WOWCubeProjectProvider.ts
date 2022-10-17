@@ -257,9 +257,9 @@ import {Output} from './Output';
 						<div id="badget" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Application Badge</div>
 						<select id="badge" class='selector' style="width:calc(100% - 200px);min-width:100px;">`;
 
-							if(json.appFlags==='0') {body+=`<option value="0" selected>None (default)</option>`;} else {body+=`<option value="0">None (default)</option>`;}
-							if(json.appFlags==='1') {body+=`<option value="1" selected>Demo</option>`;} else {body+=`<option value="1">Demo</option>`;}
-							if(json.appFlags==='2') {body+=`<option value="2" selected>Coming Soon</option>`;} else {body+=`<option value="2">Coming Soon</option>`;}
+							if(json.appFlags===0) {body+=`<option value="0" selected>None (default)</option>`;} else {body+=`<option value=0>None (default)</option>`;}
+							if(json.appFlags===1) {body+=`<option value="1" selected>Demo</option>`;} else {body+=`<option value=1>Demo</option>`;}
+							if(json.appFlags===2) {body+=`<option value="2" selected>Coming Soon</option>`;} else {body+=`<option value=2>Coming Soon</option>`;}
 
 						body+=`</select>
 						</div>`;

@@ -155,7 +155,7 @@
                    scriptFile:scf.value,
                    imageAssets:imageAssets,
                    soundAssets:soundAssets,
-                   appFlags:b.value
+                   appFlags:parseInt(b.value)
                    };
         }
         else

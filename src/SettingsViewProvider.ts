@@ -109,7 +109,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 					}
 					break;
 				case 'buttonCheckForUpdatesPressed':
-					{
+					{						
 						if(!this.checkingForUpdates)
 						{
 							this.checkingForUpdates = true;

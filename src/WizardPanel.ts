@@ -5,11 +5,13 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Uri } from "vscode";
 import {Configuration} from './Configuration';
+import { Project } from "./Project";
 
 export class WizardPanel {
 
     public static currentPanel: WizardPanel | undefined;
     public static readonly viewType = "WOWCubeSDK.wizardPanel";
+    public static currentLanguage = "pawn";
 
     private readonly _panel: vscode.WebviewPanel;  
     private readonly _extensionUri: vscode.Uri;  
@@ -130,6 +132,10 @@ export class WizardPanel {
                                 }
                             }
                         break;
+                        case 'languageChanged':
+                            {
+                                WizardPanel.currentLanguage = message.value;
+                            }
                     }
                 },
                 null,
@@ -141,7 +147,31 @@ export class WizardPanel {
         {
             var ret = {path:'',desc:''};
 
-            const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/';
+            if(WizardPanel.currentLanguage=='pawn') { ret =  this.generate_pawn(name,path,template); }
+            if(WizardPanel.currentLanguage=='cpp')  { ret =  this.generate_cpp(name,path,template); }
+
+            return ret;
+        }
+
+        private generate_cpp(name:string, path:string, template:number)
+        {
+            var ret = {path:'',desc:''};
+            vscode.window.showWarningMessage("Not implemented");
+
+            const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/'+WizardPanel.currentLanguage+'/';
+            const templates = require(templatespath+'templates.json');
+
+            var fullpath = '';
+            var needDeleteFolder:boolean = false;
+
+            return ret;
+        }
+
+        private generate_pawn(name:string,path:string,template:number)
+        {
+            var ret = {path:'',desc:''};
+
+            const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/'+WizardPanel.currentLanguage+'/';
             const templates = require(templatespath+'templates.json');
 
             var fullpath = '';
@@ -377,8 +407,20 @@ export class WizardPanel {
                                 <input id="foldername" style="display:inline-block; width:50%;" readonly value="${lastPath}"></input> <button id="folder_button" style="display:inline-block; width:70px;">...</button>
                             </div>
                         
+                            
+                            <div style="margin-top:30px;">
+                            <div class="badge"> <div class="badge_text">3</div></div>
+                            <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Choose programming language</div>
+                            <br/>
+                            <select id="plang" class='selector' style="display:inline-block; width:50%;padding-left:4px; padding-right:4px;">;
+                            <option value="pawn" selected>Pawn</option>
+                            <!--<option value="cpp">C++</option>-->
+                            </select>
+                            </div>
+                            
+
                             <div style="margin-top:30px;margin-bottom:5px;">
-                                <div class="badge"> <div class="badge_text">3</div></div>
+                                <div class="badge"> <div class="badge_text">4</div></div>
                                 <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Select project template</div>
                             </div>
 

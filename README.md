@@ -177,3 +177,6 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 1.20.0
 * Minor UI tweaks
+
+### 1.20.1
+* Minor bugfix for correct badge assignment

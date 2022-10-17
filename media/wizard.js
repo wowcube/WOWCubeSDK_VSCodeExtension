@@ -82,6 +82,11 @@ class TemplateItem
             vscode.postMessage({ type: 'folder', value: "" });
         });
 
+        document.getElementById('plang').addEventListener('change',() =>
+        {
+            vscode.postMessage({ type: 'languageChanged', value: document.getElementById('plang').value });
+        });
+
         document.getElementById('generate_button').addEventListener('click', () => 
         {
             var val = validate();
