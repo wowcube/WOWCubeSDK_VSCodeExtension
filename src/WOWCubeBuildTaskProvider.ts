@@ -260,8 +260,6 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 			this.makeDirSync(builddir);
 
-			//-X$100000 -d0 -O3 -v2 -i../PawnLibs -DSource ladybug.pwn
-
 			var includepath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/cpp/';
 
 			/*
@@ -289,6 +287,9 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 			if(this.target==='emulator')
 			{
+				command+=' -std=c++11';
+				command+=' -g0';
+				command+=' -O3';
 			}
 			else
 			{
@@ -301,8 +302,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			//C:/Users/Dev/emsdk/upstream/emscripten/em++.bat -std=c++11 -g0 -O3 -s STRICT=1 -s WASM=1 -s INITIAL_MEMORY=131072 -s TOTAL_STACK=65536 -s ERROR_ON_UNDEFINED_SYMBOLS=0 -ID:\WOW\WasmLibs\cpp 
 			//--no-entry -o D:\WOW\binary\WorkAndRelax.wasm D:\WOW\WorkAndRelax\src\work_relax.cpp D:\WOW\WasmLibs\cpp\AppManager.cpp D:\WOW\WasmLibs\cpp\native.cpp D:\WOW\WasmLibs\cpp\Screen.cpp D:\WOW\WasmLibs\cpp\GuiObjects.cpp
 
-			
-			
+				
 			command+=' -s STRICT=1';
 			command+=' -s WASM=1';
 			command+=' -s INITIAL_MEMORY=131072';
@@ -310,9 +310,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			command+=' -s ERROR_ON_UNDEFINED_SYMBOLS=0';
 			command+=' -ID:/WOW/WasmLibs/cpp';
 			command+=' --no-entry';
-			command+=' -o D:/WOW/binary/c1.wasm';
-			
-
+			command+=' -o "'+destfile+'"';
 			
 			command+=' D:/WOW/WorkAndRelax/src/work_relax.cpp';
 			command+=' D:/WOW/WasmLibs/cpp/AppManager.cpp';
@@ -340,7 +338,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				return;
 			}
 
-			var child:cp.ChildProcess = cp.exec(command, { cwd: ""}, (error, stdout, stderr) => 
+			var child:cp.ChildProcess = cp.exec(command, { cwd: compilerpath}, (error, stdout, stderr) => 
 			{
 				if (error) 
 				{
@@ -372,7 +370,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 					}
 					else
 					{
-						//this.doBuild(this.target);
+						this.doBuild(this.target);
 					}
 				}
 				else

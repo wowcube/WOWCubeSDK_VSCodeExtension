@@ -264,7 +264,8 @@ import {Output} from './Output';
 						body+=`</select>
 						</div>`;
 
-
+						if(json.language=='pawn')
+						{
 						body+=`<div style="margin-top:20px;">
 							<div id="sourcefilet" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;min-width:170px;">PAWN Source File</div>
 							<input id="sourcefile" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.sourceFile}"></input>
@@ -273,18 +274,26 @@ import {Output} from './Output';
 						<div style="margin-top:0px;">
 							<div id="scriptfilet" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">PAWN Object File</div>
 							<input id="scriptfile" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.scriptFile}"></input>
-						</div>
-						<!--
-						<div style="margin-top:0px;">
-							<div id="imagedirt" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Image Resource Directory</div>
-							<input id="imagedir" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.imageAssetsDir}"></input>
+						</div>`;
+						}
+
+						if(json.language=='cpp')
+						{
+						body+=`<div style="margin-top:20px;">
+							<div id="sourcefilet" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;min-width:170px;">CPP Source File</div>
+							<input id="sourcefile" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.sourceFile}"></input>
 						</div>
 
 						<div style="margin-top:0px;">
-							<div id="sounddirt" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Sound Resource Directory</div>
-							<input id="sounddir" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.soundAssetsDir}"></input>
-						</div>
-						-->
+							<div id="scriptfilet" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">WASM Object File</div>
+							<input id="scriptfile" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.scriptFile}"></input>
+						</div>`;
+						}
+
+						body+=`
+						<input id="language_" style="display:none;visibility:hidden;" value="${json.language}"></input>
+						<input id="interpreter_" style="display:none;wvisibility:hidden;" value="${json.interpreter}"></input>
+
 						<div style="display:inline-block;margin-left: 2px;margin-top:40px;font-size:14px;min-width:170px;"><strong>Image Assets</strong></div>
 						<div id="imageitems" class="items" style="width:(100% - 25px); margin-top:10px;padding:10px;min-width:700px;">
 							

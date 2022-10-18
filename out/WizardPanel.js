@@ -116,6 +116,7 @@ class WizardPanel {
     generate_pawn(name, path, template) {
         var ret = { path: '', desc: '' };
         const templatespath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/templates/' + Configuration_1.Configuration.getCurrentVersion() + '/' + WizardPanel.currentLanguage + '/';
+        //const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/';//+WizardPanel.currentLanguage+'/';
         const templates = require(templatespath + 'templates.json');
         var fullpath = '';
         var needDeleteFolder = false;
@@ -290,7 +291,7 @@ class WizardPanel {
                             <br/>
                             <select id="plang" class='selector' style="display:inline-block; width:50%;padding-left:4px; padding-right:4px;">;
                             <option value="pawn" selected>Pawn</option>
-                            <!--<option value="cpp">C++</option>-->
+                            <option value="cpp">C++</option>
                             </select>
                             </div>
                             

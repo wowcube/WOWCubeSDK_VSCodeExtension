@@ -165,6 +165,13 @@ class Project {
                 //New format of project file requres appFlags to be an integer.
                 json.appFlags = parseInt(json.appFlags);
             }
+            //check language-related settings
+            if (typeof (json.language) === 'undefined') {
+                json.language = 'pawn';
+            }
+            if (typeof (json.interpreter) === 'undefined') {
+                json.interpreter = 'pawn';
+            }
             //save changes
             var str = JSON.stringify(json, null, 2);
             if (autosave === true) {

@@ -134,3 +134,6 @@
 
 ### 1.20.1
 * Minor bugfix for correct badge assignment
+
+### 1.20.2
+* Regression bugfix

@@ -21,6 +21,9 @@
         let sft = document.getElementById('sourcefilet');
         let scft = document.getElementById('scriptfilet');
 
+        let lng = document.getElementById('language_');
+        let intpr = document.getElementById('interpreter_');
+
         var ret = true;
 
         nt.className="";
@@ -155,7 +158,9 @@
                    scriptFile:scf.value,
                    imageAssets:imageAssets,
                    soundAssets:soundAssets,
-                   appFlags:parseInt(b.value)
+                   appFlags:parseInt(b.value),
+                   language:lng.value,
+                   interpreter:intpr.value
                    };
         }
         else
@@ -435,6 +440,9 @@
                             document.getElementById('targetsdkwarn').innerHTML = 'Application target SDK version '+d.sdkVersion+' is not installed.';
                         }
                         
+                        document.getElementById('language_').value = d.language;
+                        document.getElementById('interpreter_').value = d.interpreter;
+
                         updateAssets(d);
 
                         validate();

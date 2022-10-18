@@ -172,7 +172,6 @@ class WOWCubeBuildTaskTerminal {
             }
             var destfile = this.workspace + '/' + build_json.scriptFile;
             this.makeDirSync(builddir);
-            //-X$100000 -d0 -O3 -v2 -i../PawnLibs -DSource ladybug.pwn
             var includepath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/cpp/';
             /*
             if(Configuration.isWindows())
@@ -192,6 +191,9 @@ class WOWCubeBuildTaskTerminal {
                 min = vers[1];
             }
             if (this.target === 'emulator') {
+                command += ' -std=c++11';
+                command += ' -g0';
+                command += ' -O3';
             }
             else {
                 //command+=" -v";
@@ -208,7 +210,7 @@ class WOWCubeBuildTaskTerminal {
             command += ' -s ERROR_ON_UNDEFINED_SYMBOLS=0';
             command += ' -ID:/WOW/WasmLibs/cpp';
             command += ' --no-entry';
-            command += ' -o D:/WOW/binary/c1.wasm';
+            command += ' -o "' + destfile + '"';
             command += ' D:/WOW/WorkAndRelax/src/work_relax.cpp';
             command += ' D:/WOW/WasmLibs/cpp/AppManager.cpp';
             command += ' D:/WOW/WasmLibs/cpp/native.cpp';
@@ -227,7 +229,7 @@ class WOWCubeBuildTaskTerminal {
                 resolve();
                 return;
             }
-            var child = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => {
+            var child = cp.exec(command, { cwd: compilerpath }, (error, stdout, stderr) => {
                 if (error) {
                     //reject({ error, stdout, stderr });
                 }
@@ -248,7 +250,7 @@ class WOWCubeBuildTaskTerminal {
                         resolve();
                     }
                     else {
-                        //this.doBuild(this.target);
+                        this.doBuild(this.target);
                     }
                 }
                 else {

@@ -172,6 +172,7 @@ export class WizardPanel {
             var ret = {path:'',desc:''};
 
             const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/'+WizardPanel.currentLanguage+'/';
+            //const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/';//+WizardPanel.currentLanguage+'/';
             const templates = require(templatespath+'templates.json');
 
             var fullpath = '';
@@ -414,7 +415,7 @@ export class WizardPanel {
                             <br/>
                             <select id="plang" class='selector' style="display:inline-block; width:50%;padding-left:4px; padding-right:4px;">;
                             <option value="pawn" selected>Pawn</option>
-                            <!--<option value="cpp">C++</option>-->
+                            <option value="cpp">C++</option>
                             </select>
                             </div>
                             
