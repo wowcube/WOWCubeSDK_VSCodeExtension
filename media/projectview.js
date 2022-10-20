@@ -24,6 +24,9 @@
         let lng = document.getElementById('language_');
         let intpr = document.getElementById('interpreter_');
 
+        let cmpflags = document.getElementById('compilerflags');
+        let cmpdefines = document.getElementById('defines');
+
         var ret = true;
 
         nt.className="";
@@ -148,7 +151,7 @@
 
         if(ret===true)
         {
-            return {
+            var obj = new Object({
                    name:name.replace(/[\/|\\: *?"<>]/g, "_"),
                    version:v.value,
                    sdkVersion: t.value,
@@ -161,7 +164,21 @@
                    appFlags:parseInt(b.value),
                    language:lng.value,
                    interpreter:intpr.value
-                   };
+                   });
+
+            if(obj.language==='cpp' && obj.interpreter === 'wasm')
+            {
+                obj.projectOptions = new Object();
+                obj.projectOptions.cpp = new Object(
+                {
+                    defines: cmpdefines.value,
+                    flags: cmpflags.value,
+                    includeFolders: new Array()
+                }
+                );
+            }
+
+            return obj;
         }
         else
         {
@@ -358,6 +375,13 @@
             document.getElementById('sourcefile').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
             document.getElementById('scriptfile').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
 
+            try
+            {
+            document.getElementById('compilerflags').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});;
+            document.getElementById('defines').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});;
+            }
+            catch(e){}
+
             document.getElementById('targetsdk').addEventListener('change',() =>
             {
                vscode.postMessage({ type: 'update', value: validate() });
@@ -442,6 +466,16 @@
                         
                         document.getElementById('language_').value = d.language;
                         document.getElementById('interpreter_').value = d.interpreter;
+
+                        try
+                        {
+                            if(d.language==='cpp' && d.interpreter==='wasm')
+                            {
+                              document.getElementById('compilerflags').value = d.projectOptions.cpp.flags;
+                              document.getElementById('defines').value = d.projectOptions.cpp.defines;
+                            }
+                        }
+                        catch(e){}
 
                         updateAssets(d);
 

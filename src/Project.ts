@@ -13,6 +13,8 @@ export class Project
 
     public static CurrentLanguage:string = 'pawn';
 
+    public static Options:any = null;
+
     //sets SDK version to currently opened project file
     public static setSDKVersion(workspace:string, version:string):boolean
     {
@@ -262,7 +264,6 @@ export class Project
             }
 
             //check language-related settings
-
             if(typeof(json.language) === 'undefined')
             {
                 json.language = 'pawn';
@@ -272,6 +273,34 @@ export class Project
             {
                 json.interpreter = 'pawn';
             }
+
+            //check options
+            /*
+            "projectOptions": {
+                "cpp": {
+                "defines": "",
+                "flags": "-std=c++11 -g0 -O3",
+                "includeFolders": []
+                }
+            }
+            */
+            if(json.interpreter === 'wasm' && json.language === 'cpp')
+            {
+                if(typeof(json.projectOptions) === 'undefined')
+                {
+                    json.projectOptions = new Object(); 
+                }
+
+                if(typeof(json.projectOptions.cpp) === 'undefined')
+                {
+                    json.projectOptions.cpp = new Object();
+                    json.projectOptions.cpp.defines = "";
+                    json.projectOptions.cpp.flags = "-std=c++11 -g0 -O3";
+                    json.projectOptions.cpp.includeFolders = new Array();
+                }
+            }
+
+            Project.Options = json.projectOptions;
 
             //save changes
             var str = JSON.stringify(json,null,2);

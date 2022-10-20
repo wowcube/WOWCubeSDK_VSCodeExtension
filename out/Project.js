@@ -172,6 +172,28 @@ class Project {
             if (typeof (json.interpreter) === 'undefined') {
                 json.interpreter = 'pawn';
             }
+            //check options
+            /*
+            "projectOptions": {
+                "cpp": {
+                "defines": "",
+                "flags": "-std=c++11 -g0 -O3",
+                "includeFolders": []
+                }
+            }
+            */
+            if (json.interpreter === 'wasm' && json.language === 'cpp') {
+                if (typeof (json.projectOptions) === 'undefined') {
+                    json.projectOptions = new Object();
+                }
+                if (typeof (json.projectOptions.cpp) === 'undefined') {
+                    json.projectOptions.cpp = new Object();
+                    json.projectOptions.cpp.defines = "";
+                    json.projectOptions.cpp.flags = "-std=c++11 -g0 -O3";
+                    json.projectOptions.cpp.includeFolders = new Array();
+                }
+            }
+            Project.Options = json.projectOptions;
             //save changes
             var str = JSON.stringify(json, null, 2);
             if (autosave === true) {
@@ -188,4 +210,5 @@ exports.Project = Project;
 Project.Images = new Array();
 Project.Sounds = new Array();
 Project.CurrentLanguage = 'pawn';
+Project.Options = null;
 //# sourceMappingURL=Project.js.map

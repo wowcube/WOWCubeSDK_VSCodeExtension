@@ -190,34 +190,52 @@ class WOWCubeBuildTaskTerminal {
                 maj = vers[0];
                 min = vers[1];
             }
-            if (this.target === 'emulator') {
-                command += ' -std=c++11';
-                command += ' -g0';
-                command += ' -O3';
+            /*
+            if(this.target==='emulator')
+            {
+                command+=' -std=c++11';
+                command+=' -g0';
+                command+=' -O3';
             }
-            else {
+            else
+            {
                 //command+=" -v";
-                command += ' -std=c++11';
-                command += ' -g0';
-                command += ' -O3';
+                command+=' -std=c++11';
+                command+=' -g0';
+                command+=' -O3';
             }
+            */
+            //compiler flags
+            command += ' ' + Project_1.Project.Options.cpp.flags;
             //C:/Users/Dev/emsdk/upstream/emscripten/em++.bat -std=c++11 -g0 -O3 -s STRICT=1 -s WASM=1 -s INITIAL_MEMORY=131072 -s TOTAL_STACK=65536 -s ERROR_ON_UNDEFINED_SYMBOLS=0 -ID:\WOW\WasmLibs\cpp 
             //--no-entry -o D:\WOW\binary\WorkAndRelax.wasm D:\WOW\WorkAndRelax\src\work_relax.cpp D:\WOW\WasmLibs\cpp\AppManager.cpp D:\WOW\WasmLibs\cpp\native.cpp D:\WOW\WasmLibs\cpp\Screen.cpp D:\WOW\WasmLibs\cpp\GuiObjects.cpp
+            //add mandatory defines. It has been decided to hardcode these values instead of letting user modify them.
             command += ' -s STRICT=1';
             command += ' -s WASM=1';
             command += ' -s INITIAL_MEMORY=131072';
             command += ' -s TOTAL_STACK=65536';
             command += ' -s ERROR_ON_UNDEFINED_SYMBOLS=0';
-            command += ' -ID:/WOW/WasmLibs/cpp';
+            //add SDK include path
+            var sdkpath = Configuration_1.Configuration.getWOWSDKPath();
+            sdkpath += 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/cpp/';
+            command += ' -I"' + sdkpath + '"'; //D:/WOW/WasmLibs/cpp';
+            //add destination file
             command += ' --no-entry';
             command += ' -o "' + destfile + '"';
-            command += ' D:/WOW/WorkAndRelax/src/work_relax.cpp';
-            command += ' D:/WOW/WasmLibs/cpp/AppManager.cpp';
-            command += ' D:/WOW/WasmLibs/cpp/native.cpp';
-            command += ' D:/WOW/WasmLibs/cpp/Screen.cpp';
-            command += ' D:/WOW/WasmLibs/cpp/GuiObjects.cpp';
-            //command+='-o"'+destfile+'" ';
-            //command+='"'+sourcefile+'"';	
+            //add mandatory SDK files
+            command += ' "' + sdkpath + 'AppManager.cpp"';
+            command += ' "' + sdkpath + 'native.cpp"';
+            command += ' "' + sdkpath + 'Screen.cpp"';
+            command += ' "' + sdkpath + 'GuiObjects.cpp"';
+            //fetch sources and add them to command line
+            if (fs.existsSync(currDir) === true) {
+                fs.readdirSync(currDir).forEach(file => {
+                    if (file.indexOf('.cpp') !== -1 || file.indexOf('.cxx') !== -1 || file.indexOf('.c++') !== -1 || file.indexOf('.cc') !== -1 || file.indexOf('.c') !== -1 || file.indexOf('.C') !== -1 || file.indexOf('.cppm') !== -1) {
+                        var fullpath = currDir + '/' + file;
+                        command += ' "' + fullpath + '"';
+                    }
+                });
+            }
             //command+=' ABI_VERSION_MAJOR='+maj;
             //command+=' ABI_VERSION_MINOR='+min;
             //return version value in case it was changed

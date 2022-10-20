@@ -279,15 +279,30 @@ import {Output} from './Output';
 
 						if(json.language=='cpp')
 						{
-						body+=`<div style="margin-top:20px;">
+						body+=`
+						
+						<div style="margin-top:20px;display:none;visibility:hidden;">
 							<div id="sourcefilet" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;min-width:170px;">CPP Source File</div>
-							<input id="sourcefile" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.sourceFile}"></input>
+							<input id="sourcefile" value="${json.sourceFile}"></input>
+						</div>
+
+						<div style="margin-top:20px;">
+							<div id="scriptfilet" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">WASM Object File</div>
+							<input id="scriptfile" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.scriptFile}"></input>
+						</div>
+						
+						<div style="margin-top:20px;">
+						<i style="font-size:12px;float:right;">Attention! Please do not modify the following values unless you really know what you are doing</i>
+						<br/>
+						<div id="compilerflagst" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Compiler flags</div>
+						<input id="compilerflags" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.projectOptions.cpp.flags}"></input>
 						</div>
 
 						<div style="margin-top:0px;">
-							<div id="scriptfilet" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">WASM Object File</div>
-							<input id="scriptfile" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.scriptFile}"></input>
-						</div>`;
+						<div id="definest" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Additional defines</div>
+						<input id="defines" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.projectOptions.cpp.defines}"></input>
+						</div>						
+						`;
 						}
 
 						body+=`
