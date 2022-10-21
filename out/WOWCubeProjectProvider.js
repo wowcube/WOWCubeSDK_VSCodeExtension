@@ -60,6 +60,33 @@ class WOWCubeProjectProvider {
                 case 'warn':
                     vscode.window.showWarningMessage(message.value);
                     break;
+                case 'folder':
+                    {
+                        const options = {
+                            canSelectMany: false,
+                            openLabel: 'Select Include Folder',
+                            canSelectFiles: false,
+                            canSelectFolders: true
+                        };
+                        vscode.window.showOpenDialog(options).then(fileUri => {
+                            if (fileUri && fileUri[0]) {
+                                if (webviewPanel.webview) {
+                                    //save configuration
+                                    var path = fileUri[0].fsPath;
+                                    /*
+                                    if(!path.endsWith(Configuration.getSlash()))
+                                    {
+                                        path = path + Configuration.getSlash();
+                                    }
+                                    */
+                                    path = path.replace(/\\/g, "/");
+                                    Configuration_1.Configuration.setLastPath(path);
+                                    webviewPanel.webview.postMessage({ type: 'folderSelected', value: { path: path, num: message.value } });
+                                }
+                            }
+                        });
+                    }
+                    break;
                 case 'update':
                     {
                         var params = message.value;
@@ -242,16 +269,50 @@ class WOWCubeProjectProvider {
 						</div>
 						
 						<div style="margin-top:20px;">
-						<i style="font-size:12px;float:right;">Attention! Please do not modify the following values unless you really know what you are doing</i>
+						<i style="font-size:12px;float:right;margin-right:7px;">Attention! Please do not modify the following values unless you really know what you are doing</i>
 						<br/>
 						<div id="compilerflagst" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Compiler flags</div>
 						<input id="compilerflags" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.projectOptions.cpp.flags}"></input>
 						</div>
 
-						<div style="margin-top:0px;">
-						<div id="definest" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Additional defines</div>
+						<div id="compilersettingst" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Additional compiler settings</div>
+						<input id="compilersettings" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.projectOptions.cpp.compilerSettings}"></input>
+						</div>
+
+						<div style="margin-top:20px;">
+						<div id="definest" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Preprocessor defines</div>
 						<input id="defines" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.projectOptions.cpp.defines}"></input>
-						</div>						
+						</div>		
+						
+						<div style="margin-top:20px;">
+						<div id="incdirs" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Additional include directories</div>
+						<br/>
+							<div>
+							<input id="incdir1" style="display:inline-block;width:calc(100% - 80px);min-width:100px;" value="${json.projectOptions.cpp.includeFolders[0]}"></input>
+							<button id="incdir_button1" style="display:inline-block;width:50px;height: 18px;">...</button>
+							</div>
+
+							<div style="margin-top:5px";>
+							<input id="incdir2" style="display:inline-block;width:calc(100% - 80px);min-width:100px;" value="${json.projectOptions.cpp.includeFolders[1]}"></input>
+							<button id="incdir_button2" style="display:inline-block;width:50px;height: 18px;">...</button>
+							</div>
+
+							<div style="margin-top:5px";>
+							<input id="incdir3" style="display:inline-block;width:calc(100% - 80px);min-width:100px;" value="${json.projectOptions.cpp.includeFolders[2]}"></input>
+							<button id="incdir_button3" style="display:inline-block;width:50px;height: 18px;">...</button>
+							</div>
+
+							<div style="margin-top:5px";>
+							<input id="incdir4" style="display:inline-block;width:calc(100% - 80px);min-width:100px;" value="${json.projectOptions.cpp.includeFolders[3]}"></input>
+							<button id="incdir_button4" style="display:inline-block;width:50px;height: 18px;">...</button>
+							</div>
+
+							<div style="margin-top:5px";>
+							<input id="incdir5" style="display:inline-block;width:calc(100% - 80px);min-width:100px;" value="${json.projectOptions.cpp.includeFolders[4]}"></input>
+							<button id="incdir_button5" style="display:inline-block;width:50px;height: 18px;">...</button>
+							</div>
+						</div>	
+
 						`;
         }
         body += `

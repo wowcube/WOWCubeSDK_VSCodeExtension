@@ -190,7 +190,19 @@ class Project {
                     json.projectOptions.cpp = new Object();
                     json.projectOptions.cpp.defines = "";
                     json.projectOptions.cpp.flags = "-std=c++11 -g0 -O3";
+                    json.projectOptions.cpp.compilerSettings = "STRICT=1;ERROR_ON_UNDEFINED_SYMBOLS=0";
                     json.projectOptions.cpp.includeFolders = new Array();
+                    json.projectOptions.cpp.includeFolders.push("");
+                    json.projectOptions.cpp.includeFolders.push("");
+                    json.projectOptions.cpp.includeFolders.push("");
+                    json.projectOptions.cpp.includeFolders.push("");
+                    json.projectOptions.cpp.includeFolders.push("");
+                }
+                for (var i = 0; i < 5; i++) {
+                    if (typeof (json.projectOptions.cpp.includeFolders[i]) == 'undefined') {
+                        json.projectOptions.cpp.includeFolders.push("");
+                        i--;
+                    }
                 }
             }
             Project.Options = json.projectOptions;

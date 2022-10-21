@@ -220,9 +220,6 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			}
 
 			var compilerpath = Configuration.getCompilerPath("cpp");
-
-
-			//compilerpath = "d:/WOW/WOWCube Development Kit/sdk/tools/cpp/";
 			compilerpath+='em/upstream/emscripten/';
 			
 			var command = '"'+compilerpath+ Configuration.getCC("cpp")+'"';
@@ -258,17 +255,6 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 			var includepath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/cpp/';
 
-			/*
-			if(Configuration.isWindows())
-			{
-				//This is weird, but it seems that pawncc treats include directories differently on different platforms
-				//On windows, it auto-searches for "standard" include folder on level up bin/ folder
-				//On mac, it does the opposite - auto-searches for inc files in source folder, but does not know where the "standard" folder is 
-				
-				includepath=currDir;
-			}
-			*/
-
 			var vers = Configuration.getCurrentVersion().split('.');
 
 			var maj = '0';
@@ -303,18 +289,46 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			//C:/Users/Dev/emsdk/upstream/emscripten/em++.bat -std=c++11 -g0 -O3 -s STRICT=1 -s WASM=1 -s INITIAL_MEMORY=131072 -s TOTAL_STACK=65536 -s ERROR_ON_UNDEFINED_SYMBOLS=0 -ID:\WOW\WasmLibs\cpp 
 			//--no-entry -o D:\WOW\binary\WorkAndRelax.wasm D:\WOW\WorkAndRelax\src\work_relax.cpp D:\WOW\WasmLibs\cpp\AppManager.cpp D:\WOW\WasmLibs\cpp\native.cpp D:\WOW\WasmLibs\cpp\Screen.cpp D:\WOW\WasmLibs\cpp\GuiObjects.cpp
 
-			//add mandatory defines. It has been decided to hardcode these values instead of letting user modify them.
-			command+=' -s STRICT=1';
+			//add mandatory compiler settings. It has been decided to hardcode these values instead of letting user modify them.
 			command+=' -s WASM=1';
 			command+=' -s INITIAL_MEMORY=131072';
 			command+=' -s TOTAL_STACK=65536';
-			command+=' -s ERROR_ON_UNDEFINED_SYMBOLS=0';
+			//command+=' -s ERROR_ON_UNDEFINED_SYMBOLS=0';
+			//command+=' -s STRICT=1';
+
+			//additional compiler settings
+			var csett = Project.Options.cpp.compilerSettings.split(";");
+			for(var i=0;i<csett.length;i++)
+			{
+				if(csett[i].length>0) command+=' -s '+csett[i];
+			}
+
+			//custom defines 
+			var cdefs = Project.Options.cpp.defines.split(";");
+			
+			for(var i=0;i<cdefs.length;i++)
+			{
+				if(cdefs[i].length>0) command+=' -D'+cdefs[i];
+			}
+
+			//ABI version defines
+			command+=' -DABI_VERSION_MAJOR='+maj;
+			command+=' -DABI_VERSION_MINOR='+min;
 
 			//add SDK include path
 			var sdkpath:string = Configuration.getWOWSDKPath();
 			sdkpath+='sdk/'+Configuration.getCurrentVersion()+'/cpp/';
 
 			command+=' -I"'+sdkpath+'"';//D:/WOW/WasmLibs/cpp';
+
+			//add additional include paths
+			for(var i=0;i<5;i++)
+			{
+				if(Project.Options.cpp.includeFolders[i].length>0)
+				{
+					command+=' -I"'+Project.Options.cpp.includeFolders[i]+'"';
+				}
+			}
 
 			//add destination file
 			command+=' --no-entry';
@@ -339,10 +353,6 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 						}
 					});
 			}
-
-			//command+=' ABI_VERSION_MAJOR='+maj;
-			//command+=' ABI_VERSION_MINOR='+min;
-			
 			
 			//return version value in case it was changed
 			Configuration.setCurrentVersion(initialVersion);

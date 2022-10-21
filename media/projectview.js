@@ -25,7 +25,14 @@
         let intpr = document.getElementById('interpreter_');
 
         let cmpflags = document.getElementById('compilerflags');
+        let cmpsettings = document.getElementById('compilersettings');
         let cmpdefines = document.getElementById('defines');
+
+        let incdir1 = document.getElementById('incdir1');
+        let incdir2 = document.getElementById('incdir2');
+        let incdir3 = document.getElementById('incdir3');
+        let incdir4 = document.getElementById('incdir4');
+        let incdir5 = document.getElementById('incdir5');
 
         var ret = true;
 
@@ -173,9 +180,16 @@
                 {
                     defines: cmpdefines.value,
                     flags: cmpflags.value,
+                    compilerSettings: cmpsettings.value,
                     includeFolders: new Array()
                 }
                 );
+
+                obj.projectOptions.cpp.includeFolders.push(incdir1.value);
+                obj.projectOptions.cpp.includeFolders.push(incdir2.value);
+                obj.projectOptions.cpp.includeFolders.push(incdir3.value);
+                obj.projectOptions.cpp.includeFolders.push(incdir4.value);
+                obj.projectOptions.cpp.includeFolders.push(incdir5.value);
             }
 
             return obj;
@@ -377,8 +391,21 @@
 
             try
             {
-            document.getElementById('compilerflags').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});;
-            document.getElementById('defines').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});;
+                document.getElementById('compilerflags').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+                document.getElementById('defines').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+                document.getElementById('compilersettings').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+
+                document.getElementById('incdir1').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+                document.getElementById('incdir2').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+                document.getElementById('incdir3').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+                document.getElementById('incdir4').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+                document.getElementById('incdir5').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+
+                document.getElementById('incdir_button1').addEventListener('click', () => { vscode.postMessage({ type: 'folder', value: 1 });});
+                document.getElementById('incdir_button2').addEventListener('click', () => { vscode.postMessage({ type: 'folder', value: 2 });});
+                document.getElementById('incdir_button3').addEventListener('click', () => { vscode.postMessage({ type: 'folder', value: 3 });});
+                document.getElementById('incdir_button4').addEventListener('click', () => { vscode.postMessage({ type: 'folder', value: 4 });});
+                document.getElementById('incdir_button5').addEventListener('click', () => { vscode.postMessage({ type: 'folder', value: 5 });});
             }
             catch(e){}
 
@@ -409,6 +436,26 @@
         const message = event.data;
         switch (message.type) 
         {
+            case 'folderSelected':
+                {
+                    try
+                    {
+                    switch(message.value.num)
+                    {
+                        case 1:  document.getElementById('incdir1').value = message.value.path; break;
+                        case 2:  document.getElementById('incdir2').value = message.value.path; break;
+                        case 3:  document.getElementById('incdir3').value = message.value.path; break;
+                        case 4:  document.getElementById('incdir4').value = message.value.path; break;
+                        case 5:  document.getElementById('incdir5').value = message.value.path; break;
+                    }
+
+                    vscode.postMessage({ type: 'update', value: validate() });
+
+                    break;
+                    }
+                    catch(e) {}
+                }
+            break;
             case 'update':
                 {
                     try
@@ -473,6 +520,13 @@
                             {
                               document.getElementById('compilerflags').value = d.projectOptions.cpp.flags;
                               document.getElementById('defines').value = d.projectOptions.cpp.defines;
+                              document.getElementById('compilersettings').value = d.projectOptions.cpp.compilerSettings;
+
+                              document.getElementById('incdir1').value = d.projectOptions.cpp.includeFolders[0];
+                              document.getElementById('incdir2').value = d.projectOptions.cpp.includeFolders[1];
+                              document.getElementById('incdir3').value = d.projectOptions.cpp.includeFolders[2];
+                              document.getElementById('incdir4').value = d.projectOptions.cpp.includeFolders[3];
+                              document.getElementById('incdir5').value = d.projectOptions.cpp.includeFolders[4];
                             }
                         }
                         catch(e){}
