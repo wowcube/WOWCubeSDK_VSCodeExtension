@@ -123,6 +123,8 @@ export class Configuration
     public static getLastPath() { return Configuration.getString('wowsdk.conf.wizard');}
     public static setLastPath(value:string) {Configuration.setString('wowsdk.conf.wizard',value);}
 
+    public static getLastLanguage() {return Configuration.getString('wowsdk.conf.language');}
+    public static setLastLanguage(value:string) {Configuration.setString('wowsdk.conf.language',value);}
 
     public static getWDKPrivate()
     {

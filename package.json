@@ -87,6 +87,12 @@
             "description": "Last used project folder",
             "scope": "application"
           },
+          "wowsdk.conf.language": {
+            "type": "string",
+            "default": "pawn",
+            "description": "Last used programming language of new project",
+            "scope": "application"
+          },          
           "wowsdk.conf.wowsdkpath": {
             "type": "string",
             "default": "",

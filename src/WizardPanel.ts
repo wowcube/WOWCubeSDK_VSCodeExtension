@@ -6,6 +6,7 @@ import * as path from 'path';
 import { Uri } from "vscode";
 import {Configuration} from './Configuration';
 import { Project } from "./Project";
+import {Output} from './Output';
 
 export class WizardPanel {
 
@@ -16,6 +17,12 @@ export class WizardPanel {
     private readonly _panel: vscode.WebviewPanel;  
     private readonly _extensionUri: vscode.Uri;  
     private _disposables: vscode.Disposable[] = [];
+
+    private writeEmitter = Output.terminal();
+	onDidWrite: vscode.Event<string> = this.writeEmitter.event;
+	private closeEmitter = Output.terminalClose();
+	onDidClose?: vscode.Event<number> = this.closeEmitter.event;
+	private _channel: vscode.OutputChannel = Output.channel();
 
     public static createOrShow(extensionUri: vscode.Uri) 
     { 
@@ -135,6 +142,7 @@ export class WizardPanel {
                         case 'languageChanged':
                             {
                                 WizardPanel.currentLanguage = message.value;
+                                Configuration.setLastLanguage(WizardPanel.currentLanguage);
                             }
                     }
                 },
@@ -156,13 +164,137 @@ export class WizardPanel {
         private generate_cpp(name:string, path:string, template:number)
         {
             var ret = {path:'',desc:''};
-            vscode.window.showWarningMessage("Not implemented");
 
             const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/'+WizardPanel.currentLanguage+'/';
             const templates = require(templatespath+'templates.json');
 
             var fullpath = '';
             var needDeleteFolder:boolean = false;
+
+            try
+            {
+                path = path.replace(/\\/g, "/");
+                if(!path.endsWith("/")) { path+='/';}
+
+                fullpath = path + name;
+                ret.path = fullpath;
+
+                if(fs.existsSync(fullpath))
+                {
+                    throw new Error("Project with such name already exists in this folder");
+                }
+
+                var currentTemplate = null;
+
+                for(var i=0;i<templates.length;i++)
+                {
+                    if(templates[i].id === template)
+                    {
+                        currentTemplate = templates[i];
+                        break;
+                    }
+                }
+
+                if(currentTemplate===null)
+                {
+                    throw new Error("Unable to find template source files");
+                }
+
+                this.makeDirSync(fullpath);
+
+                needDeleteFolder = true;
+
+                this.makeDirSync(fullpath+'/.vscode');
+                this.makeDirSync(fullpath+'/binary');
+                this.makeDirSync(fullpath+'/src');
+                this.makeDirSync(fullpath+'/assets');
+                this.makeDirSync(fullpath+'/assets/images');
+                this.makeDirSync(fullpath+'/assets/sounds');
+
+                //const iconFilename:string = this._extensionUri.fsPath+"/media/templates/icon.png";
+                const iconFilename:string = templatespath+"icon.png";             
+                fs.copyFileSync(iconFilename,fullpath+'/assets/icon.png');
+
+                var br = this.beautifyClassName(name);
+
+                if(br.err===1)
+                {
+                    this._channel.appendLine('Project wizard: class name beautification error: '+br.desc);
+                    this._channel.appendLine('Project wizard: default class name will be used instead');
+                }
+                else
+                {
+                    if(br.length!==0)
+                    {
+                        this._channel.appendLine('Project wizard: '+br.desc);
+                    }
+                }
+
+                for(var i=0;i<currentTemplate.files.length; i++)
+                {
+                    if(currentTemplate.files[i]==='_main.cpp')
+                    {
+                        if(!this.replaceInFileAndSave(templatespath+currentTemplate.id+"/"+currentTemplate.files[i],
+                                                  fullpath+'/src/'+br.str+'.cpp',
+                                                  '##CNAME##',
+                                                  br.str))
+                                                  {
+                                                    throw new Error("Unable to generate main source file");
+                                                  }
+                    }
+                    else if((currentTemplate.files[i]==='_main.h'))
+                    {
+                        if(!this.replaceInFileAndSave(templatespath+currentTemplate.id+"/"+currentTemplate.files[i],
+                                                     fullpath+'/src/'+br.str+'.h',
+                                                     '##CNAME##',
+                                                     br.str))
+                                                     {
+                                                      throw new Error("Unable to generate main header file");
+                                                     }
+
+                    }
+                    else
+                    {
+                        fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.files[i],fullpath+'/src/'+currentTemplate.files[i]);
+                    }
+                }
+            
+                for(var i=0;i<currentTemplate.images.length; i++)
+                {
+                    fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.images[i],fullpath+'/assets/images/'+currentTemplate.images[i]);
+                }
+
+                for(var i=0;i<currentTemplate.sounds.length; i++)
+                {
+                    fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.sounds[i],fullpath+'/assets/sounds/'+currentTemplate.sounds[i]);
+                }
+
+                //create json file for build
+                const json = fs.readFileSync(templatespath+currentTemplate.id+"/_build.json").toString();
+                var str = json.replace(/##NAME##/gi,name);
+                str = str.replace(/##CNAME##/gi,br.str);
+                str = str.replace(/##SDKVERSION##/gi,Configuration.getCurrentVersion());
+
+                fs.writeFileSync(fullpath+'/wowcubeapp-build.json',str);
+
+                //create vscode-related configs
+                fs.copyFileSync(templatespath+"_launch.json",fullpath+'/.vscode/launch.json');
+                fs.copyFileSync(templatespath+"_tasks.json",fullpath+'/.vscode/tasks.json');
+                fs.copyFileSync(templatespath+"_extensions.json",fullpath+'/.vscode/extensions.json');
+            }
+            catch(error)
+            {
+                ret.desc = error as string;
+                ret.path = '';
+
+                if(needDeleteFolder===true)
+                {
+                    if(!this.deleteDir(fullpath))
+                    {
+                        ret.desc+='; unalbe to delete recently created project folder!';
+                    }
+                }
+            } 
 
             return ret;
         }
@@ -374,6 +506,9 @@ export class WizardPanel {
             var lastPath = Configuration.getLastPath();
             if(typeof(lastPath)==='undefined') lastPath='';
 
+            var lastLanguage = Configuration.getLastLanguage();
+            if(typeof(lastLanguage)==='undefined') lastLanguage = 'pawn';
+
             var ret =  `      
                 <!DOCTYPE html>
                 <html lang="en">
@@ -413,9 +548,12 @@ export class WizardPanel {
                             <div class="badge"> <div class="badge_text">3</div></div>
                             <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Choose programming language</div>
                             <br/>
-                            <select id="plang" class='selector' style="display:inline-block; width:50%;padding-left:4px; padding-right:4px;">;
-                            <option value="pawn" selected>Pawn</option>
-                            <option value="cpp">C++</option>
+                            <select id="plang" class='selector' style="display:inline-block; width:50%;padding-left:4px; padding-right:4px;">;`;
+
+                            if(lastLanguage==='pawn') { ret += `<option value="pawn" selected>Pawn</option>`;} else { ret += `<option value="pawn">Pawn</option>`;}
+                            if(lastLanguage==='cpp') { ret += ` <option value="cpp" selected>C++</option>`;} else { ret += ` <option value="cpp">C++</option>`;}
+
+                            ret+=`
                             </select>
                             </div>
                             
@@ -460,7 +598,222 @@ export class WizardPanel {
 
             return ret;
         }
+
+        private replaceInFileAndSave(sourcefile:string, destfile:string, template:string, value:string):boolean
+        {
+            var ret:boolean = true;
+
+            try
+            {
+                //read source file
+                const src = fs.readFileSync(sourcefile).toString();
+                //replace template with value
+                var str = src.replace(new RegExp(template,'g'),value);
+                //save file
+                fs.writeFileSync(destfile,str);
+            }
+            catch(e)
+            {
+                ret = false;
+            }
+
+            return ret;
+        }
+
+        private beautifyClassName(name:string):any
+        { 
+            var str:string = name;
+            var desc:string = "";
+
+            const keywords = [
+            'alignas',
+            'alignof',
+            'and',
+            'and_eq',
+            'asm',
+            'atomic_cancel',
+            'atomic_commit',
+            'atomic_noexcept',
+            'auto',
+            'bitand',
+            'bitor',
+            'bool',
+            'break',
+            'case',
+            'catch',
+            'char',
+            'char8_t',
+            'char16_t',
+            'char32_t',
+            'class',
+            'compl',
+            'concept',
+            'const',
+            'consteval',
+            'constexpr',
+            'constinit',
+            'const_cast',
+            'continue',
+            'co_await',
+            'co_return',
+            'co_yield',
+            'decltype',
+            'default',
+            'delete',
+            'do',
+            'double',
+            'dynamic_cast',
+            'else',
+            'enum',
+            'explicit',
+            'export',
+            'extern',
+            'false',
+            'float',
+            'for',
+            'friend',
+            'goto',
+            'if',
+            'inline',
+            'int',
+            'long',
+            'mutable',
+            'namespace',
+            'new',
+            'noexcept',
+            'not',
+            'not_eq',
+            'nullptr',
+            'operator',
+            'or',
+            'or_eq',
+            'private',
+            'protected',
+            'public',
+            'reflexpr',
+            'register',
+            'reinterpret_cast',
+            'requires',
+            'return',
+            'short',
+            'signed',
+            'sizeof',
+            'static',
+            'static_assert',
+            'static_cast',
+            'struct',
+            'switch',
+            'synchronized',
+            'template',
+            'this',
+            'thread_local',
+            'throw',
+            'true',
+            'try',
+            'typedef',
+            'typeid',
+            'typename',
+            'union',
+            'unsigned',
+            'using',
+            'virtual',
+            'void',
+            'volatile',
+            'wchar_t',
+            'while',
+            'xor',
+            'xor_eq',
+            'final',
+            'override',
+            'transaction_safe',
+            'transaction_safe_dynamic',
+            'if',
+            'elif',
+            'else',
+            'endif',
+            'ifdef',
+            'ifndef',
+            'elifdef',
+            'elifndef',
+            'define',
+            'undef',
+            'include',
+            'line',
+            'error',
+            'warning',
+            'pragma',
+            'defined',
+            '__has_include',
+            '__has_cpp_attribute',            
+            'export',
+            'import',
+            'module',
+            '_Pragma'];
+
+            const digitReplace = "Replacing a digit at the beginning of the name with textual represenation, class name can only start with a non-digit.";
+
+            try
+            {
+                if(str.length==0) { throw new Error("Incorrect length of the name"); }
+
+                //check if first character in the name is not a digit
+                if(str[0]=='0') { str = str.replace('0','Zero'); desc = digitReplace;}
+                if(str[0]=='1') { str = str.replace('1','One'); desc = digitReplace;}
+                if(str[0]=='2') { str = str.replace('2','Two'); desc = digitReplace;}
+                if(str[0]=='3') { str = str.replace('3','Three'); desc = digitReplace;}
+                if(str[0]=='4') { str = str.replace('4','Four'); desc = digitReplace;}
+                if(str[0]=='5') { str = str.replace('5','Five'); desc = digitReplace;}
+                if(str[0]=='6') { str = str.replace('6','Six'); desc = digitReplace;}
+                if(str[0]=='7') { str = str.replace('7','Seven'); desc = digitReplace;}
+                if(str[0]=='8') { str = str.replace('8','Eight'); desc = digitReplace;}
+                if(str[0]=='9') { str = str.replace('9','Nine'); desc = digitReplace;}
+
+                //check for ASCII-only symbols
+                var str2 = str.replace(/[^A-Za-z0-9]/g, '_');
+
+                if(str!=str2)
+                {
+                        desc+= "Replacing all non-ASCII characters with an underscore, class name can only have a subset of ASCII characters.";
+                        str = str2;
+                }
+
+                //check if the name isn't entirely out of underscores
+                var found = false;
+
+                for(var i=0;i<str.length;i++)
+                {
+                    if(str[i]!=='_')
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if(!found)
+                {
+                    throw new Error("Class name doesn't contain any characters, defaulting...");
+                }
+
+                //check if name is a reserved keyword
+                for(var i=0;i<keywords.length;i++)
+                {
+                    if(str == keywords[i])
+                    {
+                        desc+= "Surrounding the name with underscores, class name can not be one of the reserved keywords.";
+                        str = '_'+keywords[i]+'_';
+                        break;
+                    }
+                }
+            }
+            catch(e)
+            {
+                return {str:"MyClassName",err:1,desc:e};
+            }
+
+            return {str:str,err:0,desc:desc};
+        }
 }
+
 function getWebviewOptions(extensionUri: vscode.Uri): 
 vscode.WebviewOptions {    
     return {
