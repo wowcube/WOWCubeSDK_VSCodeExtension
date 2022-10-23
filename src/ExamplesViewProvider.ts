@@ -246,13 +246,28 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 		return sites;
 	}
 
-	private getSDKFiles()
+	private getSDKFiles(lang:string)
 	{
 		var files:Array<[string,string]> = new Array<[string,string]>();
 
 		try
 		{
-			var sourceFiles = Configuration.getWOWSDKPath()+'sdk/'+this._currentDocsVersion+'/pawn/include/';
+			var sourceFiles = "";
+			
+			switch(lang)
+			{
+				default:
+				case 'pawn':
+					{
+						sourceFiles = Configuration.getWOWSDKPath()+'sdk/'+this._currentDocsVersion+'/pawn/include/';
+					}
+					break;
+				case 'cpp':
+						{
+							sourceFiles = Configuration.getWOWSDKPath()+'sdk/'+this._currentDocsVersion+'/cpp/';
+						}
+						break;		 			
+			}
 
 			if(fs.existsSync(sourceFiles)===true)
 			{
@@ -289,7 +304,8 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 			var sites = this.getOnlineResources();
 
 			//get sdk files
-			var files = this.getSDKFiles();
+			var files_pawn = this.getSDKFiles('pawn');
+			var files_cpp = this.getSDKFiles('cpp');
 
 			//setup web page
 			const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examplesview.js'));
@@ -376,12 +392,24 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 				body+=`</ul></li>`;
 
 				body+=`<li><span class="caret">SDK Files</span>
-				<ul class="nested">`;
+				<ul class="nested">
 
-				for(var i=0;i<files.length;i++)
-				{
-					body+=`<li class="liitem" path="${files[i][1]}">${files[i][0]}</li>`;
-				}
+					<li><span class="caret">Pawn</span>
+					<ul class="nested">`;
+					for(var i=0;i<files_pawn.length;i++)
+					{
+						body+=`<li class="liitem" path="${files_pawn[i][1]}">${files_pawn[i][0]}</li>`;
+					}
+					body+=`</ul></li>`;
+
+					body+=`<li><span class="caret">C++</span>
+					<ul class="nested">`;
+					for(var i=0;i<files_cpp.length;i++)
+					{
+						body+=`<li class="liitem" path="${files_cpp[i][1]}">${files_cpp[i][0]}</li>`;
+					}
+					body+=`</ul></li>`;
+
 				body+=`</ul></li>`;
 
 				body+=`<li><span class="caret">Online Resources</span>

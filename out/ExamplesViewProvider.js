@@ -166,10 +166,23 @@ class ExamplesViewProvider {
         }
         return sites;
     }
-    getSDKFiles() {
+    getSDKFiles(lang) {
         var files = new Array();
         try {
-            var sourceFiles = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + this._currentDocsVersion + '/pawn/include/';
+            var sourceFiles = "";
+            switch (lang) {
+                default:
+                case 'pawn':
+                    {
+                        sourceFiles = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + this._currentDocsVersion + '/pawn/include/';
+                    }
+                    break;
+                case 'cpp':
+                    {
+                        sourceFiles = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + this._currentDocsVersion + '/cpp/';
+                    }
+                    break;
+            }
             if (fs.existsSync(sourceFiles) === true) {
                 fs.readdirSync(sourceFiles).forEach(file => {
                     if (file !== '.DS_Store') {
@@ -194,7 +207,8 @@ class ExamplesViewProvider {
             //get online resources
             var sites = this.getOnlineResources();
             //get sdk files
-            var files = this.getSDKFiles();
+            var files_pawn = this.getSDKFiles('pawn');
+            var files_cpp = this.getSDKFiles('cpp');
             //setup web page
             const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examplesview.js'));
             // Do the same for the stylesheet.
@@ -261,10 +275,20 @@ class ExamplesViewProvider {
             }
             body += `</ul></li>`;
             body += `<li><span class="caret">SDK Files</span>
-				<ul class="nested">`;
-            for (var i = 0; i < files.length; i++) {
-                body += `<li class="liitem" path="${files[i][1]}">${files[i][0]}</li>`;
+				<ul class="nested">
+
+					<li><span class="caret">Pawn</span>
+					<ul class="nested">`;
+            for (var i = 0; i < files_pawn.length; i++) {
+                body += `<li class="liitem" path="${files_pawn[i][1]}">${files_pawn[i][0]}</li>`;
             }
+            body += `</ul></li>`;
+            body += `<li><span class="caret">C++</span>
+					<ul class="nested">`;
+            for (var i = 0; i < files_cpp.length; i++) {
+                body += `<li class="liitem" path="${files_cpp[i][1]}">${files_cpp[i][0]}</li>`;
+            }
+            body += `</ul></li>`;
             body += `</ul></li>`;
             body += `<li><span class="caret">Online Resources</span>
 				<ul class="nested">`;
