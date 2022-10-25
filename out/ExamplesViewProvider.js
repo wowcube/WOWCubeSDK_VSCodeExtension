@@ -44,7 +44,7 @@ class ExamplesViewProvider {
             switch (data.type) {
                 case 'itemSelected':
                     {
-                        ExamplePanel_1.ExamplePanel.createOrShow(Configuration_1.Configuration.context.extensionUri, data.value);
+                        ExamplePanel_1.ExamplePanel.createOrShow(Configuration_1.Configuration.context.extensionUri, data.value.key, data.value.lang);
                     }
                     break;
                 case 'docSelected':
@@ -68,7 +68,7 @@ class ExamplesViewProvider {
             }
         });
     }
-    getExamples() {
+    getExamples(lang) {
         var categories = new Array();
         //Get existing categories of examples
         var catInfoPath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/categories.json';
@@ -89,7 +89,16 @@ class ExamplesViewProvider {
         var names = new Map();
         for (var i = 0; i < versions.length; i++) {
             for (var j = 0; j < categories.length; j++) {
-                var path = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/' + versions[i] + '/' + categories[j] + '/';
+                var path = '';
+                switch (lang) {
+                    case 'pawn':
+                        path = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/' + versions[i] + '/pawn/' + categories[j] + '/';
+                        break;
+                    case 'cpp':
+                        path = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/' + versions[i] + '/cpp/' + categories[j] + '/';
+                        break;
+                }
+                Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/' + versions[i] + '/' + categories[j] + '/';
                 if (fs.existsSync(path)) {
                     fs.readdirSync(path).forEach(exampleFolder => {
                         if (exampleFolder === '.DS_Store')
@@ -226,10 +235,14 @@ class ExamplesViewProvider {
     _getHtmlForWebview(webview) {
         //get examples
         try {
-            this.examples = this.getExamples();
-            var categories = this.examples.c;
-            var articles = this.examples.e;
-            var names = this.examples.n;
+            this.examples_pawn = this.getExamples('pawn');
+            this.examples_cpp = this.getExamples('pawn');
+            var categories_pawn = this.examples_pawn.c;
+            var articles_pawn = this.examples_pawn.e;
+            var names_pawn = this.examples_pawn.n;
+            var categories_cpp = this.examples_cpp.c;
+            var articles_cpp = this.examples_cpp.e;
+            var names_cpp = this.examples_cpp.n;
             //get docs
             this.docs_pawn = this.getDocumentation('pawn');
             this.docs_cpp = this.getDocumentation('cpp');
@@ -264,16 +277,18 @@ class ExamplesViewProvider {
 			<div>
 			<ul id="myUL">
 				<li><span class="caret">Built-in Examples</span>
+					<ul class="nested">
+					<li><span class="caret">Pawn</span>
 					<ul class="nested">`;
-            for (var i = 0; i < categories.length; i++) {
-                body += `<li><span class="caret">${categories[i]}</span>
+            for (var i = 0; i < categories_pawn.length; i++) {
+                body += `<li><span class="caret">${categories_pawn[i]}</span>
 						<ul class="nested">`;
-                articles.forEach((value, key) => {
-                    if (key.indexOf(categories[i] + '/') === 0) {
+                articles_pawn.forEach((value, key) => {
+                    if (key.indexOf(categories_pawn[i] + '/') === 0) {
                         try {
-                            if (names.has(key)) {
-                                var articleName = names.get(key);
-                                body += `<li class="liitem" key="${key}">${articleName}</li>`;
+                            if (names_pawn.has(key)) {
+                                var articleName = names_pawn.get(key);
+                                body += `<li class="liitem" key="${key}" lang="pawn">${articleName}</li>`;
                             }
                             else {
                                 body += `<li class="liitem" key="${key}">Unnamed Article</li>`;
@@ -282,9 +297,31 @@ class ExamplesViewProvider {
                         catch (e) { }
                     }
                 });
-                body += `</ul>
-						</li>`;
+                body += `</ul></li>`;
             }
+            body += `</ul></li>`;
+            body += `<li><span class="caret">C++</span>
+					<ul class="nested">`;
+            for (var i = 0; i < categories_cpp.length; i++) {
+                body += `<li><span class="caret">${categories_cpp[i]}</span>
+						<ul class="nested">`;
+                articles_cpp.forEach((value, key) => {
+                    if (key.indexOf(categories_cpp[i] + '/') === 0) {
+                        try {
+                            if (names_cpp.has(key)) {
+                                var articleName = names_cpp.get(key);
+                                body += `<li class="liitem" key="${key}" lang="cpp">${articleName}</li>`;
+                            }
+                            else {
+                                body += `<li class="liitem" key="${key}">Unnamed Article</li>`;
+                            }
+                        }
+                        catch (e) { }
+                    }
+                });
+                body += `</ul></li>`;
+            }
+            body += `</ul></li>`;
             body += ` </ul>
 				</li>      					
 				<li><span class="caret">Documentation (SDK Version ${this._currentDocsVersion})</span>

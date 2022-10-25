@@ -39,7 +39,7 @@
                 
                 if(key!==null)
                 {
-                    vscode.postMessage({ type: 'itemSelected', value: key });
+                    vscode.postMessage({ type: 'itemSelected', value: {key:key,lang:lang }});
                 }
                 else
                 {

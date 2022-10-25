@@ -11,9 +11,10 @@ const Configuration_1 = require("./Configuration");
 const Providers_1 = require("./Providers");
 const Version_1 = require("./Version");
 class ExamplePanel {
-    constructor(panel, extensionUri, key, forceVersion) {
+    constructor(panel, extensionUri, key, forceVersion, language) {
         this._disposables = [];
         this._key = "";
+        this._language = "";
         this._version = "";
         this._forceVersion = "";
         this._viewLoaded = false;
@@ -22,6 +23,7 @@ class ExamplePanel {
         this._extensionUri = extensionUri;
         this._key = key;
         this._forceVersion = forceVersion;
+        this._language = language;
         // Set the webview's initial html content    
         this._update();
         this._panel.onDidDispose(() => {
@@ -77,13 +79,13 @@ class ExamplePanel {
                 case 'prev':
                 case 'next':
                     {
-                        ExamplePanel.createOrShow(Configuration_1.Configuration.context.extensionUri, message.value);
+                        ExamplePanel.createOrShow(Configuration_1.Configuration.context.extensionUri, message.value, this._language);
                         this.dispose();
                     }
                     break;
                 case 'versionChanged':
                     {
-                        ExamplePanel.createOrShowForce(Configuration_1.Configuration.context.extensionUri, this._key, message.value);
+                        ExamplePanel.createOrShowForce(Configuration_1.Configuration.context.extensionUri, this._key, message.value, this._language);
                         this.dispose();
                     }
                     break;
@@ -95,46 +97,46 @@ class ExamplePanel {
             }
         }, null, this._disposables);
     }
-    static createOrShow(extensionUri, exampleKey) {
+    static createOrShow(extensionUri, exampleKey, language) {
         const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn : undefined;
         // If we already have a panel, show it.      
-        if (ExamplePanel.panels.has(exampleKey)) {
-            if (ExamplePanel.panels.get(exampleKey)?._version === Configuration_1.Configuration.getCurrentVersion()) {
-                ExamplePanel.panels.get(exampleKey)?._panel.reveal(column);
+        if (ExamplePanel.panels.has(language + '___' + exampleKey)) {
+            if (ExamplePanel.panels.get(language + '___' + exampleKey)?._version === Configuration_1.Configuration.getCurrentVersion()) {
+                ExamplePanel.panels.get(language + '___' + exampleKey)?._panel.reveal(column);
                 return;
             }
             else {
-                ExamplePanel.panels.get(exampleKey)?._panel.dispose();
+                ExamplePanel.panels.get(language + '___' + exampleKey)?._panel.dispose();
             }
         }
         // Otherwise, create a new panel. 
         const panel = vscode.window.createWebviewPanel(ExamplePanel.viewType, 'WOWCube SDK Document', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
-        ExamplePanel.panels.set(exampleKey, new ExamplePanel(panel, extensionUri, exampleKey, ""));
+        ExamplePanel.panels.set(language + '___' + exampleKey, new ExamplePanel(panel, extensionUri, exampleKey, "", language));
     }
-    static createOrShowForce(extensionUri, exampleKey, forceVersion) {
+    static createOrShowForce(extensionUri, exampleKey, forceVersion, language) {
         const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn : undefined;
         // If we already have a panel, show it.      
-        if (ExamplePanel.panels.has(exampleKey)) {
-            if (ExamplePanel.panels.get(exampleKey)?._version === forceVersion) {
-                ExamplePanel.panels.get(exampleKey)?._panel.reveal(column);
+        if (ExamplePanel.panels.has(language + '___' + exampleKey)) {
+            if (ExamplePanel.panels.get(language + '___' + exampleKey)?._version === forceVersion) {
+                ExamplePanel.panels.get(language + '___' + exampleKey)?._panel.reveal(column);
                 return;
             }
             else {
-                ExamplePanel.panels.get(exampleKey)?._panel.dispose();
+                ExamplePanel.panels.get(language + '___' + exampleKey)?._panel.dispose();
             }
         }
         // Otherwise, create a new panel. 
         const panel = vscode.window.createWebviewPanel(ExamplePanel.viewType, 'WOWCube SDK Document', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
-        ExamplePanel.panels.set(exampleKey, new ExamplePanel(panel, extensionUri, exampleKey, forceVersion));
+        ExamplePanel.panels.set(language + '___' + exampleKey, new ExamplePanel(panel, extensionUri, exampleKey, forceVersion, language));
     }
     generateExample(key, path) {
         var ret = { path: '', desc: '' };
         var fullpath = '';
         var needDeleteFolder = false;
         try {
-            var ex = Providers_1.Providers.examples.examples.e;
+            var ex = Providers_1.Providers.examples.examples_pawn.e;
             var availableVersions = ex.get(this._key);
             var currVersion = Configuration_1.Configuration.getCurrentVersion();
             if (this._forceVersion !== "") {
@@ -329,7 +331,15 @@ class ExamplePanel {
         });
         var content = "";
         var tempfolder = "";
-        var ex = Providers_1.Providers.examples.examples.e;
+        var ex;
+        switch (this._language) {
+            case 'pawn':
+                ex = Providers_1.Providers.examples.examples_pawn.e;
+                break;
+            case 'cpp':
+                ex = Providers_1.Providers.examples.examples_cpp.e;
+                break;
+        }
         var availableVersions = ex.get(this._key);
         var currVersion = Configuration_1.Configuration.getCurrentVersion();
         if (this._forceVersion !== "") {
@@ -348,7 +358,7 @@ class ExamplePanel {
             //there is no document for this version, so take a first available one
             this._version = availableVersions[0];
         }
-        var info = Configuration_1.Configuration.getWOWSDKPath() + "/sdk/examples/" + this._version + '/' + this._key + '/';
+        var info = Configuration_1.Configuration.getWOWSDKPath() + "/sdk/examples/" + this._version + '/' + this._language + '/' + this._key + '/';
         var minfo = info;
         var title = "No title";
         var desc = "No description";
@@ -421,7 +431,14 @@ class ExamplePanel {
                         correctSDK = false;
                         versionClass = "negative";
                     }
-                    this._panel.title = title;
+                    switch (this._language) {
+                        case 'pawn':
+                            this._panel.title = 'Pawn : ' + title;
+                            break;
+                        case 'cpp':
+                            this._panel.title = 'C++ : ' + title;
+                            break;
+                    }
                 }
                 catch (e) {
                     content = '# this document is empty';

@@ -18,28 +18,29 @@ export class ExamplePanel {
     private _disposables: vscode.Disposable[] = [];
 
     private readonly _key:string = "";
+    private readonly _language:string = "";
     private _version:string = "";
     private  _forceVersion:string="";
 
     private _viewLoaded:Boolean = false;
     private _scrollPos = 0;
 
-    public static createOrShow(extensionUri: vscode.Uri,exampleKey:string) 
+    public static createOrShow(extensionUri: vscode.Uri,exampleKey:string,language:string) 
     { 
         const column = vscode.window.activeTextEditor
         ? vscode.window.activeTextEditor.viewColumn: undefined;
 
         // If we already have a panel, show it.      
-        if(ExamplePanel.panels.has(exampleKey))
+        if(ExamplePanel.panels.has(language+'___'+exampleKey))
         {
-            if(ExamplePanel.panels.get(exampleKey)?._version===Configuration.getCurrentVersion()) 
+            if(ExamplePanel.panels.get(language+'___'+exampleKey)?._version===Configuration.getCurrentVersion()) 
             {
-                 ExamplePanel.panels.get(exampleKey)?._panel.reveal(column);
+                 ExamplePanel.panels.get(language+'___'+exampleKey)?._panel.reveal(column);
                 return;
             }
             else
             {
-                ExamplePanel.panels.get(exampleKey)?._panel.dispose();
+                ExamplePanel.panels.get(language+'___'+exampleKey)?._panel.dispose();
             }
         }
 
@@ -52,25 +53,25 @@ export class ExamplePanel {
             getWebviewOptions(extensionUri),
         );
 
-        ExamplePanel.panels.set(exampleKey,new ExamplePanel(panel, extensionUri,exampleKey,""));
+        ExamplePanel.panels.set(language+'___'+exampleKey,new ExamplePanel(panel, extensionUri,exampleKey,"",language));
     }
 
-    public static createOrShowForce(extensionUri: vscode.Uri,exampleKey:string,forceVersion:string) 
+    public static createOrShowForce(extensionUri: vscode.Uri,exampleKey:string,forceVersion:string,language:string) 
     { 
         const column = vscode.window.activeTextEditor
         ? vscode.window.activeTextEditor.viewColumn: undefined;
 
         // If we already have a panel, show it.      
-        if(ExamplePanel.panels.has(exampleKey))
+        if(ExamplePanel.panels.has(language+'___'+exampleKey))
         {
-            if(ExamplePanel.panels.get(exampleKey)?._version===forceVersion) 
+            if(ExamplePanel.panels.get(language+'___'+exampleKey)?._version===forceVersion) 
             {
-                 ExamplePanel.panels.get(exampleKey)?._panel.reveal(column);
+                 ExamplePanel.panels.get(language+'___'+exampleKey)?._panel.reveal(column);
                 return;
             }
             else
             {
-                ExamplePanel.panels.get(exampleKey)?._panel.dispose();
+                ExamplePanel.panels.get(language+'___'+exampleKey)?._panel.dispose();
             }
         }
 
@@ -83,15 +84,16 @@ export class ExamplePanel {
             getWebviewOptions(extensionUri),
         );
 
-        ExamplePanel.panels.set(exampleKey,new ExamplePanel(panel, extensionUri,exampleKey,forceVersion));
+        ExamplePanel.panels.set(language+'___'+exampleKey,new ExamplePanel(panel, extensionUri,exampleKey,forceVersion,language));
     }
 
-    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, key:string, forceVersion:string) 
+    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, key:string, forceVersion:string, language:string) 
         {    
             this._panel = panel;    
             this._extensionUri = extensionUri;
             this._key = key;
             this._forceVersion = forceVersion;
+            this._language = language;
 
         // Set the webview's initial html content    
             this._update();
@@ -169,13 +171,13 @@ export class ExamplePanel {
                         case 'prev':
                         case 'next':
                             {
-                                ExamplePanel.createOrShow(Configuration.context.extensionUri,message.value);
+                                ExamplePanel.createOrShow(Configuration.context.extensionUri,message.value,this._language);
                                 this.dispose();
                             }
                         break;
                         case 'versionChanged':
                             {
-                                ExamplePanel.createOrShowForce(Configuration.context.extensionUri,this._key,message.value);
+                                ExamplePanel.createOrShowForce(Configuration.context.extensionUri,this._key,message.value,this._language);
                                 this.dispose();
                             }
                             break;
@@ -200,7 +202,7 @@ export class ExamplePanel {
             try
             {
 
-            var ex = Providers.examples.examples.e;
+            var ex = Providers.examples.examples_pawn.e;
             var availableVersions = ex.get(this._key);
     
             var currVersion = Configuration.getCurrentVersion();
@@ -485,7 +487,18 @@ export class ExamplePanel {
             var content: string = "";
             var tempfolder: string = "";
 
-            var ex = Providers.examples.examples.e;
+            var ex:any;
+            
+            switch(this._language)
+            {
+                case 'pawn':
+                    ex = Providers.examples.examples_pawn.e;
+                break;
+                case 'cpp':
+                    ex = Providers.examples.examples_cpp.e;
+                break;        
+            }
+            
             var availableVersions = ex.get(this._key);
 
             var currVersion = Configuration.getCurrentVersion();
@@ -514,7 +527,7 @@ export class ExamplePanel {
                 this._version = availableVersions[0];
             }
 
-            var info:string = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+'/';
+            var info:string = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._language+'/'+this._key+'/';
             var minfo:string = info;
 
             var title:string = "No title";
@@ -625,7 +638,16 @@ export class ExamplePanel {
                             versionClass = "negative";
                         }
 
-                        this._panel.title = title;
+
+                        switch(this._language)
+                        {
+                            case 'pawn':
+                                this._panel.title = 'Pawn : '+title;
+                            break;
+                            case 'cpp':
+                                this._panel.title = 'C++ : '+title;
+                            break;
+                        }
                     }
                     catch(e)
                     {

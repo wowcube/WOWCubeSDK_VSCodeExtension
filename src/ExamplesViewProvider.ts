@@ -24,7 +24,8 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 	public docs_pawn:Array<[string, Array<string>]> = [];
 	public docs_cpp:Array<[string, Array<string>]> = [];
 
-	public examples:any;
+	public examples_pawn:any;
+	public examples_cpp:any;
 
 	private _currentDocsVersion:string = "";
 
@@ -69,7 +70,7 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
             {
 				case 'itemSelected':
 					{
-                        ExamplePanel.createOrShow(Configuration.context.extensionUri,data.value);
+                        ExamplePanel.createOrShow(Configuration.context.extensionUri,data.value.key,data.value.lang);
 					}
 					break;
 				case 'docSelected':
@@ -94,7 +95,7 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 		});
 	}
 
-	private getExamples()
+	private getExamples(lang:string)
 	{
 		var categories:Array<string> = new Array<string>();
 
@@ -127,7 +128,18 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 		{
 			for(var j=0;j<categories.length;j++)
 			{
-				var path = Configuration.getWOWSDKPath()+'sdk/examples/'+versions[i]+'/'+categories[j]+'/';
+				var path = '';
+				
+				switch(lang)
+				{
+					case 'pawn':
+						path = Configuration.getWOWSDKPath()+'sdk/examples/'+versions[i]+'/pawn/'+categories[j]+'/';
+					break;
+					case 'cpp':
+						path = Configuration.getWOWSDKPath()+'sdk/examples/'+versions[i]+'/cpp/'+categories[j]+'/';
+					break;
+				}
+				Configuration.getWOWSDKPath()+'sdk/examples/'+versions[i]+'/'+categories[j]+'/';
 
 				if(fs.existsSync(path))
 				{
@@ -326,10 +338,16 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 		//get examples
 		try
 		{
-			this.examples = this.getExamples();
-			var categories:Array<string> = this.examples.c;
-			var articles = this.examples.e;
-			var names = this.examples.n;
+			this.examples_pawn = this.getExamples('pawn');
+			this.examples_cpp = this.getExamples('pawn');
+
+			var categories_pawn:Array<string> = this.examples_pawn.c;
+			var articles_pawn = this.examples_pawn.e;
+			var names_pawn = this.examples_pawn.n;
+
+			var categories_cpp:Array<string> = this.examples_cpp.c;
+			var articles_cpp = this.examples_cpp.e;
+			var names_cpp = this.examples_cpp.n;
 
 			//get docs
 			this.docs_pawn = this.getDocumentation('pawn');
@@ -371,23 +389,25 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 			<div>
 			<ul id="myUL">
 				<li><span class="caret">Built-in Examples</span>
+					<ul class="nested">
+					<li><span class="caret">Pawn</span>
 					<ul class="nested">`;
 
-					for(var i=0;i<categories.length;i++)
+					for(var i=0;i<categories_pawn.length;i++)
 					{
-						body+=`<li><span class="caret">${categories[i]}</span>
+						body+=`<li><span class="caret">${categories_pawn[i]}</span>
 						<ul class="nested">`;
 						
-						articles.forEach((value: Array<string>, key: string) => 
+						articles_pawn.forEach((value: Array<string>, key: string) => 
 						{
-								if(key.indexOf(categories[i]+'/')===0)
+								if(key.indexOf(categories_pawn[i]+'/')===0)
 								{
 									try
 									{
-										if(names.has(key))
+										if(names_pawn.has(key))
 										{
-											var articleName = names.get(key);
-											body+=`<li class="liitem" key="${key}">${articleName}</li>`;
+											var articleName = names_pawn.get(key);
+											body+=`<li class="liitem" key="${key}" lang="pawn">${articleName}</li>`;
 										}
 										else
 										{
@@ -398,9 +418,41 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 								}
 							});
 
-						body+=`</ul>
-						</li>`;
+						body+=`</ul></li>`;
 					}
+					body+=`</ul></li>`;
+
+					body+=`<li><span class="caret">C++</span>
+					<ul class="nested">`;
+
+					for(var i=0;i<categories_cpp.length;i++)
+					{
+						body+=`<li><span class="caret">${categories_cpp[i]}</span>
+						<ul class="nested">`;
+						
+						articles_cpp.forEach((value: Array<string>, key: string) => 
+						{
+								if(key.indexOf(categories_cpp[i]+'/')===0)
+								{
+									try
+									{
+										if(names_cpp.has(key))
+										{
+											var articleName = names_cpp.get(key);
+											body+=`<li class="liitem" key="${key}" lang="cpp">${articleName}</li>`;
+										}
+										else
+										{
+											body+=`<li class="liitem" key="${key}">Unnamed Article</li>`;
+										}
+									}
+									catch(e){}
+								}
+							});
+
+						body+=`</ul></li>`;
+					}
+					body+=`</ul></li>`;
 
 				body+=` </ul>
 				</li>      					
