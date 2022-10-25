@@ -8,20 +8,22 @@ const fs = require("fs");
 const Configuration_1 = require("./Configuration");
 const Providers_1 = require("./Providers");
 class DocumentPanel {
-    constructor(panel, extensionUri, folder, file, version) {
+    constructor(panel, extensionUri, folder, file, version, language) {
         this._disposables = [];
         this._key = "";
         this._folder = "";
         this._file = "";
         this._version = "";
+        this._language = "";
         this._viewLoaded = false;
         this._scrollPos = 0;
         this._panel = panel;
         this._extensionUri = extensionUri;
-        this._key = '___' + folder + '___' + file;
+        this._key = '___' + language + '___' + folder + '___' + file;
         this._file = file;
         this._folder = folder;
         this._version = version;
+        this._language = language;
         // Set the webview's initial html content    
         this._update();
         this._panel.onDidDispose(() => {
@@ -49,14 +51,14 @@ class DocumentPanel {
                 case 'prev':
                     {
                         var prev = this.getPrevDocument();
-                        DocumentPanel.createOrShowDoc(Configuration_1.Configuration.context.extensionUri, prev.folder, prev.file, this._version);
+                        DocumentPanel.createOrShowDoc(Configuration_1.Configuration.context.extensionUri, prev.folder, prev.file, this._version, this._language);
                         this.dispose();
                     }
                     break;
                 case 'next':
                     {
                         var next = this.getNextDocument();
-                        DocumentPanel.createOrShowDoc(Configuration_1.Configuration.context.extensionUri, next.folder, next.file, this._version);
+                        DocumentPanel.createOrShowDoc(Configuration_1.Configuration.context.extensionUri, next.folder, next.file, this._version, this._language);
                         this.dispose();
                     }
                     break;
@@ -68,10 +70,10 @@ class DocumentPanel {
             }
         }, null, this._disposables);
     }
-    static createOrShowDoc(extensionUri, folder, file, sdkVersion) {
+    static createOrShowDoc(extensionUri, folder, file, sdkVersion, language) {
         const column = vscode.window.activeTextEditor
             ? vscode.window.activeTextEditor.viewColumn : undefined;
-        var exampleKey = '___' + folder + '___' + file;
+        var exampleKey = '___' + language + '___' + folder + '___' + file;
         // If we already have a panel, show it.      
         if (DocumentPanel.panels.has(exampleKey)) {
             DocumentPanel.panels.get(exampleKey)?._panel.reveal(column);
@@ -79,7 +81,7 @@ class DocumentPanel {
         }
         // Otherwise, create a new panel. 
         const panel = vscode.window.createWebviewPanel(DocumentPanel.viewType, 'WOWCube SDK Document', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
-        DocumentPanel.panels.set(exampleKey, new DocumentPanel(panel, extensionUri, folder, file, sdkVersion));
+        DocumentPanel.panels.set(exampleKey, new DocumentPanel(panel, extensionUri, folder, file, sdkVersion, language));
     }
     dispose() {
         DocumentPanel.panels.delete(this._key);
@@ -100,10 +102,20 @@ class DocumentPanel {
     }
     getPrevDocument() {
         try {
-            for (var i = 0; i < Providers_1.Providers.examples.docs.length; i++) {
-                if (Providers_1.Providers.examples.docs[i][0] === this._folder) {
-                    for (var j = 0; j < Providers_1.Providers.examples.docs[i][1].length; j++) {
-                        if (Providers_1.Providers.examples.docs[i][1][j] === this._file) {
+            var docs;
+            switch (this._language) {
+                case 'pawn':
+                default:
+                    docs = Providers_1.Providers.examples.docs_pawn;
+                    break;
+                case 'cpp':
+                    docs = Providers_1.Providers.examples.docs_pawn;
+                    break;
+            }
+            for (var i = 0; i < docs.length; i++) {
+                if (docs[i][0] === this._folder) {
+                    for (var j = 0; j < docs[i][1].length; j++) {
+                        if (docs[i][1][j] === this._file) {
                             //found current 
                             if (j === 0) {
                                 //try to find prev topic
@@ -112,15 +124,15 @@ class DocumentPanel {
                                     return { folder: "", file: "" };
                                 }
                                 else {
-                                    var t = Providers_1.Providers.examples.docs[i - 1];
+                                    var t = docs[i - 1];
                                     var tp = t[0];
                                     var fl = t[1][t[1].length - 1];
                                     return { folder: tp, file: fl };
                                 }
                             }
                             else {
-                                var tp = Providers_1.Providers.examples.docs[i][0];
-                                var fl = Providers_1.Providers.examples.docs[i][1][j - 1];
+                                var tp = docs[i][0];
+                                var fl = docs[i][1][j - 1];
                                 return { folder: tp, file: fl };
                             }
                         }
@@ -134,27 +146,37 @@ class DocumentPanel {
     }
     getNextDocument() {
         try {
-            for (var i = 0; i < Providers_1.Providers.examples.docs.length; i++) {
-                if (Providers_1.Providers.examples.docs[i][0] === this._folder) {
-                    for (var j = 0; j < Providers_1.Providers.examples.docs[i][1].length; j++) {
-                        if (Providers_1.Providers.examples.docs[i][1][j] === this._file) {
+            var docs;
+            switch (this._language) {
+                case 'pawn':
+                default:
+                    docs = Providers_1.Providers.examples.docs_pawn;
+                    break;
+                case 'cpp':
+                    docs = Providers_1.Providers.examples.docs_pawn;
+                    break;
+            }
+            for (var i = 0; i < docs.length; i++) {
+                if (docs[i][0] === this._folder) {
+                    for (var j = 0; j < docs[i][1].length; j++) {
+                        if (docs[i][1][j] === this._file) {
                             //found current 
-                            if (j === Providers_1.Providers.examples.docs[i][1].length - 1) {
+                            if (j === docs[i][1].length - 1) {
                                 //try to find next topic
-                                if (i === Providers_1.Providers.examples.docs.length - 1) {
+                                if (i === docs.length - 1) {
                                     //last page of last topic, no next
                                     return { folder: "", file: "" };
                                 }
                                 else {
-                                    var t = Providers_1.Providers.examples.docs[i + 1];
+                                    var t = docs[i + 1];
                                     var tp = t[0];
                                     var fl = t[1][0];
                                     return { folder: tp, file: fl };
                                 }
                             }
                             else {
-                                var tp = Providers_1.Providers.examples.docs[i][0];
-                                var fl = Providers_1.Providers.examples.docs[i][1][j + 1];
+                                var tp = docs[i][0];
+                                var fl = docs[i][1][j + 1];
                                 return { folder: tp, file: fl };
                             }
                         }
@@ -192,7 +214,7 @@ class DocumentPanel {
         });
         var content = "";
         var tempfolder = "";
-        var info = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/' + this._version + '/' + this._folder + '/';
+        var info = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/' + this._version + '/' + this._language + '/' + this._folder + '/';
         //Look for external resources and copy them into extension temp folder
         if (fs.existsSync(info) === true) {
             fs.readdirSync(info).forEach(file => {
@@ -253,7 +275,7 @@ class DocumentPanel {
                         next = -1;
                     }
                     var fname = this._file.substring(0, this._file.length - 3);
-                    this._panel.title = "WOWCube SDK " + this._version + ' / ' + this._folder.substring(this._folder.indexOf('.') + 1) + ' / ' + fname.substring(fname.indexOf('.') + 1);
+                    this._panel.title = "WOWCube SDK " + this._version + ' / ' + this._language + ' / ' + this._folder.substring(this._folder.indexOf('.') + 1) + ' / ' + fname.substring(fname.indexOf('.') + 1);
                 }
                 catch (e) {
                     content = '# this document is empty';

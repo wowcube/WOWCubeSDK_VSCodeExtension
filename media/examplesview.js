@@ -23,10 +23,11 @@
                 var key = this.getAttribute('key');
                 var url = this.getAttribute('url');
                 var path = this.getAttribute('path');
+                var lang = this.getAttribute('lang');
 
                 if(path!==null)
                 {
-                    vscode.postMessage({ type: 'fileSelected', value: path });
+                    vscode.postMessage({ type: 'fileSelected', value: path, lang:lang });
                     return;
                 }
 
@@ -45,7 +46,7 @@
                     var folder = this.getAttribute('folder');
                     var file = this.getAttribute('file');
 
-                    vscode.postMessage({ type: 'docSelected', value: {folder:folder,file:file} });
+                    vscode.postMessage({ type: 'docSelected', value: {folder:folder,file:file,lang:lang} });
                 }
             }
         );

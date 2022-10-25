@@ -21,7 +21,9 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 	onDidClose?: vscode.Event<number> = this.closeEmitter.event;
 	private _channel: vscode.OutputChannel = Output.channel();
 
-	public docs:Array<[string, Array<string>]> = [];
+	public docs_pawn:Array<[string, Array<string>]> = [];
+	public docs_cpp:Array<[string, Array<string>]> = [];
+
 	public examples:any;
 
 	private _currentDocsVersion:string = "";
@@ -72,7 +74,7 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 					break;
 				case 'docSelected':
 					{
-						DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,data.value.folder, data.value.file,this._currentDocsVersion);
+						DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,data.value.folder, data.value.file,this._currentDocsVersion,data.value.lang);
 					}
 					break;		
 				case 'urlSelected':
@@ -162,14 +164,31 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 		return {c:categories,e:examples,n:names};
 	}
 
-	private getDocumentation()
+	private getDocumentation(lang:string)
 	{
 		var topics:Array<[string, Array<string>]> = new Array<[string, Array<string>]>();
 
 		this._currentDocsVersion = Configuration.getCurrentVersion();
-
-		var sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/'+this._currentDocsVersion+'/';
 		var sourceDocsRoot = Configuration.getWOWSDKPath()+'sdk/docs/';
+
+		var sourceDocs='';
+		var sourceDocsRoot='';
+
+		switch(lang)
+		{
+			default:
+			case 'pawn':
+				{
+					sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/'+this._currentDocsVersion+'/pawn/';
+				}
+				break;
+			case 'cpp':
+				{
+					sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/'+this._currentDocsVersion+'/cpp/';
+				}
+				break;		 			
+		}
+
 
 		//check if we have documentation of needed version
 		if(fs.existsSync(sourceDocsRoot)===true)
@@ -186,7 +205,22 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 				this._currentDocsVersion = majs+'.'+mins;
 
 				//this must MUST be present. If there is no path of a such, it means that DevKit folder structure is incomplete! 
-				sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/'+this._currentDocsVersion+'/';
+				//sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/'+this._currentDocsVersion+'/';
+
+				switch(lang)
+				{
+					default:
+					case 'pawn':
+						{
+							sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/'+this._currentDocsVersion+'/pawn/';
+						}
+						break;
+					case 'cpp':
+						{
+							sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/'+this._currentDocsVersion+'/cpp/';
+						}
+						break;		 			
+				}
 			}
 		}
 
@@ -298,8 +332,9 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 			var names = this.examples.n;
 
 			//get docs
-			this.docs = this.getDocumentation();
-		
+			this.docs_pawn = this.getDocumentation('pawn');
+			this.docs_cpp = this.getDocumentation('cpp');
+
 			//get online resources
 			var sites = this.getOnlineResources();
 
@@ -370,26 +405,52 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 				body+=` </ul>
 				</li>      					
 				<li><span class="caret">Documentation (SDK Version ${this._currentDocsVersion})</span>
+					<ul class="nested">
+					<li><span class="caret">Pawn</span>
 					<ul class="nested">`;
 
-				for(var i=0;i<this.docs.length;i++)
+				for(var i=0;i<this.docs_pawn.length;i++)
 				{
-					var topic = this.docs[i][0];
+					var topic = this.docs_pawn[i][0];
 					body+=`<li><span class="caret">${topic.substring(topic.indexOf('.')+1)}</span>
 						<ul class="nested">`;
 
-					for(var j=0;j<this.docs[i][1].length;j++)
+					for(var j=0;j<this.docs_pawn[i][1].length;j++)
 					{
-						var item = this.docs[i][1][j];
+						var item = this.docs_pawn[i][1][j];
 						item = item.substring(0,item.length-3);
 						item = item.substring(item.indexOf('.')+1);
-						body+=`<li class="liitem" file="${this.docs[i][1][j]}" folder="${topic}" doc="1">${item}</li>`;
+						body+=`<li class="liitem" file="${this.docs_pawn[i][1][j]}" folder="${topic}" doc="1" lang="pawn">${item}</li>`;
 					}
 
-					body+=`</ul>
-						</li>`;
+					body+=`</ul></li>`;
 				}
 				body+=`</ul></li>`;
+
+				body+=`<li><span class="caret">C++</span>
+				<ul class="nested">`;
+
+				for(var i=0;i<this.docs_cpp.length;i++)
+				{
+					var topic = this.docs_cpp[i][0];
+					body+=`<li><span class="caret">${topic.substring(topic.indexOf('.')+1)}</span>
+						<ul class="nested">`;
+
+					for(var j=0;j<this.docs_cpp[i][1].length;j++)
+					{
+						var item = this.docs_cpp[i][1][j];
+						item = item.substring(0,item.length-3);
+						item = item.substring(item.indexOf('.')+1);
+						body+=`<li class="liitem" file="${this.docs_cpp[i][1][j]}" folder="${topic}" doc="1" lang="cpp">${item}</li>`;
+					}
+
+					body+=`</ul></li>`;
+				}
+				body+=`</ul></li>`;
+
+
+				body+=`</ul></li>`;
+
 
 				body+=`<li><span class="caret">SDK Files</span>
 				<ul class="nested">

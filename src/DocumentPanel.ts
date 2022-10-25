@@ -21,16 +21,17 @@ export class DocumentPanel {
     private readonly _folder:string = "";
     private readonly _file:string = "";
     private readonly _version:string = "";
+    private readonly _language:string = "";
 
     private _viewLoaded:Boolean = false;
     private _scrollPos = 0;
 
-    public static createOrShowDoc(extensionUri: vscode.Uri,folder:string,file:string, sdkVersion:string) 
+    public static createOrShowDoc(extensionUri: vscode.Uri,folder:string,file:string, sdkVersion:string, language:string) 
     { 
         const column = vscode.window.activeTextEditor
         ? vscode.window.activeTextEditor.viewColumn: undefined;
 
-        var exampleKey:string = '___'+folder+'___'+file;
+        var exampleKey:string = '___'+language+'___'+folder+'___'+file;
         
         // If we already have a panel, show it.      
         if(DocumentPanel.panels.has(exampleKey))
@@ -48,18 +49,19 @@ export class DocumentPanel {
             getWebviewOptions(extensionUri),
         );
 
-        DocumentPanel.panels.set(exampleKey,new DocumentPanel(panel, extensionUri,folder,file,sdkVersion));
+        DocumentPanel.panels.set(exampleKey,new DocumentPanel(panel, extensionUri,folder,file,sdkVersion,language));
     }
 
     private constructor(panel: vscode.WebviewPanel,
-        extensionUri: vscode.Uri, folder:string, file:string,version:string) 
+        extensionUri: vscode.Uri, folder:string, file:string,version:string,language:string) 
         {    
             this._panel = panel;    
             this._extensionUri = extensionUri;
-            this._key = '___'+folder+'___'+file;
+            this._key = '___'+language+'___'+folder+'___'+file;
             this._file = file;
             this._folder = folder;
             this._version = version;
+            this._language = language;
 
         // Set the webview's initial html content    
             this._update();
@@ -100,14 +102,14 @@ export class DocumentPanel {
                         case 'prev':
                             {
                                 var prev = this.getPrevDocument();
-                                DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,prev.folder,prev.file,this._version); 
+                                DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,prev.folder,prev.file,this._version,this._language); 
                                 this.dispose();                                
                             }
                             break;
                         case 'next':
                             {
                                 var next = this.getNextDocument();
-                                DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,next.folder,next.file,this._version); 
+                                DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,next.folder,next.file,this._version,this._language); 
                                 this.dispose();
                             }
                         break;
@@ -151,14 +153,27 @@ export class DocumentPanel {
         private getPrevDocument()
         {      
             try
-            {      
-                for(var i=0;i<Providers.examples.docs.length;i++)
+            {  
+                var docs: any;
+
+                switch(this._language)
                 {
-                    if(Providers.examples.docs[i][0]===this._folder)
+                    case 'pawn': 
+                    default:
+                        docs = Providers.examples.docs_pawn;
+                    break;
+                    case 'cpp': 
+                        docs = Providers.examples.docs_pawn;
+                    break;               
+                }
+
+                for(var i=0;i<docs.length;i++)
+                {
+                    if(docs[i][0]===this._folder)
                     {
-                        for(var j=0;j<Providers.examples.docs[i][1].length;j++)
+                        for(var j=0;j<docs[i][1].length;j++)
                         {
-                            if(Providers.examples.docs[i][1][j]===this._file)
+                            if(docs[i][1][j]===this._file)
                             {
                                 //found current 
 
@@ -172,7 +187,7 @@ export class DocumentPanel {
                                     }
                                     else
                                     {
-                                        var t = Providers.examples.docs[i-1];
+                                        var t = docs[i-1];
 
                                         var tp = t[0];
                                         var fl = t[1][t[1].length-1];
@@ -182,8 +197,8 @@ export class DocumentPanel {
                                 }
                                 else
                                 {
-                                    var tp = Providers.examples.docs[i][0];
-                                    var fl=Providers.examples.docs[i][1][j-1];
+                                    var tp = docs[i][0];
+                                    var fl=docs[i][1][j-1];
 
                                     return {folder:tp,file:fl};
                                 }
@@ -195,35 +210,49 @@ export class DocumentPanel {
             catch(e)
             {                
             }
-
+            
             return {folder:"",file:""};
         }
 
         private getNextDocument()
         {
+            
             try
             {
-                for(var i=0;i<Providers.examples.docs.length;i++)
+                var docs: any;
+
+                switch(this._language)
                 {
-                    if(Providers.examples.docs[i][0]===this._folder)
+                    case 'pawn': 
+                    default:
+                        docs = Providers.examples.docs_pawn;
+                    break;
+                    case 'cpp': 
+                        docs = Providers.examples.docs_pawn;
+                    break;               
+                }
+
+                for(var i=0;i<docs.length;i++)
+                {
+                    if(docs[i][0]===this._folder)
                     {
-                        for(var j=0;j<Providers.examples.docs[i][1].length;j++)
+                        for(var j=0;j<docs[i][1].length;j++)
                         {
-                            if(Providers.examples.docs[i][1][j]===this._file)
+                            if(docs[i][1][j]===this._file)
                             {
                                 //found current 
 
-                                if(j===Providers.examples.docs[i][1].length-1)
+                                if(j===docs[i][1].length-1)
                                 {
                                     //try to find next topic
-                                    if(i===Providers.examples.docs.length-1)
+                                    if(i===docs.length-1)
                                     {
                                         //last page of last topic, no next
                                         return {folder:"",file:""};
                                     }
                                     else
                                     {
-                                        var t = Providers.examples.docs[i+1];
+                                        var t = docs[i+1];
 
                                         var tp = t[0];
                                         var fl = t[1][0];
@@ -233,8 +262,8 @@ export class DocumentPanel {
                                 }
                                 else
                                 {
-                                    var tp = Providers.examples.docs[i][0];
-                                    var fl=Providers.examples.docs[i][1][j+1];
+                                    var tp = docs[i][0];
+                                    var fl=docs[i][1][j+1];
 
                                     return {folder:tp,file:fl};
                                 }
@@ -245,7 +274,7 @@ export class DocumentPanel {
             }
             catch(e)
             {}
-
+    
             return {folder:"",file:""};
         }
 
@@ -291,7 +320,7 @@ export class DocumentPanel {
               });
             var content: string = "";
             var tempfolder: string = "";
-            var info:string = Configuration.getWOWSDKPath()+'sdk/docs/'+this._version+'/'+this._folder+'/';
+            var info:string = Configuration.getWOWSDKPath()+'sdk/docs/'+this._version+'/'+this._language+'/'+this._folder+'/';
 
             //Look for external resources and copy them into extension temp folder
             if(fs.existsSync(info)===true)
@@ -390,7 +419,7 @@ export class DocumentPanel {
 
                         var fname = this._file.substring(0,this._file.length-3);
 
-                        this._panel.title = "WOWCube SDK "+this._version+' / '+this._folder.substring(this._folder.indexOf('.')+1)+' / '+fname.substring(fname.indexOf('.')+1);
+                        this._panel.title = "WOWCube SDK "+this._version+' / '+ this._language+' / '+this._folder.substring(this._folder.indexOf('.')+1)+' / '+fname.substring(fname.indexOf('.')+1);
                     }
                     catch(e)
                     {
