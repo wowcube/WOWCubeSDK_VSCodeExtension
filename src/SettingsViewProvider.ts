@@ -181,9 +181,6 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 						}
 			}
 		});
-
-		//check for updates every time extension starts
-		this.doCheckUpdate();
 	}
 
 	private refreshVersionSelector()
@@ -201,7 +198,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 		this._view?.webview.postMessage({ type: 'setVersion',value:version });
 	}
 
-	private async doCheckUpdate(): Promise<void> 
+	public async doCheckUpdate(): Promise<void> 
     {
 		return new Promise<void>((resolve,reject) => 
         {
@@ -426,6 +423,16 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				this._channel.appendLine("SDK Settigs Error: Path \""+includepath+"\" is invalid");
 				this._channel.show(true);
 
+				return false;
+			}
+
+			//CPP
+			var cpppath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/cpp/';
+			if(fs.existsSync(cpppath)===false)
+			{
+				this._channel.appendLine("SDK Settigs Error: Path \""+cpppath+"\" is invalid");
+				this._channel.show(true);
+			
 				return false;
 			}
 

@@ -53,6 +53,8 @@ async function activate(context) {
         DeviceDetailsPanel_1.DeviceDetailsPanel.createOrShow(context.extensionUri);
     }));
     context.subscriptions.push(vscode.window.registerCustomEditorProvider(WOWCubeProjectProvider_1.WOWCubeProjectProvider.viewType, Providers_1.Providers.project));
+    //check for updates when extension starts
+    Providers_1.Providers.settings.doCheckUpdate();
 }
 exports.activate = activate;
 // this method is called when your extension is deactivated

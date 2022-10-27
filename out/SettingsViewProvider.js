@@ -139,8 +139,6 @@ class SettingsViewProvider {
                     }
             }
         });
-        //check for updates every time extension starts
-        this.doCheckUpdate();
     }
     refreshVersionSelector() {
         Configuration_1.Configuration.reloadVersions();
@@ -308,6 +306,13 @@ class SettingsViewProvider {
             var includepath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/pawn/include/';
             if (fs.existsSync(includepath) === false) {
                 this._channel.appendLine("SDK Settigs Error: Path \"" + includepath + "\" is invalid");
+                this._channel.show(true);
+                return false;
+            }
+            //CPP
+            var cpppath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/cpp/';
+            if (fs.existsSync(cpppath) === false) {
+                this._channel.appendLine("SDK Settigs Error: Path \"" + cpppath + "\" is invalid");
                 this._channel.show(true);
                 return false;
             }
