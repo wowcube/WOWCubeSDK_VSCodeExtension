@@ -509,6 +509,8 @@ export class WizardPanel {
             var lastLanguage = Configuration.getLastLanguage();
             if(typeof(lastLanguage)==='undefined') lastLanguage = 'pawn';
 
+            WizardPanel.currentLanguage =lastLanguage;
+
             var ret =  `      
                 <!DOCTYPE html>
                 <html lang="en">

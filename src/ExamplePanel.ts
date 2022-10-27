@@ -148,8 +148,18 @@ export class ExamplePanel {
                                         {
                                             //save project
                                             var path = fileUri[0].fsPath;
+                                            var ret:any;
 
-                                            var ret = this.generateExample(message.value,path);
+                                            switch(this._language)
+                                            {
+                                                case 'pawn':
+                                                    ret = this.generateExamplePawn(message.value,path);
+                                                break;
+                                                case 'cpp':
+                                                    ret = this.generateExampleCpp(message.value,path);
+                                                break;
+                                            }
+
 
                                             if(ret.path.length===0)
                                             {
@@ -171,12 +181,14 @@ export class ExamplePanel {
                         case 'prev':
                         case 'next':
                             {
+                                ExamplePanel.panels.delete(this._language+'___'+message.value);
                                 ExamplePanel.createOrShow(Configuration.context.extensionUri,message.value,this._language);
                                 this.dispose();
                             }
                         break;
                         case 'versionChanged':
                             {
+                                ExamplePanel.panels.delete(this._language+'___'+this._key);
                                 ExamplePanel.createOrShowForce(Configuration.context.extensionUri,this._key,message.value,this._language);
                                 this.dispose();
                             }
@@ -193,7 +205,7 @@ export class ExamplePanel {
             );
         }
 
-        public generateExample(key:number,path:string)
+        public generateExampleCpp(key:number,path:string)
         {
             var ret = {path:'',desc:''};
             var fullpath = '';
@@ -231,7 +243,7 @@ export class ExamplePanel {
                 this._version = availableVersions[0];
             }
 
-            var info:string = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key;
+            var info:string = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/cpp/'+this._key;
             var minfo:string = info;
 
             var title:string = "Untitled Project";
@@ -277,7 +289,7 @@ export class ExamplePanel {
                 path = path.replace(/\\/g, "/");
                 if(!path.endsWith("/")) { path+='/';}
 
-                fullpath = path + title+"("+this._version+")";
+                fullpath = path + title+"("+this._version+"-Cpp)";
                 ret.path = fullpath;
 
                 if(fs.existsSync(fullpath))
@@ -296,14 +308,14 @@ export class ExamplePanel {
                 this.makeDirSync(fullpath+'/assets/images');
                 this.makeDirSync(fullpath+'/assets/sounds');
 
-                const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/';
+                const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/cpp/';
 
                 //const iconFilename:string = this._extensionUri.fsPath+"/media/templates/icon.png";     
                 const iconFilename:string = templatespath+"icon.png";             
                 fs.copyFileSync(iconFilename,fullpath+'/assets/icon.png');
 
                 //copy project files
-                var sourcePrj = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+"/project/src/";
+                var sourcePrj = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/cpp/'+this._key+"/project/src/";
                 if(fs.existsSync(sourcePrj)===true)
                 {
                     fs.readdirSync(sourcePrj).forEach(file => 
@@ -313,8 +325,8 @@ export class ExamplePanel {
                 }
 
                 //copy resources
-                var sourceImg = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+"/project/assets/images/";
-                var sourceSnd = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+"/project/assets/sounds/";
+                var sourceImg = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/cpp/'+this._key+"/project/assets/images/";
+                var sourceSnd = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/cpp/'+this._key+"/project/assets/sounds/";
 
                 if(fs.existsSync(sourceImg)===true)
                 {
@@ -333,7 +345,172 @@ export class ExamplePanel {
                 }
 
                 //copy build json
-                fs.copyFileSync(Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/'+this._key+"/project/wowcubeapp-build.json",fullpath+'/wowcubeapp-build.json');
+                fs.copyFileSync(Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/cpp/'+this._key+"/project/wowcubeapp-build.json",fullpath+'/wowcubeapp-build.json');
+
+                //create vscode-related configs
+                fs.copyFileSync(templatespath+"_launch.json",fullpath+'/.vscode/launch.json');
+                fs.copyFileSync(templatespath+"_tasks.json",fullpath+'/.vscode/tasks.json');
+                fs.copyFileSync(templatespath+"_extensions.json",fullpath+'/.vscode/extensions.json');
+
+            }
+            catch(error)
+            {
+                ret.desc = error as string;
+                ret.path = '';
+
+                if(needDeleteFolder===true)
+                {
+                    if(!this.deleteDir(fullpath))
+                    {
+                        ret.desc+='; unalbe to delete recently created project folder!';
+                    }
+                }
+            } 
+
+            return ret;
+        }
+
+        public generateExamplePawn(key:number,path:string)
+        {
+            var ret = {path:'',desc:''};
+            var fullpath = '';
+            var needDeleteFolder:boolean = false;
+
+            try
+            {
+
+            var ex = Providers.examples.examples_pawn.e;
+            var availableVersions = ex.get(this._key);
+    
+            var currVersion = Configuration.getCurrentVersion();
+    
+            if(this._forceVersion!=="")
+            {
+                currVersion = this._forceVersion;
+            }
+
+            //check if document is available for this version
+            var available:boolean = false;
+            this._version= currVersion;
+
+            for(var i=0;i<availableVersions.length;i++)
+            {
+                if(availableVersions[i]===currVersion)
+                {
+                    available = true;
+                    break;
+                }
+            }
+
+            if(available===false)
+            {
+                //there is no document for this version, so take a first available one
+                this._version = availableVersions[0];
+            }
+
+            var info:string = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/pawn/'+this._key;
+            var minfo:string = info;
+
+            var title:string = "Untitled Project";
+            var desc:string  = "No description";
+            var prev = -1;
+            var next = -1;
+            var hasProject:boolean = false;
+
+            if(fs.existsSync(info)===false)
+            {
+                throw new Error("Unable to find example project source folder, please try to re-install WOWCube SDK extension");
+            }
+            else
+            {
+                info+='/info.md';
+                minfo+='/info.json';
+
+                if(fs.existsSync(info)===false)
+                {
+                    throw new Error("Unable to find example project source folder, please try to re-install WOWCube SDK extension");
+                }
+                else
+                {
+                    try
+                    {
+                        const meta = require(minfo);
+
+                        title = meta.name;
+                        desc = meta.desc;
+
+                        prev = meta.prev_key;
+                        next = meta.next_key;
+
+                        hasProject = meta.has_project;
+                    }
+                    catch(e)
+                    {
+                        throw new Error("Unable to find example project metadata, please try to re-install WOWCube SDK extension");
+                    }
+                }
+            }
+
+                path = path.replace(/\\/g, "/");
+                if(!path.endsWith("/")) { path+='/';}
+
+                fullpath = path + title+"("+this._version+"-Pawn)";
+                ret.path = fullpath;
+
+                if(fs.existsSync(fullpath))
+                {
+                    throw new Error("Project with such name already exists in this folder");
+                }
+
+                this.makeDirSync(fullpath);
+
+                needDeleteFolder = true;
+
+                this.makeDirSync(fullpath+'/.vscode');
+                this.makeDirSync(fullpath+'/binary');
+                this.makeDirSync(fullpath+'/src');
+                this.makeDirSync(fullpath+'/assets');
+                this.makeDirSync(fullpath+'/assets/images');
+                this.makeDirSync(fullpath+'/assets/sounds');
+
+                const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/pawn/';
+
+                //const iconFilename:string = this._extensionUri.fsPath+"/media/templates/icon.png";     
+                const iconFilename:string = templatespath+"icon.png";             
+                fs.copyFileSync(iconFilename,fullpath+'/assets/icon.png');
+
+                //copy project files
+                var sourcePrj = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/pawn/'+this._key+"/project/src/";
+                if(fs.existsSync(sourcePrj)===true)
+                {
+                    fs.readdirSync(sourcePrj).forEach(file => 
+                        {
+                            fs.copyFileSync(sourcePrj+file,fullpath+'/src/'+file);
+                        });
+                }
+
+                //copy resources
+                var sourceImg = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/pawn/'+this._key+"/project/assets/images/";
+                var sourceSnd = Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/pawn/'+this._key+"/project/assets/sounds/";
+
+                if(fs.existsSync(sourceImg)===true)
+                {
+                    fs.readdirSync(sourceImg).forEach(file => 
+                        {
+                            fs.copyFileSync(sourceImg+file,fullpath+'/assets/images/'+file);
+                        });
+                }
+
+                if(fs.existsSync(sourceSnd)===true)
+                {
+                    fs.readdirSync(sourceSnd).forEach(file => 
+                        {
+                            fs.copyFileSync(sourceSnd+file,fullpath+'/assets/sounds/'+file);
+                        });
+                }
+
+                //copy build json
+                fs.copyFileSync(Configuration.getWOWSDKPath()+"/sdk/examples/"+this._version+'/pawn/'+this._key+"/project/wowcubeapp-build.json",fullpath+'/wowcubeapp-build.json');
 
                 //create vscode-related configs
                 fs.copyFileSync(templatespath+"_launch.json",fullpath+'/.vscode/launch.json');
