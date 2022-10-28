@@ -12,6 +12,8 @@ import { SettingsViewProvider } from './SettingsViewProvider';
 import { ExamplesViewProvider } from './ExamplesViewProvider';
 import { WOWCubeBuildTaskProvider } from './WOWCubeBuildTaskProvider';
 import { WOWCubeProjectProvider } from './WOWCubeProjectProvider';
+import { ExternalToolsPanel } from './ExternalToolsPanel';
+
 import {Configuration} from './Configuration';
 import {Providers} from './Providers';
 
@@ -69,6 +71,12 @@ export async function activate(context: vscode.ExtensionContext)
 		{
 			AdHocPanel.createOrShow(context.extensionUri);
 		}));
+
+	context.subscriptions.push(
+			vscode.commands.registerCommand('WOWCubeSDK.openExternalTools', () => 
+			{
+				ExternalToolsPanel.createOrShow(context.extensionUri);
+			}));
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('WOWCubeSDK.openDeviceDetails', () => 

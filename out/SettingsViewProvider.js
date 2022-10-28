@@ -89,6 +89,11 @@ class SettingsViewProvider {
                         }
                     }
                     break;
+                case 'buttonManageToolsPressed':
+                    {
+                        vscode.commands.executeCommand('WOWCubeSDK.openExternalTools');
+                    }
+                    break;
                 case 'buttonPressed':
                     {
                         var p = os.platform();
@@ -415,7 +420,9 @@ class SettingsViewProvider {
 
 			<br/>
 			<br/>
-			<button class="share-adhoc-button">Check For Updates</button>
+			<button id="manageToolsButton" class="share-adhoc-button">Manage External Tools</button>
+			<br/>
+			<button id="checkForUpdatesButton" class="share-adhoc-button">Check For Updates</button>
 
 			<script nonce="${nonce}" src="${scriptUri}"></script>
 		</body>

@@ -13,6 +13,7 @@ const SettingsViewProvider_1 = require("./SettingsViewProvider");
 const ExamplesViewProvider_1 = require("./ExamplesViewProvider");
 const WOWCubeBuildTaskProvider_1 = require("./WOWCubeBuildTaskProvider");
 const WOWCubeProjectProvider_1 = require("./WOWCubeProjectProvider");
+const ExternalToolsPanel_1 = require("./ExternalToolsPanel");
 const Configuration_1 = require("./Configuration");
 const Providers_1 = require("./Providers");
 let buildTask;
@@ -44,6 +45,9 @@ async function activate(context) {
     }));
     context.subscriptions.push(vscode.commands.registerCommand('WOWCubeSDK.openAdHocSharing', () => {
         AdHocPanel_1.AdHocPanel.createOrShow(context.extensionUri);
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand('WOWCubeSDK.openExternalTools', () => {
+        ExternalToolsPanel_1.ExternalToolsPanel.createOrShow(context.extensionUri);
     }));
     context.subscriptions.push(vscode.commands.registerCommand('WOWCubeSDK.openDeviceDetails', () => {
         if (Configuration_1.Configuration.isLinux()) {

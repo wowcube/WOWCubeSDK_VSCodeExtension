@@ -18,9 +18,14 @@
         vscode.postMessage({ type: 'versionChanged', value: document.getElementById('versions').value });
     });
     
-    document.querySelector('.share-adhoc-button').addEventListener('click', () => 
+    document.getElementById('checkForUpdatesButton').addEventListener('click', () => 
     {
         vscode.postMessage({ type: 'buttonCheckForUpdatesPressed', value: "" });
+    });
+
+    document.getElementById('manageToolsButton').addEventListener('click', () => 
+    {
+        vscode.postMessage({ type: 'buttonManageToolsPressed', value: "" });
     });
 
     // Handle messages sent from the extension to the webview
