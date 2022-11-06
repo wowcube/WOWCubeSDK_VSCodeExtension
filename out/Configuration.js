@@ -397,7 +397,7 @@ class Configuration {
         switch (p) {
             case 'darwin': //mac
                 {
-                    homedir += "/Library/WOWCube Development Kit/Tools/";
+                    homedir += "/WOWCube Development Kit/Tools/";
                     homedir += language + '/';
                 }
                 break;

@@ -543,11 +543,6 @@ export class Configuration
         switch(p)
         {
             case 'darwin'://mac
-            {
-                homedir+="/Library/WOWCube Development Kit/Tools/";
-                homedir+=language+'/';
-            }
-            break;
             case 'win32': //windows
             {
                 homedir+="/WOWCube Development Kit/Tools/";
