@@ -91,34 +91,26 @@ export class ExternalToolsPanel {
                         case 'warn':
                             vscode.window.showWarningMessage(message.value); 
                         break;
-                        case 'folder': 
-                        {
-                            const options: vscode.OpenDialogOptions = {
-                                canSelectMany: false,
-                                openLabel: 'Select Project Folder',
-                                canSelectFiles: false,
-                                canSelectFolders: true
-                            };
-                           
-                           vscode.window.showOpenDialog(options).then(fileUri => 
+                        case 'installButtonPressed':
                             {
-                               if (fileUri && fileUri[0]) 
-                               {
-                                    if (this._panel) 
-                                    {
-                                        //save configuration
-                                        var path = fileUri[0].fsPath;
+                                vscode.window.showErrorMessage('Install '+message.value); 
+                            }
+                        break;
+                        case 'removeButtonPressed':
+                        {
+                            vscode.window.showInformationMessage(
+                                "Package '"+message.value.packname+"' will be removed from the computer",
+                                ...["Remove Package", "Cancel"]
+                            ).then((answer)=>
+                            {
+                                if(answer==="Remove Package")
+                                {
+                                    //this.doDeleteApp(device.mac,appname);
+                                    //Providers.btdevices.showWait(true); 
+                                }
+                            });
 
-                                        if(!path.endsWith(Configuration.getSlash()))
-                                        {
-                                            path = path + Configuration.getSlash();
-                                        }
-
-                                        Configuration.setLastPath(path);
-                                        this._panel.webview.postMessage({ type: 'folderSelected',value:path});
-                                    }
-                               }
-                           });
+                            vscode.window.showErrorMessage('Remove '+message.value); 
                         }
                         break;
                     }
@@ -126,45 +118,6 @@ export class ExternalToolsPanel {
                 null,
                 this._disposables 
             );
-        }
-
-
-        makefiles(filepaths: string[]) 
-        {
-            filepaths.forEach(filepath => this.makeFileSync(filepath));
-        }
-    
-        makefolders(files: string[]) 
-        {
-            files.forEach(file => this.makeDirSync(file));
-        }
-    
-        makeDirSync(dir: string) 
-        {
-            if (fs.existsSync(dir)) return;
-            if (!fs.existsSync(path.dirname(dir))) 
-            {
-                this.makeDirSync(path.dirname(dir));
-            }
-            fs.mkdirSync(dir);
-        }
-    
-        makeFileSync(filename: string) 
-        {
-            if (!fs.existsSync(filename)) 
-            {
-                this.makeDirSync(path.dirname(filename));
-                fs.createWriteStream(filename).close();
-            }
-        }
-    
-        findDir(filePath: string) 
-        {
-            if (!filePath) return null;
-            if (fs.statSync(filePath).isFile())
-                return path.dirname(filePath);
-    
-            return filePath;
         }
 
         deleteDir(dir:string)
@@ -218,13 +171,15 @@ export class ExternalToolsPanel {
             );
 
             const scriptUri = webview.asWebviewUri( 
-                vscode.Uri.joinPath(this._extensionUri, "media", "wizard.js")
+                vscode.Uri.joinPath(this._extensionUri, "media", "externaltoolsview.js")
             );
             
             const nonce = getNonce();  
             const baseUri = webview.asWebviewUri(vscode.Uri.joinPath(
                 this._extensionUri, 'media')
                 ).toString().replace('%22', '');
+
+            var emInstall = this.validateToolInstallation('emscripten');
 
             var ret =  `      
                 <!DOCTYPE html>
@@ -242,7 +197,7 @@ export class ExternalToolsPanel {
                       
                     <div style="padding:0px;">
                         <div id="t1" style="margin-top:10px;margin-bottom:10px;font-size:24px;">External Tools</div>
-                        <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Manage external tools required by WOWCube Development Kit</div>
+                        <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Manage external tools supported by WOWCube Development Kit</div>
                         <div class="separator"></div>
 
                         <div class="view">
@@ -253,10 +208,21 @@ export class ExternalToolsPanel {
 
                                     <div style="display:inline-block; width: calc(100% - 145px);">
                                         <div class="itemdesc">The package provides the ability to compile and build cubeapps in the C++ programming language.</div>
-                                        </div>
-                                        <button id="remove_button" style="display:inline-block;width:120px;">Remove</button>
-                                    <div class="itemdesc positive" style="margin-top:10px">INSTALLED</div>
-                                </div>
+                                        </div>`;
+                                     
+                                if(emInstall==true)
+                                {
+                                    ret+=`  <button class="remove_button" style="display:inline-block;width:120px;" pack="em" packname="C++ Compiler support">Remove</button>
+                                            <div class="itemdesc positive" style="margin-top:10px">INSTALLED</div>`;
+                                }
+                                else
+                                {
+                                    ret+=`   <button class="install_button" style="display:inline-block;width:120px;" pack="em" packname="C++ Compiler support">Install</button>
+                                             <div class="itemdesc neutral" style="margin-top:10px">NOT INSTALLED</div>`;
+                                }
+
+
+                                ret+=`</div>
 
                                 <div id="i2" class="item">
                                     <div style="margin:5px;"><strong>RUST Compiler support package for WOWCube SDK</strong></div>
@@ -265,7 +231,7 @@ export class ExternalToolsPanel {
                                         <div class="itemdesc"><i>COMING SOON</i></div>
                                         <div class="itemdesc">The package provides the development tools needed to write programs in Rust.</div>
                                         </div>
-                                        <button id="remove_button" style="display:inline-block;width:120px;">Install</button>
+                                        <button class="install_button" style="display:inline-block;width:120px;" pack="rust" packname="RUST Compiler support">Install</button>
                                     <div class="itemdesc neutral" style="margin-top:10px">NOT INSTALLED</div>
                                 </div>
                             </div>
@@ -281,7 +247,52 @@ export class ExternalToolsPanel {
             return ret;
         }
 
+        private validateToolInstallation(tool:string)
+        {		
+            if(typeof(tool)==='undefined') {tool='';}
+            if(tool.length>0)
+            {
+                switch(tool)
+                {
+                    case 'emscripten':
+                        {
+                            var compilerpath = Configuration.getCompilerPath("cpp");
+                            compilerpath+='em/upstream/emscripten/';
+
+                            if(fs.existsSync(compilerpath)===false)
+                            {
+                                this._channel.appendLine("External Tools management: Path \""+compilerpath+"\" is invalid, C++ Compiler support package for WOWCube SDK is not installed");
+                                this._channel.show(true);
+                
+                                return false;
+                            }
+
+                            var command = '"'+compilerpath+ Configuration.getCC("cpp")+'"';
+
+                            if(fs.existsSync(compilerpath)===false)
+                            {
+                                this._channel.appendLine("External Tools management: File \""+command+"\" does not exist, C++ Compiler support package for WOWCube SDK is not installed or corrupted");
+                                this._channel.show(true);
+                
+                                return false;
+                            }
+                        }
+                    break;
+                    default:
+                        return false;
+                    break;
+                }
+            }
+            else
+            {
+                return false;
+            }
+
+            return true;
+        }
+
 }
+
 
 function getWebviewOptions(extensionUri: vscode.Uri): 
 vscode.WebviewOptions {    
