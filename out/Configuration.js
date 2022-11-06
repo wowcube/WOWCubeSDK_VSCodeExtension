@@ -396,11 +396,6 @@ class Configuration {
         var homedir = os.homedir();
         switch (p) {
             case 'darwin': //mac
-                {
-                    homedir += "/WOWCube Development Kit/Tools/";
-                    homedir += language + '/';
-                }
-                break;
             case 'win32': //windows
                 {
                     homedir += "/WOWCube Development Kit/Tools/";
