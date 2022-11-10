@@ -8,6 +8,11 @@ import {Configuration} from './Configuration';
 import { Project } from "./Project";
 import {Output} from './Output';
 
+//import {got} from 'got';
+
+import { request, RequestOptions, ClientRequest, ServerResponse } from 'node:http';
+import { URL } from 'node:url';
+
 export class ExternalToolsPanel {
 
     public static currentPanel: ExternalToolsPanel | undefined;
@@ -22,6 +27,13 @@ export class ExternalToolsPanel {
 	private closeEmitter = Output.terminalClose();
 	onDidClose?: vscode.Event<number> = this.closeEmitter.event;
 	private _channel: vscode.OutputChannel = Output.channel();
+
+    //downloader
+    //private url:string = "https://media0.giphy.com/media/4SS0kfzRqfBf2/giphy.gif";
+    //private url:string = "http://ipv4.download.thinkbroadband.com/50MB.zip";
+    private url:string = "http://ipv4.download.thinkbroadband.com/200MB.zip";
+
+    private fileName:string = "image.gif";
 
     public static createOrShow(extensionUri: vscode.Uri) 
     { 
@@ -55,6 +67,102 @@ export class ExternalToolsPanel {
     public static revive(panel: vscode.WebviewPanel,
         extensionUri: vscode.Uri) {    
             ExternalToolsPanel.currentPanel = new ExternalToolsPanel(panel, extensionUri);  
+    }
+
+    public static getContentLength(url:string)
+    {
+        const http = require('http');
+
+        return new Promise((resolve, reject) => 
+        {
+            http.request(url, { method: 'HEAD', headers: { 'user-agent': 'test' } }, (res:any) => 
+            {
+                console.log(res.statusCode);
+                if(res.statusCode == 200)
+                {
+                    var contentLength = res.headers['content-length']; 
+                    if(contentLength>0)
+                    {
+                        console.log("File length: "+contentLength);
+                        resolve({length:contentLength,url:url});
+                    }
+                    else
+                    {
+                        reject(-1);
+                    }
+                }
+                else
+                {
+                    reject(-1);
+                }
+            }).on('error', (err:any) => 
+            {
+                console.error(err);
+                reject(-1);
+            }).end();          
+        });
+    }
+
+    public static download(url:string, dest:string, len:any)
+    {
+        var http = require('http');
+        var progress = require('progress-stream');
+        
+        return new Promise((resolve, reject) => 
+        {
+            const file = fs.createWriteStream(dest, { flags: "wx" });
+    
+            var str = progress({
+                time: 100,
+                length:len
+            });
+             
+            str.on('progress', function(progress:any) 
+            {
+                console.log(Math.round(progress.percentage)+'%');
+                console.log(progress.transferred);
+
+                ExternalToolsPanel.currentPanel?.setProgress(Math.round(progress.percentage)+'%');
+            });
+
+            const request = http.get(url, { headers: { 'user-agent': 'test' }}, (response:any) => {
+                if (response.statusCode === 200) 
+                {
+                    response.pipe(str).pipe(file);
+                }
+                 else 
+                 {
+                    file.close();
+                    fs.unlink(dest, () => {}); // Delete temp file
+                    reject(`Server responded with ${response.statusCode}: ${response.statusMessage}`);
+                }
+            });
+    
+            request.on("error", (err:any) => 
+            {
+                file.close();
+                fs.unlink(dest, () => {}); // Delete temp file
+                reject(err.message);
+            });
+    
+            file.on("finish", () => 
+            {
+                resolve(dest);
+            });
+    
+            file.on("error", err => 
+            {
+                file.close();
+    
+                if (err.name === "EEXIST") {
+                    reject("File already exists");
+                } else {
+                    fs.unlink(dest, () => {}); // Delete temp file
+                    reject(err.message);
+                }
+            });
+        });
+        
     }
 
     private constructor(panel: vscode.WebviewPanel,
@@ -93,7 +201,40 @@ export class ExternalToolsPanel {
                         break;
                         case 'installButtonPressed':
                             {
-                                vscode.window.showErrorMessage('Install '+message.value); 
+                                //https://file-examples.com/wp-content/uploads/2018/04/file_example_AVI_1920_2_3MG.avi
+                                vscode.window.showErrorMessage('Install '+message.value.pack); 
+
+                                //const file = fs.createWriteStream("D:\\1.bin");
+                                
+                                ExternalToolsPanel.currentPanel?.showWait(true);
+
+                                ExternalToolsPanel.getContentLength(this.url).then
+                                (
+                                    function(value:any) 
+                                    {
+                                        const url:string = value.url;
+                                        const len = value.length;
+
+                                        ExternalToolsPanel.download(url, "D:\\1.bin",len).then
+                                        (
+                                            function(value:any) 
+                                            {
+                                                ExternalToolsPanel.currentPanel?.showWait(false);
+                                            },
+                                            function(error:any) 
+                                            {
+                                                vscode.window.showErrorMessage('ERROR: '+error); 
+                                                ExternalToolsPanel.currentPanel?.showWait(false);
+                                            }
+                                        );
+                                    },
+                                    function(error:any) 
+                                    {
+                                        vscode.window.showErrorMessage('ERROR: '+error); 
+                                        ExternalToolsPanel.currentPanel?.showWait(false);
+                                    }
+                                );
+
                             }
                         break;
                         case 'removeButtonPressed':
@@ -110,7 +251,7 @@ export class ExternalToolsPanel {
                                 }
                             });
 
-                            vscode.window.showErrorMessage('Remove '+message.value); 
+                            vscode.window.showErrorMessage('Remove '+message.value.pack); 
                         }
                         break;
                     }
@@ -118,6 +259,23 @@ export class ExternalToolsPanel {
                 null,
                 this._disposables 
             );
+        }
+
+        public setProgress(v:any)
+        {
+            this._panel.webview.postMessage({ type: 'setProgress',value: v} ); 
+        }
+        public showWait(b:boolean)
+        {
+            if(b)
+            {
+                this._panel.webview.postMessage({ type: 'showWait',value: {show:b}} ); 
+            }
+            else
+            {
+                this._panel.webview.postMessage({ type: 'hideWait',value: {show:b}} ); 
+            }
+    
         }
 
         deleteDir(dir:string)
@@ -157,23 +315,16 @@ export class ExternalToolsPanel {
             this._panel.webview.html = this._getHtmlForWebview(webview);  
         }
         
-        private _getHtmlForWebview(webview: vscode.Webview) {    
-            const styleResetUri = webview.asWebviewUri(      
-                vscode.Uri.joinPath(this._extensionUri, "media", "reset.css")   
-            );
+        private _getHtmlForWebview(webview: vscode.Webview) 
+        {
 
-            const styleVSCodeUri = webview.asWebviewUri(    
-                vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css")
-            );
 
-            const styleMainCodeUri = webview.asWebviewUri(    
-                vscode.Uri.joinPath(this._extensionUri, "media", "main.css")
-            );
+            const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
+            const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
+            const styleMainCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "main.css"));
+            const scriptUri = webview.asWebviewUri( vscode.Uri.joinPath(this._extensionUri, "media", "externaltoolsview.js")); 
+            const styleWaitUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'wait.css'));
 
-            const scriptUri = webview.asWebviewUri( 
-                vscode.Uri.joinPath(this._extensionUri, "media", "externaltoolsview.js")
-            );
-            
             const nonce = getNonce();  
             const baseUri = webview.asWebviewUri(vscode.Uri.joinPath(
                 this._extensionUri, 'media')
@@ -190,6 +341,7 @@ export class ExternalToolsPanel {
                     <link href="${styleResetUri}" rel="stylesheet">
                     <link href="${styleVSCodeUri}" rel="stylesheet"> 
                     <link href="${styleMainCodeUri}" rel="stylesheet"> 
+                    <link href="${styleWaitUri}" rel="stylesheet">
                     <title>External Tools</title>
                 </head>
                 <body>
@@ -236,9 +388,16 @@ export class ExternalToolsPanel {
                                 </div>
                             </div>
                             
+                            <div class="wait" id="wait">
+                            <div class="centered">
+                                <div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+                            </div>
+                            <div class="centered" style="top:calc(50% - 60px);left:0;width:100%;text-align:center;">
+                                <div style="margin:5px;"><strong id='progresstext'>Package is being downloaded</strong></div>
+                            </div>
                         </div>
 
-                        <!--<button id="generate_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">GENERATE NEW PROJECT</button>-->
+                        </div>
                     </div>
                 </body>
                 </html> 

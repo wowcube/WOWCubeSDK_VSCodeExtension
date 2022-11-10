@@ -8,8 +8,7 @@
   "engines": {
     "vscode": "^1.64.0"
   },
-  "repository": 
-  {
+  "repository": {
     "type": "git",
     "url": "https://github.com/wowcube/WOWCubeSDK_VSCodeExtension.git"
   },
@@ -93,7 +92,7 @@
             "default": "pawn",
             "description": "Last used programming language of new project",
             "scope": "application"
-          },          
+          },
           "wowsdk.conf.wowsdkpath": {
             "type": "string",
             "default": "",
@@ -156,16 +155,16 @@
       ]
     },
     "customEditors": [
-			{
-				"viewType": "WOWCubeSDK.projectPanel",
-				"displayName": "WOWCube Cubeapp Project",
-				"selector": [
-					{
-						"filenamePattern": "wowcubeapp-build.json"
-					}
-				]
-			}
-		],
+      {
+        "viewType": "WOWCubeSDK.projectPanel",
+        "displayName": "WOWCube Cubeapp Project",
+        "selector": [
+          {
+            "filenamePattern": "wowcubeapp-build.json"
+          }
+        ]
+      }
+    ],
     "commands": [
       {
         "command": "WOWCubeSDK.openWizard",
@@ -178,7 +177,7 @@
       {
         "command": "WOWCubeSDK.openExternalTools",
         "title": "Open Manage External Tools"
-      },      
+      },
       {
         "command": "WOWCubeSDK.openDeviceDetails",
         "title": "Open WOWCube device details"
@@ -201,7 +200,7 @@
   "devDependencies": {
     "@types/glob": "^7.1.4",
     "@types/mocha": "^9.0.0",
-    "@types/node": "14.x",
+    "@types/node": "^14.18.33",
     "@types/vscode": "^1.62.0",
     "@typescript-eslint/eslint-plugin": "^5.1.0",
     "@typescript-eslint/parser": "^5.1.0",
@@ -214,6 +213,8 @@
   "dependencies": {
     "form-data": "^4.0.0",
     "markdown-it": "^12.3.2",
-    "regedit": "^5.0.0"
+    "progress-stream": "^2.0.0",
+    "regedit": "^5.0.0",
+    "request": "^2.88.2"
   }
 }

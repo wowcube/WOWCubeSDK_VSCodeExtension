@@ -40,6 +40,27 @@
         // Handle messages sent from the extension to the webview
         window.addEventListener('message', event =>  
         {
+            const message = event.data; // The json data that the extension sent
+            switch (message.type) 
+            {
+            case 'showWait':
+                {
+                    document.getElementById('wait').className = 'wait visible';
+                }
+                break;
+            case 'hideWait':
+                    {
+                        document.getElementById('wait').className = 'wait';
+                    }
+                    break;   
+            case 'setProgress':
+                {
+                    document.getElementById('progresstext').innerHTML = 'Package is being downloaded: '+message.value;
+                }
+                break;
+            default:
+                break;
+            }
         });
     }
 }());
