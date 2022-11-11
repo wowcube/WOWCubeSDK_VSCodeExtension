@@ -195,7 +195,7 @@ export class AdHocPanel {
             }
             else
             {
-                this._channel.appendLine("Share Ad-Hoc: Cubemap file has been successfully shared");
+                this._channel.appendLine("Share Ad-Hoc: Cubeapp file has been successfully shared");
 				this._channel.show(true);
 
                //all good, open web page and close itself
