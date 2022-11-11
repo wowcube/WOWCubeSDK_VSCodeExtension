@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import * as os from 'os';
 import * as fs from 'fs';
+import * as path from 'path';
 import { deepStrictEqual } from "assert";
 import { Z_FIXED } from "zlib";
 
@@ -533,6 +534,51 @@ export class Configuration
     {
         Configuration.setString('wowsdk.conf.wowsdkpath',value);
         Configuration._lastSetSDKPath = value;
+    }
+
+    private static makeDirSync(dir: string) 
+    {
+        if (fs.existsSync(dir)) return;
+        if (!fs.existsSync(path.dirname(dir))) 
+        {
+            this.makeDirSync(path.dirname(dir));
+        }
+        fs.mkdirSync(dir);
+    }
+
+    public static getToolsPath()
+    {
+        var p = os.platform();
+        var homedir = os.homedir();
+
+        switch(p)
+        {
+            case 'darwin'://mac
+            case 'win32': //windows
+            {
+                homedir+="/WOWCube Development Kit/Tools/";
+            }
+            break;
+            case 'linux':
+            default:
+            //unsupported os
+            break;        
+        }
+
+        //try to create if this folder doesn't exist
+        try
+        {
+            if(!fs.existsSync(homedir))
+            {
+                this.makeDirSync(homedir);
+            }
+        }
+        catch(e)
+        {
+            homedir = "";
+        }
+
+        return homedir;
     }
 
     public static getCompilerPath(language:string)

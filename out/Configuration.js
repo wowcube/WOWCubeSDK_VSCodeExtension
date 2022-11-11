@@ -4,6 +4,7 @@ exports.Configuration = void 0;
 const vscode = require("vscode");
 const os = require("os");
 const fs = require("fs");
+const path = require("path");
 class Configuration {
     static getString(key) {
         var ret = "";
@@ -390,6 +391,40 @@ class Configuration {
     static setWOWSDKPath(value) {
         Configuration.setString('wowsdk.conf.wowsdkpath', value);
         Configuration._lastSetSDKPath = value;
+    }
+    static makeDirSync(dir) {
+        if (fs.existsSync(dir))
+            return;
+        if (!fs.existsSync(path.dirname(dir))) {
+            this.makeDirSync(path.dirname(dir));
+        }
+        fs.mkdirSync(dir);
+    }
+    static getToolsPath() {
+        var p = os.platform();
+        var homedir = os.homedir();
+        switch (p) {
+            case 'darwin': //mac
+            case 'win32': //windows
+                {
+                    homedir += "/WOWCube Development Kit/Tools/";
+                }
+                break;
+            case 'linux':
+            default:
+                //unsupported os
+                break;
+        }
+        //try to create if this folder doesn't exist
+        try {
+            if (!fs.existsSync(homedir)) {
+                this.makeDirSync(homedir);
+            }
+        }
+        catch (e) {
+            homedir = "";
+        }
+        return homedir;
     }
     static getCompilerPath(language) {
         var p = os.platform();

@@ -7,7 +7,107 @@ const getNonce_1 = require("./getNonce");
 const fs = require("fs");
 const Configuration_1 = require("./Configuration");
 const Output_1 = require("./Output");
+const DownloadManager_1 = require("./DownloadManager");
+const ArchiveManager_1 = require("./ArchiveManager");
 class ExternalToolsPanel {
+    /*
+    public static getContentLength(url:string)
+    {
+        const http = require('http');
+
+        return new Promise((resolve, reject) =>
+        {
+            http.request(url, { method: 'HEAD', headers: { 'user-agent': 'test' } }, (res:any) =>
+            {
+                console.log(res.statusCode);
+                if(res.statusCode == 200)
+                {
+                    var contentLength = res.headers['content-length'];
+                    if(contentLength>0)
+                    {
+                        console.log("File length: "+contentLength);
+                        resolve({length:contentLength,url:url});
+                    }
+                    else
+                    {
+                        reject(-1);
+                    }
+                }
+                else
+                {
+                    reject(-1);
+                }
+            }).on('error', (err:any) =>
+            {
+                console.error(err);
+                reject(-1);
+            }).end();
+        });
+    }
+    */
+    /*
+    public static download(url:string, dest:string, len:any)
+    {
+        var http = require('http');
+        var progress = require('progress-stream');
+        
+        return new Promise((resolve, reject) =>
+        {
+            const file = fs.createWriteStream(dest, { flags: "wx" });
+    
+            var str = progress({
+                time: 100,
+                length:len
+            });
+             
+            str.on('progress', function(progress:any)
+            {
+                console.log(Math.round(progress.percentage)+'%');
+                console.log(progress.transferred);
+
+                ExternalToolsPanel.currentPanel?.setProgress(Math.round(progress.percentage)+'%');
+            });
+
+            const request = http.get(url, { headers: { 'user-agent': 'test' }}, (response:any) => {
+                if (response.statusCode === 200)
+                {
+                    response.pipe(str).pipe(file);
+                }
+                 else
+                 {
+                    file.close();
+                    fs.unlink(dest, () => {}); // Delete temp file
+                    reject(`Server responded with ${response.statusCode}: ${response.statusMessage}`);
+                }
+            });
+    
+            request.on("error", (err:any) =>
+            {
+                file.close();
+                fs.unlink(dest, () => {}); // Delete temp file
+                reject(err.message);
+            });
+    
+            file.on("finish", () =>
+            {
+                resolve(dest);
+            });
+    
+            file.on("error", err =>
+            {
+                file.close();
+    
+                if (err.name === "EEXIST") {
+                    reject("File already exists");
+                } else {
+                    fs.unlink(dest, () => {}); // Delete temp file
+                    reject(err.message);
+                }
+            });
+        });
+        
+    }
+    */
     constructor(panel, extensionUri) {
         this._disposables = [];
         this.writeEmitter = Output_1.Output.terminal();
@@ -18,8 +118,8 @@ class ExternalToolsPanel {
         //downloader
         //private url:string = "https://media0.giphy.com/media/4SS0kfzRqfBf2/giphy.gif";
         //private url:string = "http://ipv4.download.thinkbroadband.com/50MB.zip";
-        this.url = "http://ipv4.download.thinkbroadband.com/200MB.zip";
-        this.fileName = "image.gif";
+        //private url:string = "http://ipv4.download.thinkbroadband.com/200MB.zip";
+        this._url = "https://www.sample-videos.com/zip/30mb.zip";
         this._panel = panel;
         this._extensionUri = extensionUri;
         // Set the webview's initial html content    
@@ -42,21 +142,46 @@ class ExternalToolsPanel {
                     break;
                 case 'installButtonPressed':
                     {
-                        //https://file-examples.com/wp-content/uploads/2018/04/file_example_AVI_1920_2_3MG.avi
-                        vscode.window.showErrorMessage('Install ' + message.value.pack);
-                        //const file = fs.createWriteStream("D:\\1.bin");
+                        var toolspath = Configuration_1.Configuration.getToolsPath();
+                        if (toolspath === '') {
+                            this._channel.appendLine("External Tools management: Unable to create a folder for saving the package");
+                            this._channel.show(true);
+                            return;
+                        }
+                        switch (message.value.pack) {
+                            case 'cpp':
+                                {
+                                }
+                                break;
+                            case 'rust':
+                                {
+                                    this._url = "https://www.sample-videos.com/zip/30mb.zip";
+                                    ExternalToolsPanel._filename = toolspath + "package.zip";
+                                }
+                                break;
+                            default:
+                                return;
+                        }
                         ExternalToolsPanel.currentPanel?.showWait(true);
-                        ExternalToolsPanel.getContentLength(this.url).then(function (value) {
+                        DownloadManager_1.DownloadManager.getFileLength(this._url).then(function (value) {
                             const url = value.url;
                             const len = value.length;
-                            ExternalToolsPanel.download(url, "D:\\1.bin", len).then(function (value) {
+                            DownloadManager_1.DownloadManager.doDownload(url, ExternalToolsPanel._filename, len, (value, progress) => {
+                                console.log(value + '%');
+                                console.log(progress.transferred);
+                                ExternalToolsPanel.currentPanel?._channel.appendLine(`Downloaded ${value}% / ${progress.transferred} of ${len}`);
+                                ExternalToolsPanel.currentPanel?._channel.show(true);
+                                ExternalToolsPanel.currentPanel?.setProgress(value + '%');
+                            }).then(function (value) {
+                                var toolspath = Configuration_1.Configuration.getToolsPath();
+                                ArchiveManager_1.ArchiveManager.doUnzip(value, toolspath);
                                 ExternalToolsPanel.currentPanel?.showWait(false);
                             }, function (error) {
-                                vscode.window.showErrorMessage('ERROR: ' + error);
+                                vscode.window.showErrorMessage(error);
                                 ExternalToolsPanel.currentPanel?.showWait(false);
                             });
                         }, function (error) {
-                            vscode.window.showErrorMessage('ERROR: ' + error);
+                            vscode.window.showErrorMessage(error);
                             ExternalToolsPanel.currentPanel?.showWait(false);
                         });
                     }
@@ -69,7 +194,7 @@ class ExternalToolsPanel {
                                 //Providers.btdevices.showWait(true); 
                             }
                         });
-                        vscode.window.showErrorMessage('Remove ' + message.value.pack);
+                        //vscode.window.showErrorMessage('Remove '+message.value.pack); 
                     }
                     break;
             }
@@ -93,74 +218,6 @@ class ExternalToolsPanel {
     }
     static revive(panel, extensionUri) {
         ExternalToolsPanel.currentPanel = new ExternalToolsPanel(panel, extensionUri);
-    }
-    static getContentLength(url) {
-        const http = require('http');
-        return new Promise((resolve, reject) => {
-            http.request(url, { method: 'HEAD', headers: { 'user-agent': 'test' } }, (res) => {
-                console.log(res.statusCode);
-                if (res.statusCode == 200) {
-                    var contentLength = res.headers['content-length'];
-                    if (contentLength > 0) {
-                        console.log("File length: " + contentLength);
-                        resolve({ length: contentLength, url: url });
-                    }
-                    else {
-                        reject(-1);
-                    }
-                }
-                else {
-                    reject(-1);
-                }
-            }).on('error', (err) => {
-                console.error(err);
-                reject(-1);
-            }).end();
-        });
-    }
-    static download(url, dest, len) {
-        var http = require('http');
-        var progress = require('progress-stream');
-        return new Promise((resolve, reject) => {
-            const file = fs.createWriteStream(dest, { flags: "wx" });
-            var str = progress({
-                time: 100,
-                length: len
-            });
-            str.on('progress', function (progress) {
-                console.log(Math.round(progress.percentage) + '%');
-                console.log(progress.transferred);
-                ExternalToolsPanel.currentPanel?.setProgress(Math.round(progress.percentage) + '%');
-            });
-            const request = http.get(url, { headers: { 'user-agent': 'test' } }, (response) => {
-                if (response.statusCode === 200) {
-                    response.pipe(str).pipe(file);
-                }
-                else {
-                    file.close();
-                    fs.unlink(dest, () => { }); // Delete temp file
-                    reject(`Server responded with ${response.statusCode}: ${response.statusMessage}`);
-                }
-            });
-            request.on("error", (err) => {
-                file.close();
-                fs.unlink(dest, () => { }); // Delete temp file
-                reject(err.message);
-            });
-            file.on("finish", () => {
-                resolve(dest);
-            });
-            file.on("error", err => {
-                file.close();
-                if (err.name === "EEXIST") {
-                    reject("File already exists");
-                }
-                else {
-                    fs.unlink(dest, () => { }); // Delete temp file
-                    reject(err.message);
-                }
-            });
-        });
     }
     setProgress(v) {
         this._panel.webview.postMessage({ type: 'setProgress', value: v });
@@ -199,6 +256,9 @@ class ExternalToolsPanel {
     async _update() {
         const webview = this._panel.webview;
         this._panel.webview.html = this._getHtmlForWebview(webview);
+        if (DownloadManager_1.DownloadManager.isDownloading()) {
+            this.showWait(true);
+        }
     }
     _getHtmlForWebview(webview) {
         const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
@@ -312,6 +372,7 @@ class ExternalToolsPanel {
 }
 exports.ExternalToolsPanel = ExternalToolsPanel;
 ExternalToolsPanel.viewType = "WOWCubeSDK.externalToolsPanel";
+ExternalToolsPanel._filename = "";
 function getWebviewOptions(extensionUri) {
     return {
         // Enable javascript in the webview

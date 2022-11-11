@@ -371,7 +371,6 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 
 				if(child.exitCode===0)
 				{
-					this._channel.appendLine('Done\r\n');
 					this.closeEmitter.fire(0);
 
 					this.checkingForUpdates = false;

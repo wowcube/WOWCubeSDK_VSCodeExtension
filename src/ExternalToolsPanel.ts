@@ -7,11 +7,8 @@ import { Uri } from "vscode";
 import {Configuration} from './Configuration';
 import { Project } from "./Project";
 import {Output} from './Output';
-
-//import {got} from 'got';
-
-import { request, RequestOptions, ClientRequest, ServerResponse } from 'node:http';
-import { URL } from 'node:url';
+import { DownloadManager } from "./DownloadManager";
+import {ArchiveManager} from "./ArchiveManager";
 
 export class ExternalToolsPanel {
 
@@ -31,9 +28,9 @@ export class ExternalToolsPanel {
     //downloader
     //private url:string = "https://media0.giphy.com/media/4SS0kfzRqfBf2/giphy.gif";
     //private url:string = "http://ipv4.download.thinkbroadband.com/50MB.zip";
-    private url:string = "http://ipv4.download.thinkbroadband.com/200MB.zip";
-
-    private fileName:string = "image.gif";
+    //private url:string = "http://ipv4.download.thinkbroadband.com/200MB.zip";
+    private _url:string ="https://www.sample-videos.com/zip/30mb.zip";
+    private static _filename:string = "";
 
     public static createOrShow(extensionUri: vscode.Uri) 
     { 
@@ -69,6 +66,7 @@ export class ExternalToolsPanel {
             ExternalToolsPanel.currentPanel = new ExternalToolsPanel(panel, extensionUri);  
     }
 
+    /*
     public static getContentLength(url:string)
     {
         const http = require('http');
@@ -102,7 +100,9 @@ export class ExternalToolsPanel {
             }).end();          
         });
     }
+    */
 
+    /*
     public static download(url:string, dest:string, len:any)
     {
         var http = require('http');
@@ -164,6 +164,7 @@ export class ExternalToolsPanel {
         });
         
     }
+    */
 
     private constructor(panel: vscode.WebviewPanel,
         extensionUri: vscode.Uri) {    
@@ -201,36 +202,70 @@ export class ExternalToolsPanel {
                         break;
                         case 'installButtonPressed':
                             {
-                                //https://file-examples.com/wp-content/uploads/2018/04/file_example_AVI_1920_2_3MG.avi
-                                vscode.window.showErrorMessage('Install '+message.value.pack); 
+                                var toolspath = Configuration.getToolsPath();
+    
+                                if(toolspath==='')
+                                {
+                                    this._channel.appendLine("External Tools management: Unable to create a folder for saving the package");
+                                    this._channel.show(true);
+                                    return;
+                                }
 
-                                //const file = fs.createWriteStream("D:\\1.bin");
-                                
+                                switch(message.value.pack)
+                                {
+                                    case 'cpp':
+                                        {
+
+                                        }
+                                    break;
+                                    case 'rust':
+                                        {
+                                           this._url ="https://www.sample-videos.com/zip/30mb.zip";
+                                           ExternalToolsPanel._filename = toolspath+"package.zip";
+                                        }
+                                    break;
+                                    default: 
+                                    return;
+                                }
+
                                 ExternalToolsPanel.currentPanel?.showWait(true);
-
-                                ExternalToolsPanel.getContentLength(this.url).then
+                                DownloadManager.getFileLength(this._url).then
                                 (
                                     function(value:any) 
                                     {
                                         const url:string = value.url;
                                         const len = value.length;
 
-                                        ExternalToolsPanel.download(url, "D:\\1.bin",len).then
+                                        DownloadManager.doDownload(url,ExternalToolsPanel._filename,len,(value:Number,progress:any) =>
+                                                                                        {
+                                                                                            console.log(value+'%');
+                                                                                            console.log(progress.transferred);
+                                                                            
+                                                                                            ExternalToolsPanel.currentPanel?._channel.appendLine(`Downloaded ${value}% / ${progress.transferred} of ${len}`);
+                                                                                            ExternalToolsPanel.currentPanel?._channel.show(true);
+
+                                                                                            ExternalToolsPanel.currentPanel?.setProgress(value+'%');
+                                                                                        }
+                                        ).then
                                         (
                                             function(value:any) 
                                             {
+                                                var toolspath = Configuration.getToolsPath();
+
+                                                ArchiveManager.doUnzip(value,toolspath);
+                                                
                                                 ExternalToolsPanel.currentPanel?.showWait(false);
                                             },
                                             function(error:any) 
                                             {
-                                                vscode.window.showErrorMessage('ERROR: '+error); 
+                                                vscode.window.showErrorMessage(error); 
                                                 ExternalToolsPanel.currentPanel?.showWait(false);
                                             }
                                         );
                                     },
                                     function(error:any) 
                                     {
-                                        vscode.window.showErrorMessage('ERROR: '+error); 
+                                        vscode.window.showErrorMessage(error); 
                                         ExternalToolsPanel.currentPanel?.showWait(false);
                                     }
                                 );
@@ -251,7 +286,7 @@ export class ExternalToolsPanel {
                                 }
                             });
 
-                            vscode.window.showErrorMessage('Remove '+message.value.pack); 
+                            //vscode.window.showErrorMessage('Remove '+message.value.pack); 
                         }
                         break;
                     }
@@ -313,6 +348,11 @@ export class ExternalToolsPanel {
         private async _update() {
             const webview = this._panel.webview;    
             this._panel.webview.html = this._getHtmlForWebview(webview);  
+
+            if(DownloadManager.isDownloading())
+            {
+                this.showWait(true);
+            }
         }
         
         private _getHtmlForWebview(webview: vscode.Webview) 
