@@ -55,7 +55,7 @@
                     break;   
             case 'setProgress':
                 {
-                    document.getElementById('progresstext').innerHTML = 'Package is being downloaded: '+message.value;
+                    document.getElementById('progresstext').innerHTML = message.value;
                 }
                 break;
             default:

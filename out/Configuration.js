@@ -400,6 +400,29 @@ class Configuration {
         }
         fs.mkdirSync(dir);
     }
+    static getPackageDownloadURL(pack) {
+        var p = os.platform();
+        var url = "https://updates.wowcube.com/packages/";
+        switch (p) {
+            case 'darwin': //mac
+                {
+                    url += pack + "_osx.zip";
+                }
+                break;
+            case 'win32': //windows
+                {
+                    url += pack + "_windows.zip";
+                }
+                break;
+            case 'linux':
+            default:
+                {
+                    url = "";
+                }
+                break;
+        }
+        return url;
+    }
     static getToolsPath() {
         var p = os.platform();
         var homedir = os.homedir();

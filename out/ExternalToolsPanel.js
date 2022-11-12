@@ -10,104 +10,6 @@ const Output_1 = require("./Output");
 const DownloadManager_1 = require("./DownloadManager");
 const ArchiveManager_1 = require("./ArchiveManager");
 class ExternalToolsPanel {
-    /*
-    public static getContentLength(url:string)
-    {
-        const http = require('http');
-
-        return new Promise((resolve, reject) =>
-        {
-            http.request(url, { method: 'HEAD', headers: { 'user-agent': 'test' } }, (res:any) =>
-            {
-                console.log(res.statusCode);
-                if(res.statusCode == 200)
-                {
-                    var contentLength = res.headers['content-length'];
-                    if(contentLength>0)
-                    {
-                        console.log("File length: "+contentLength);
-                        resolve({length:contentLength,url:url});
-                    }
-                    else
-                    {
-                        reject(-1);
-                    }
-                }
-                else
-                {
-                    reject(-1);
-                }
-            }).on('error', (err:any) =>
-            {
-                console.error(err);
-                reject(-1);
-            }).end();
-        });
-    }
-    */
-    /*
-    public static download(url:string, dest:string, len:any)
-    {
-        var http = require('http');
-        var progress = require('progress-stream');
-        
-        return new Promise((resolve, reject) =>
-        {
-            const file = fs.createWriteStream(dest, { flags: "wx" });
-    
-            var str = progress({
-                time: 100,
-                length:len
-            });
-             
-            str.on('progress', function(progress:any)
-            {
-                console.log(Math.round(progress.percentage)+'%');
-                console.log(progress.transferred);
-
-                ExternalToolsPanel.currentPanel?.setProgress(Math.round(progress.percentage)+'%');
-            });
-
-            const request = http.get(url, { headers: { 'user-agent': 'test' }}, (response:any) => {
-                if (response.statusCode === 200)
-                {
-                    response.pipe(str).pipe(file);
-                }
-                 else
-                 {
-                    file.close();
-                    fs.unlink(dest, () => {}); // Delete temp file
-                    reject(`Server responded with ${response.statusCode}: ${response.statusMessage}`);
-                }
-            });
-    
-            request.on("error", (err:any) =>
-            {
-                file.close();
-                fs.unlink(dest, () => {}); // Delete temp file
-                reject(err.message);
-            });
-    
-            file.on("finish", () =>
-            {
-                resolve(dest);
-            });
-    
-            file.on("error", err =>
-            {
-                file.close();
-    
-                if (err.name === "EEXIST") {
-                    reject("File already exists");
-                } else {
-                    fs.unlink(dest, () => {}); // Delete temp file
-                    reject(err.message);
-                }
-            });
-        });
-        
-    }
-    */
     constructor(panel, extensionUri) {
         this._disposables = [];
         this.writeEmitter = Output_1.Output.terminal();
@@ -116,10 +18,7 @@ class ExternalToolsPanel {
         this.onDidClose = this.closeEmitter.event;
         this._channel = Output_1.Output.channel();
         //downloader
-        //private url:string = "https://media0.giphy.com/media/4SS0kfzRqfBf2/giphy.gif";
-        //private url:string = "http://ipv4.download.thinkbroadband.com/50MB.zip";
-        //private url:string = "http://ipv4.download.thinkbroadband.com/200MB.zip";
-        this._url = "https://www.sample-videos.com/zip/30mb.zip";
+        this._url = "";
         this._panel = panel;
         this._extensionUri = extensionUri;
         // Set the webview's initial html content    
@@ -148,20 +47,14 @@ class ExternalToolsPanel {
                             this._channel.show(true);
                             return;
                         }
-                        switch (message.value.pack) {
-                            case 'cpp':
-                                {
-                                }
-                                break;
-                            case 'rust':
-                                {
-                                    this._url = "https://www.sample-videos.com/zip/30mb.zip";
-                                    ExternalToolsPanel._filename = toolspath + "package.zip";
-                                }
-                                break;
-                            default:
-                                return;
+                        this._url = Configuration_1.Configuration.getPackageDownloadURL(message.value.pack);
+                        ExternalToolsPanel._filename = toolspath + "package.zip";
+                        if (this._url === '') {
+                            this._channel.appendLine("External Tools management: Unable to find download url for the package");
+                            this._channel.show(true);
+                            return;
                         }
+                        ExternalToolsPanel.currentPanel?.setProgress('Getting ready to download the package...');
                         ExternalToolsPanel.currentPanel?.showWait(true);
                         DownloadManager_1.DownloadManager.getFileLength(this._url).then(function (value) {
                             const url = value.url;
@@ -171,11 +64,22 @@ class ExternalToolsPanel {
                                 console.log(progress.transferred);
                                 ExternalToolsPanel.currentPanel?._channel.appendLine(`Downloaded ${value}% / ${progress.transferred} of ${len}`);
                                 ExternalToolsPanel.currentPanel?._channel.show(true);
-                                ExternalToolsPanel.currentPanel?.setProgress(value + '%');
+                                ExternalToolsPanel.currentPanel?.setProgress('Package is being downloaded: ' + value + '%');
                             }).then(function (value) {
                                 var toolspath = Configuration_1.Configuration.getToolsPath();
-                                ArchiveManager_1.ArchiveManager.doUnzip(value, toolspath);
-                                ExternalToolsPanel.currentPanel?.showWait(false);
+                                ExternalToolsPanel.currentPanel?.setProgress('Package is being installed...');
+                                ArchiveManager_1.ArchiveManager.doUnzip(value, toolspath, () => {
+                                    ExternalToolsPanel.currentPanel?.showWait(false);
+                                    ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
+                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+                                    ExternalToolsPanel.currentPanel?.reload();
+                                }, (e) => {
+                                    vscode.window.showErrorMessage(e);
+                                    ExternalToolsPanel.currentPanel?.showWait(false);
+                                    ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unalbe to install the package, " + e);
+                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+                                    ExternalToolsPanel.currentPanel?.reload();
+                                });
                             }, function (error) {
                                 vscode.window.showErrorMessage(error);
                                 ExternalToolsPanel.currentPanel?.showWait(false);
@@ -190,11 +94,23 @@ class ExternalToolsPanel {
                     {
                         vscode.window.showInformationMessage("Package '" + message.value.packname + "' will be removed from the computer", ...["Remove Package", "Cancel"]).then((answer) => {
                             if (answer === "Remove Package") {
-                                //this.doDeleteApp(device.mac,appname);
-                                //Providers.btdevices.showWait(true); 
+                                var toolspath = Configuration_1.Configuration.getToolsPath();
+                                if (toolspath === '') {
+                                    ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unable to locate tools folder");
+                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+                                    return;
+                                }
+                                ExternalToolsPanel.currentPanel?.setProgress('Package is being uninstalled...');
+                                ExternalToolsPanel.currentPanel?.showWait(true);
+                                if (!ExternalToolsPanel.currentPanel?.deleteDir(toolspath + message.value.pack)) {
+                                    vscode.window.showErrorMessage("Failed to uninstall the package");
+                                }
+                                ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management:  Package '" + message.value.packname + "' has been successfully uninstalled");
+                                ExternalToolsPanel.currentPanel?._channel.show(true);
+                                ExternalToolsPanel.currentPanel?.showWait(false);
+                                ExternalToolsPanel.currentPanel?.reload();
                             }
                         });
-                        //vscode.window.showErrorMessage('Remove '+message.value.pack); 
                     }
                     break;
             }
@@ -228,6 +144,7 @@ class ExternalToolsPanel {
         }
         else {
             this._panel.webview.postMessage({ type: 'hideWait', value: { show: b } });
+            this.setProgress('');
         }
     }
     deleteDir(dir) {
@@ -258,6 +175,17 @@ class ExternalToolsPanel {
         this._panel.webview.html = this._getHtmlForWebview(webview);
         if (DownloadManager_1.DownloadManager.isDownloading()) {
             this.showWait(true);
+        }
+        else {
+            if (ArchiveManager_1.ArchiveManager.isBusy()) {
+                this.setProgress('Package is being uninstalled...');
+                this.showWait(true);
+            }
+        }
+    }
+    reload() {
+        if (typeof (this._panel) !== 'undefined') {
+            this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
         }
     }
     _getHtmlForWebview(webview) {
@@ -299,12 +227,12 @@ class ExternalToolsPanel {
                                         <div class="itemdesc">The package provides the ability to compile and build cubeapps in the C++ programming language.</div>
                                         </div>`;
         if (emInstall == true) {
-            ret += `  <button class="remove_button" style="display:inline-block;width:120px;" pack="em" packname="C++ Compiler support">Remove</button>
-                                            <div class="itemdesc positive" style="margin-top:10px">INSTALLED</div>`;
+            ret += `  <button class="remove_button" style="display:inline-block;width:120px;" pack="cpp" packname="C++ Compiler support">Remove</button>
+                                            <div class="itemstatus itemdesc positive" style="margin-top:10px" pack="cpp">INSTALLED</div>`;
         }
         else {
-            ret += `   <button class="install_button" style="display:inline-block;width:120px;" pack="em" packname="C++ Compiler support">Install</button>
-                                             <div class="itemdesc neutral" style="margin-top:10px">NOT INSTALLED</div>`;
+            ret += `   <button class="install_button" style="display:inline-block;width:120px;" pack="cpp" packname="C++ Compiler support">Install</button>
+                                             <div class="itemstatus itemdesc neutral" style="margin-top:10px" pack="cpp">NOT INSTALLED</div>`;
         }
         ret += `</div>
 

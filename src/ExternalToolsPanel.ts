@@ -26,10 +26,7 @@ export class ExternalToolsPanel {
 	private _channel: vscode.OutputChannel = Output.channel();
 
     //downloader
-    //private url:string = "https://media0.giphy.com/media/4SS0kfzRqfBf2/giphy.gif";
-    //private url:string = "http://ipv4.download.thinkbroadband.com/50MB.zip";
-    //private url:string = "http://ipv4.download.thinkbroadband.com/200MB.zip";
-    private _url:string ="https://www.sample-videos.com/zip/30mb.zip";
+    private _url:string ="";
     private static _filename:string = "";
 
     public static createOrShow(extensionUri: vscode.Uri) 
@@ -65,106 +62,6 @@ export class ExternalToolsPanel {
         extensionUri: vscode.Uri) {    
             ExternalToolsPanel.currentPanel = new ExternalToolsPanel(panel, extensionUri);  
     }
-
-    /*
-    public static getContentLength(url:string)
-    {
-        const http = require('http');
-
-        return new Promise((resolve, reject) => 
-        {
-            http.request(url, { method: 'HEAD', headers: { 'user-agent': 'test' } }, (res:any) => 
-            {
-                console.log(res.statusCode);
-                if(res.statusCode == 200)
-                {
-                    var contentLength = res.headers['content-length']; 
-                    if(contentLength>0)
-                    {
-                        console.log("File length: "+contentLength);
-                        resolve({length:contentLength,url:url});
-                    }
-                    else
-                    {
-                        reject(-1);
-                    }
-                }
-                else
-                {
-                    reject(-1);
-                }
-            }).on('error', (err:any) => 
-            {
-                console.error(err);
-                reject(-1);
-            }).end();          
-        });
-    }
-    */
-
-    /*
-    public static download(url:string, dest:string, len:any)
-    {
-        var http = require('http');
-        var progress = require('progress-stream');
-        
-        return new Promise((resolve, reject) => 
-        {
-            const file = fs.createWriteStream(dest, { flags: "wx" });
-    
-            var str = progress({
-                time: 100,
-                length:len
-            });
-             
-            str.on('progress', function(progress:any) 
-            {
-                console.log(Math.round(progress.percentage)+'%');
-                console.log(progress.transferred);
-
-                ExternalToolsPanel.currentPanel?.setProgress(Math.round(progress.percentage)+'%');
-            });
-
-            const request = http.get(url, { headers: { 'user-agent': 'test' }}, (response:any) => {
-                if (response.statusCode === 200) 
-                {
-                    response.pipe(str).pipe(file);
-                }
-                 else 
-                 {
-                    file.close();
-                    fs.unlink(dest, () => {}); // Delete temp file
-                    reject(`Server responded with ${response.statusCode}: ${response.statusMessage}`);
-                }
-            });
-    
-            request.on("error", (err:any) => 
-            {
-                file.close();
-                fs.unlink(dest, () => {}); // Delete temp file
-                reject(err.message);
-            });
-    
-            file.on("finish", () => 
-            {
-                resolve(dest);
-            });
-    
-            file.on("error", err => 
-            {
-                file.close();
-    
-                if (err.name === "EEXIST") {
-                    reject("File already exists");
-                } else {
-                    fs.unlink(dest, () => {}); // Delete temp file
-                    reject(err.message);
-                }
-            });
-        });
-        
-    }
-    */
 
     private constructor(panel: vscode.WebviewPanel,
         extensionUri: vscode.Uri) {    
@@ -211,22 +108,17 @@ export class ExternalToolsPanel {
                                     return;
                                 }
 
-                                switch(message.value.pack)
-                                {
-                                    case 'cpp':
-                                        {
+                                this._url = Configuration.getPackageDownloadURL(message.value.pack);
+                                ExternalToolsPanel._filename = toolspath+"package.zip";
 
-                                        }
-                                    break;
-                                    case 'rust':
-                                        {
-                                           this._url ="https://www.sample-videos.com/zip/30mb.zip";
-                                           ExternalToolsPanel._filename = toolspath+"package.zip";
-                                        }
-                                    break;
-                                    default: 
+                                if(this._url==='')
+                                {
+                                    this._channel.appendLine("External Tools management: Unable to find download url for the package");
+                                    this._channel.show(true);
                                     return;
                                 }
+
+                                ExternalToolsPanel.currentPanel?.setProgress('Getting ready to download the package...');
 
                                 ExternalToolsPanel.currentPanel?.showWait(true);
                                 DownloadManager.getFileLength(this._url).then
@@ -244,7 +136,7 @@ export class ExternalToolsPanel {
                                                                                             ExternalToolsPanel.currentPanel?._channel.appendLine(`Downloaded ${value}% / ${progress.transferred} of ${len}`);
                                                                                             ExternalToolsPanel.currentPanel?._channel.show(true);
 
-                                                                                            ExternalToolsPanel.currentPanel?.setProgress(value+'%');
+                                                                                            ExternalToolsPanel.currentPanel?.setProgress('Package is being downloaded: '+value+'%');
                                                                                         }
                                         ).then
                                         (
@@ -252,9 +144,28 @@ export class ExternalToolsPanel {
                                             {
                                                 var toolspath = Configuration.getToolsPath();
 
-                                                ArchiveManager.doUnzip(value,toolspath);
-                                                
-                                                ExternalToolsPanel.currentPanel?.showWait(false);
+                                                ExternalToolsPanel.currentPanel?.setProgress('Package is being installed...');
+                                                ArchiveManager.doUnzip(value,toolspath,()=>
+                                                    {
+                                                        ExternalToolsPanel.currentPanel?.showWait(false);
+
+                                                        ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
+                                                        ExternalToolsPanel.currentPanel?._channel.show(true);
+
+                                                        ExternalToolsPanel.currentPanel?.reload();
+
+                                                    }, (e:any)=>
+                                                    {
+                                                        vscode.window.showErrorMessage(e); 
+                                                        ExternalToolsPanel.currentPanel?.showWait(false);
+
+                                                        ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unalbe to install the package, "+e);
+                                                        ExternalToolsPanel.currentPanel?._channel.show(true);
+
+                                                        ExternalToolsPanel.currentPanel?.reload();
+                                                    } 
+                                                    );
+
                                             },
                                             function(error:any) 
                                             {
@@ -281,12 +192,30 @@ export class ExternalToolsPanel {
                             {
                                 if(answer==="Remove Package")
                                 {
-                                    //this.doDeleteApp(device.mac,appname);
-                                    //Providers.btdevices.showWait(true); 
+                                    var toolspath = Configuration.getToolsPath();
+    
+                                    if(toolspath==='')
+                                    {
+                                        ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unable to locate tools folder");
+                                        ExternalToolsPanel.currentPanel?._channel.show(true);
+                                        return;
+                                    }
+
+                                    ExternalToolsPanel.currentPanel?.setProgress('Package is being uninstalled...');
+                                    ExternalToolsPanel.currentPanel?.showWait(true);
+
+                                    if(!ExternalToolsPanel.currentPanel?.deleteDir(toolspath+message.value.pack))
+                                    {
+                                        vscode.window.showErrorMessage("Failed to uninstall the package"); 
+                                    }
+
+                                    ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management:  Package '"+message.value.packname+"' has been successfully uninstalled");
+                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+
+                                    ExternalToolsPanel.currentPanel?.showWait(false);
+                                    ExternalToolsPanel.currentPanel?.reload();
                                 }
                             });
-
-                            //vscode.window.showErrorMessage('Remove '+message.value.pack); 
                         }
                         break;
                     }
@@ -296,10 +225,11 @@ export class ExternalToolsPanel {
             );
         }
 
-        public setProgress(v:any)
+        public setProgress(v:string)
         {
             this._panel.webview.postMessage({ type: 'setProgress',value: v} ); 
         }
+
         public showWait(b:boolean)
         {
             if(b)
@@ -309,6 +239,7 @@ export class ExternalToolsPanel {
             else
             {
                 this._panel.webview.postMessage({ type: 'hideWait',value: {show:b}} ); 
+                this.setProgress('');
             }
     
         }
@@ -353,12 +284,27 @@ export class ExternalToolsPanel {
             {
                 this.showWait(true);
             }
+            else
+            {
+                if(ArchiveManager.isBusy())
+                {
+                    this.setProgress('Package is being uninstalled...');
+                    this.showWait(true);
+                }
+            }
+
         }
         
+        public reload()
+        {
+           if(typeof(this._panel)!=='undefined')
+           {
+               this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
+           }
+        }
+
         private _getHtmlForWebview(webview: vscode.Webview) 
         {
-
-
             const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
             const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
             const styleMainCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "main.css"));
@@ -404,13 +350,13 @@ export class ExternalToolsPanel {
                                      
                                 if(emInstall==true)
                                 {
-                                    ret+=`  <button class="remove_button" style="display:inline-block;width:120px;" pack="em" packname="C++ Compiler support">Remove</button>
-                                            <div class="itemdesc positive" style="margin-top:10px">INSTALLED</div>`;
+                                    ret+=`  <button class="remove_button" style="display:inline-block;width:120px;" pack="cpp" packname="C++ Compiler support">Remove</button>
+                                            <div class="itemstatus itemdesc positive" style="margin-top:10px" pack="cpp">INSTALLED</div>`;
                                 }
                                 else
                                 {
-                                    ret+=`   <button class="install_button" style="display:inline-block;width:120px;" pack="em" packname="C++ Compiler support">Install</button>
-                                             <div class="itemdesc neutral" style="margin-top:10px">NOT INSTALLED</div>`;
+                                    ret+=`   <button class="install_button" style="display:inline-block;width:120px;" pack="cpp" packname="C++ Compiler support">Install</button>
+                                             <div class="itemstatus itemdesc neutral" style="margin-top:10px" pack="cpp">NOT INSTALLED</div>`;
                                 }
 
 
