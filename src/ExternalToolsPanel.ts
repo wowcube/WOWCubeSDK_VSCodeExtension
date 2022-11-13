@@ -358,7 +358,7 @@ export class ExternalToolsPanel {
                         {
                             var chmodr = require('chmodr');
 
-                            chmodr('/folder', 0o777, (err:string) => 
+                            chmodr(rootpath, 0o777, (err:string) => 
                             {
                             if (err) 
                             {

@@ -225,7 +225,7 @@ class ExternalToolsPanel {
                         var rootpath = Configuration_1.Configuration.getToolsPath();
                         if (rootpath !== '') {
                             var chmodr = require('chmodr');
-                            chmodr('/folder', 0o777, (err) => {
+                            chmodr(rootpath, 0o777, (err) => {
                                 if (err) {
                                     ExternalToolsPanel.currentPanel?._channel.appendLine('Failed to set package file permissions,' + err);
                                 }
