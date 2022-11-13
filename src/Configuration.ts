@@ -2,8 +2,6 @@ import * as vscode from "vscode";
 import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
-import { deepStrictEqual } from "assert";
-import { Z_FIXED } from "zlib";
 
 export class Configuration 
 {
