@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import { getNonce } from "./getNonce";
 import * as fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { Uri } from "vscode";
 import {Configuration} from './Configuration';
 import { Project } from "./Project";
@@ -198,6 +199,9 @@ export class ExternalToolsPanel {
                         break;
                         case 'removeButtonPressed':
                         {
+                            ExternalToolsPanel.currentPanel?.fixPackageFilesPermissons();
+                            return;
+
                             vscode.window.showInformationMessage(
                                 "Package '"+message.value.packname+"' will be removed from the computer",
                                 ...["Remove Package", "Cancel"]
@@ -316,6 +320,67 @@ export class ExternalToolsPanel {
            }
         }
 
+
+        private static getAllFiles(dirPath:string,arrayOfFiles:any) 
+        {
+            var files = fs.readdirSync(dirPath);        
+            arrayOfFiles = arrayOfFiles || [];
+
+            files.forEach((file:string)=> 
+            {
+              if (fs.statSync(dirPath + "/" + file).isDirectory()) 
+              {
+                arrayOfFiles = ExternalToolsPanel.getAllFiles(dirPath + "/" + file,arrayOfFiles);
+              } 
+              else 
+              {
+                arrayOfFiles.push(path.join(__dirname, dirPath, "/", file))
+              }
+            })
+          
+            return arrayOfFiles;
+        }
+
+        private fixPackageFilesPermissons()
+        {
+            var p = os.platform();
+    
+            switch(p)
+            {
+                case 'darwin'://mac
+                case 'win32': //windows
+                {    
+                    //on mac, package files should have RWX (700) permission to avoid 'permission denied' error after package installation
+                    try
+                    {
+                        var rootpath = Configuration.getToolsPath();
+                        if(rootpath!=='')
+                        {
+                            var files:any;
+                            var files =ExternalToolsPanel.getAllFiles(rootpath,files);
+
+                            files.forEach((file:string) =>
+                            {
+                                fs.chmod(file, fs.constants.S_IRUSR | fs.constants.S_IWUSR | fs.constants.S_IXUSR, () => 
+                                {
+                                    // Check the file mode
+                                    var mode = fs.statSync(file).mode;
+                                    ExternalToolsPanel.currentPanel?._channel.appendLine("Current File Mode:"+ mode);
+                                });
+                            });
+                        } 
+                    }
+                    catch(e)
+                    {}
+                }
+                break;
+                //case 'win32': //windows
+                case 'linux':
+                default:
+                //unsupported os
+                break;        
+            }
+        }
         private _getHtmlForWebview(webview: vscode.Webview) 
         {
             const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));

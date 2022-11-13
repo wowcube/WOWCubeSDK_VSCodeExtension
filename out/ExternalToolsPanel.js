@@ -5,6 +5,8 @@ exports.ExternalToolsPanel = void 0;
 const vscode = require("vscode");
 const getNonce_1 = require("./getNonce");
 const fs = require("fs");
+const path = require("path");
+const os = require("os");
 const Configuration_1 = require("./Configuration");
 const Output_1 = require("./Output");
 const DownloadManager_1 = require("./DownloadManager");
@@ -101,6 +103,8 @@ class ExternalToolsPanel {
                     break;
                 case 'removeButtonPressed':
                     {
+                        ExternalToolsPanel.currentPanel?.fixPackageFilesPermissons();
+                        return;
                         vscode.window.showInformationMessage("Package '" + message.value.packname + "' will be removed from the computer", ...["Remove Package", "Cancel"]).then((answer) => {
                             if (answer === "Remove Package") {
                                 var toolspath = Configuration_1.Configuration.getToolsPath();
@@ -195,6 +199,50 @@ class ExternalToolsPanel {
     reload() {
         if (typeof (this._panel) !== 'undefined') {
             this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
+        }
+    }
+    static getAllFiles(dirPath, arrayOfFiles) {
+        var files = fs.readdirSync(dirPath);
+        arrayOfFiles = arrayOfFiles || [];
+        files.forEach((file) => {
+            if (fs.statSync(dirPath + "/" + file).isDirectory()) {
+                arrayOfFiles = ExternalToolsPanel.getAllFiles(dirPath + "/" + file, arrayOfFiles);
+            }
+            else {
+                arrayOfFiles.push(path.join(__dirname, dirPath, "/", file));
+            }
+        });
+        return arrayOfFiles;
+    }
+    fixPackageFilesPermissons() {
+        var p = os.platform();
+        switch (p) {
+            case 'darwin': //mac
+            case 'win32': //windows
+                {
+                    //on mac, package files should have RWX (700) permission to avoid 'permission denied' error after package installation
+                    try {
+                        var rootpath = Configuration_1.Configuration.getToolsPath();
+                        if (rootpath !== '') {
+                            var files;
+                            var files = ExternalToolsPanel.getAllFiles(rootpath, files);
+                            files.forEach((file) => {
+                                fs.chmod(file, fs.constants.S_IRUSR | fs.constants.S_IWUSR | fs.constants.S_IXUSR, () => {
+                                    // Check the file mode
+                                    var mode = fs.statSync(file).mode;
+                                    ExternalToolsPanel.currentPanel?._channel.appendLine("Current File Mode:" + mode);
+                                });
+                            });
+                        }
+                    }
+                    catch (e) { }
+                }
+                break;
+            //case 'win32': //windows
+            case 'linux':
+            default:
+                //unsupported os
+                break;
         }
     }
     _getHtmlForWebview(webview) {
