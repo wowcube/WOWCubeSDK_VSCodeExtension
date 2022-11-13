@@ -148,25 +148,43 @@ export class ExternalToolsPanel {
                                                 ExternalToolsPanel.currentPanel?.setProgress('Package is being installed...');
                                                 ArchiveManager.doUnzip(value,toolspath,()=>
                                                     {
-                                                        ExternalToolsPanel.currentPanel?.showWait(false);
-
-                                                        ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
-                                                        ExternalToolsPanel.currentPanel?._channel.show(true);
-
-                                                        //delete source package file
-                                                        try
-                                                        {
-                                                            if(fs.existsSync(value))
+                                                        ExternalToolsPanel.currentPanel?.fixPackageFilesPermissons(
+                                                            ()=>
                                                             {
-                                                                fs.unlink(value, () => {}); // Delete temp file
-                                                            }
-                                                        }
-                                                        catch(e)
-                                                        {
-                                                            ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: but the temporary file has not been deleted due error: ${e}`);
-                                                        }
+                                                                //success;
+                                                                ExternalToolsPanel.currentPanel?.showWait(false);
 
-                                                        ExternalToolsPanel.currentPanel?.reload();
+                                                                ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
+                                                                ExternalToolsPanel.currentPanel?._channel.show(true);
+        
+                                                                //delete source package file
+                                                                try
+                                                                {
+                                                                    if(fs.existsSync(value))
+                                                                    {
+                                                                        fs.unlink(value, () => {}); // Delete temp file
+                                                                    }
+                                                                }
+                                                                catch(e)
+                                                                {
+                                                                    ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: but the temporary file has not been deleted due error: ${e}`);
+                                                                }
+
+                                                                ExternalToolsPanel.currentPanel?.reload();
+                                                            },
+                                                            (e:string)=>
+                                                            {
+                                                                //error
+                                                                vscode.window.showErrorMessage(e); 
+                                                                ExternalToolsPanel.currentPanel?.showWait(false);
+        
+                                                                ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unalbe to completely install the package, the following error has ocurred while changing package file permissions: "+e);
+                                                                ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Please try to install the package again or allow file execution permissions to all package files recursively");
+                                                                ExternalToolsPanel.currentPanel?._channel.show(true);
+
+                                                                ExternalToolsPanel.currentPanel?.reload();
+                                                            });
+                                                    
 
                                                     }, (e:any)=>
                                                     {
@@ -199,8 +217,6 @@ export class ExternalToolsPanel {
                         break;
                         case 'removeButtonPressed':
                         {
-                            ExternalToolsPanel.currentPanel?.fixPackageFilesPermissons();
-                            return;
 
                             vscode.window.showInformationMessage(
                                 "Package '"+message.value.packname+"' will be removed from the computer",
@@ -320,35 +336,13 @@ export class ExternalToolsPanel {
            }
         }
 
-
-        private static getAllFiles(dirPath:string,arrayOfFiles:any) 
-        {
-            var files = fs.readdirSync(dirPath);        
-            arrayOfFiles = arrayOfFiles || [];
-
-            files.forEach((file:string)=> 
-            {
-              if (fs.statSync(dirPath + "/" + file).isDirectory()) 
-              {
-                arrayOfFiles = ExternalToolsPanel.getAllFiles(dirPath + "/" + file,arrayOfFiles);
-              } 
-              else 
-              {
-                arrayOfFiles.push(path.join(__dirname, dirPath, "/", file))
-              }
-            })
-          
-            return arrayOfFiles;
-        }
-
-        private fixPackageFilesPermissons()
+        private fixPackageFilesPermissons(onSuccess:Function, onError:Function)
         {
             var p = os.platform();
     
             switch(p)
             {
                 case 'darwin'://mac
-                case 'win32': //windows
                 {    
                     //on mac, package files should have RWX (700) permission to avoid 'permission denied' error after package installation
                     try
@@ -358,45 +352,33 @@ export class ExternalToolsPanel {
                         {
                             var chmodr = require('chmodr');
 
-                            chmodr(rootpath, 0o777, (err:string) => 
+                            chmodr(rootpath, 0o700, (err:string) => 
                             {
                             if (err) 
                             {
                                 ExternalToolsPanel.currentPanel?._channel.appendLine('Failed to set package file permissions,'+err);
+                                onError('Failed to set package file permissions,'+err);
                             }
                              else 
                              {
                                 ExternalToolsPanel.currentPanel?._channel.appendLine('Package file permissions have been successfully changed');
+                                onSuccess();
                              }
                             });
-
-                            /*
-                            var files:any;
-                            var files =ExternalToolsPanel.getAllFiles(rootpath,files);
-
-                            files.forEach((file:string) =>
-                            {
-                                fs.chmod(file, fs.constants.S_IRUSR | fs.constants.S_IWUSR | fs.constants.S_IXUSR, () => 
-                                {
-                                    // Check the file mode
-                                    var mode = fs.statSync(file).mode;
-                                    ExternalToolsPanel.currentPanel?._channel.appendLine("Current File Mode:"+ mode);
-                                });
-                            });
-                            */
                         } 
                     }
                     catch(e)
                     {}
                 }
                 break;
-                //case 'win32': //windows
+                case 'win32': //windows
                 case 'linux':
                 default:
-                //unsupported os
+                    onSuccess();
                 break;        
             }
         }
+
         private _getHtmlForWebview(webview: vscode.Webview) 
         {
             const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));

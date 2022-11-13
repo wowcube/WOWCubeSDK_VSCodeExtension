@@ -5,7 +5,6 @@ exports.ExternalToolsPanel = void 0;
 const vscode = require("vscode");
 const getNonce_1 = require("./getNonce");
 const fs = require("fs");
-const path = require("path");
 const os = require("os");
 const Configuration_1 = require("./Configuration");
 const Output_1 = require("./Output");
@@ -71,19 +70,30 @@ class ExternalToolsPanel {
                                 var toolspath = Configuration_1.Configuration.getToolsPath();
                                 ExternalToolsPanel.currentPanel?.setProgress('Package is being installed...');
                                 ArchiveManager_1.ArchiveManager.doUnzip(value, toolspath, () => {
-                                    ExternalToolsPanel.currentPanel?.showWait(false);
-                                    ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
-                                    ExternalToolsPanel.currentPanel?._channel.show(true);
-                                    //delete source package file
-                                    try {
-                                        if (fs.existsSync(value)) {
-                                            fs.unlink(value, () => { }); // Delete temp file
+                                    ExternalToolsPanel.currentPanel?.fixPackageFilesPermissons(() => {
+                                        //success;
+                                        ExternalToolsPanel.currentPanel?.showWait(false);
+                                        ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
+                                        ExternalToolsPanel.currentPanel?._channel.show(true);
+                                        //delete source package file
+                                        try {
+                                            if (fs.existsSync(value)) {
+                                                fs.unlink(value, () => { }); // Delete temp file
+                                            }
                                         }
-                                    }
-                                    catch (e) {
-                                        ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: but the temporary file has not been deleted due error: ${e}`);
-                                    }
-                                    ExternalToolsPanel.currentPanel?.reload();
+                                        catch (e) {
+                                            ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: but the temporary file has not been deleted due error: ${e}`);
+                                        }
+                                        ExternalToolsPanel.currentPanel?.reload();
+                                    }, (e) => {
+                                        //error
+                                        vscode.window.showErrorMessage(e);
+                                        ExternalToolsPanel.currentPanel?.showWait(false);
+                                        ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unalbe to completely install the package, the following error has ocurred while changing package file permissions: " + e);
+                                        ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Please try to install the package again or allow file execution permissions to all package files recursively");
+                                        ExternalToolsPanel.currentPanel?._channel.show(true);
+                                        ExternalToolsPanel.currentPanel?.reload();
+                                    });
                                 }, (e) => {
                                     vscode.window.showErrorMessage(e);
                                     ExternalToolsPanel.currentPanel?.showWait(false);
@@ -103,8 +113,6 @@ class ExternalToolsPanel {
                     break;
                 case 'removeButtonPressed':
                     {
-                        ExternalToolsPanel.currentPanel?.fixPackageFilesPermissons();
-                        return;
                         vscode.window.showInformationMessage("Package '" + message.value.packname + "' will be removed from the computer", ...["Remove Package", "Cancel"]).then((answer) => {
                             if (answer === "Remove Package") {
                                 var toolspath = Configuration_1.Configuration.getToolsPath();
@@ -201,61 +209,35 @@ class ExternalToolsPanel {
             this._panel.webview.html = this._getHtmlForWebview(this._panel.webview);
         }
     }
-    static getAllFiles(dirPath, arrayOfFiles) {
-        var files = fs.readdirSync(dirPath);
-        arrayOfFiles = arrayOfFiles || [];
-        files.forEach((file) => {
-            if (fs.statSync(dirPath + "/" + file).isDirectory()) {
-                arrayOfFiles = ExternalToolsPanel.getAllFiles(dirPath + "/" + file, arrayOfFiles);
-            }
-            else {
-                arrayOfFiles.push(path.join(__dirname, dirPath, "/", file));
-            }
-        });
-        return arrayOfFiles;
-    }
-    fixPackageFilesPermissons() {
+    fixPackageFilesPermissons(onSuccess, onError) {
         var p = os.platform();
         switch (p) {
             case 'darwin': //mac
-            case 'win32': //windows
                 {
                     //on mac, package files should have RWX (700) permission to avoid 'permission denied' error after package installation
                     try {
                         var rootpath = Configuration_1.Configuration.getToolsPath();
                         if (rootpath !== '') {
                             var chmodr = require('chmodr');
-                            chmodr(rootpath, 0o777, (err) => {
+                            chmodr(rootpath, 0o700, (err) => {
                                 if (err) {
                                     ExternalToolsPanel.currentPanel?._channel.appendLine('Failed to set package file permissions,' + err);
+                                    onError('Failed to set package file permissions,' + err);
                                 }
                                 else {
                                     ExternalToolsPanel.currentPanel?._channel.appendLine('Package file permissions have been successfully changed');
+                                    onSuccess();
                                 }
                             });
-                            /*
-                            var files:any;
-                            var files =ExternalToolsPanel.getAllFiles(rootpath,files);
-
-                            files.forEach((file:string) =>
-                            {
-                                fs.chmod(file, fs.constants.S_IRUSR | fs.constants.S_IWUSR | fs.constants.S_IXUSR, () =>
-                                {
-                                    // Check the file mode
-                                    var mode = fs.statSync(file).mode;
-                                    ExternalToolsPanel.currentPanel?._channel.appendLine("Current File Mode:"+ mode);
-                                });
-                            });
-                            */
                         }
                     }
                     catch (e) { }
                 }
                 break;
-            //case 'win32': //windows
+            case 'win32': //windows
             case 'linux':
             default:
-                //unsupported os
+                onSuccess();
                 break;
         }
     }
