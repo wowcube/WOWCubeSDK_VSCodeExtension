@@ -356,6 +356,21 @@ export class ExternalToolsPanel {
                         var rootpath = Configuration.getToolsPath();
                         if(rootpath!=='')
                         {
+                            var chmodr = require('chmodr');
+
+                            chmodr('/folder', 0o777, (err:string) => 
+                            {
+                            if (err) 
+                            {
+                                ExternalToolsPanel.currentPanel?._channel.appendLine('Failed to set package file permissions,'+err);
+                            }
+                             else 
+                             {
+                                ExternalToolsPanel.currentPanel?._channel.appendLine('Package file permissions have been successfully changed');
+                             }
+                            });
+
+                            /*
                             var files:any;
                             var files =ExternalToolsPanel.getAllFiles(rootpath,files);
 
@@ -368,6 +383,7 @@ export class ExternalToolsPanel {
                                     ExternalToolsPanel.currentPanel?._channel.appendLine("Current File Mode:"+ mode);
                                 });
                             });
+                            */
                         } 
                     }
                     catch(e)
