@@ -72,6 +72,15 @@ class ExternalToolsPanel {
                                     ExternalToolsPanel.currentPanel?.showWait(false);
                                     ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
                                     ExternalToolsPanel.currentPanel?._channel.show(true);
+                                    //delete source package file
+                                    try {
+                                        if (fs.existsSync(value)) {
+                                            fs.unlink(value, () => { }); // Delete temp file
+                                        }
+                                    }
+                                    catch (e) {
+                                        ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: but the temporary file has not been deleted due error: ${e}`);
+                                    }
                                     ExternalToolsPanel.currentPanel?.reload();
                                 }, (e) => {
                                     vscode.window.showErrorMessage(e);
@@ -178,7 +187,7 @@ class ExternalToolsPanel {
         }
         else {
             if (ArchiveManager_1.ArchiveManager.isBusy()) {
-                this.setProgress('Package is being uninstalled...');
+                this.setProgress('Package is being installed...');
                 this.showWait(true);
             }
         }

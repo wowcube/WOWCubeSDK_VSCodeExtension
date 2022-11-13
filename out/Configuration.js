@@ -465,6 +465,14 @@ class Configuration {
                 //unsupported os
                 break;
         }
+        try {
+            if (!fs.existsSync(homedir)) {
+                homedir = "";
+            }
+        }
+        catch (e) {
+            homedir = "";
+        }
         return homedir;
     }
     static getPawnPath() {

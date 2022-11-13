@@ -152,6 +152,19 @@ export class ExternalToolsPanel {
                                                         ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
                                                         ExternalToolsPanel.currentPanel?._channel.show(true);
 
+                                                        //delete source package file
+                                                        try
+                                                        {
+                                                            if(fs.existsSync(value))
+                                                            {
+                                                                fs.unlink(value, () => {}); // Delete temp file
+                                                            }
+                                                        }
+                                                        catch(e)
+                                                        {
+                                                            ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: but the temporary file has not been deleted due error: ${e}`);
+                                                        }
+
                                                         ExternalToolsPanel.currentPanel?.reload();
 
                                                     }, (e:any)=>
@@ -288,7 +301,7 @@ export class ExternalToolsPanel {
             {
                 if(ArchiveManager.isBusy())
                 {
-                    this.setProgress('Package is being uninstalled...');
+                    this.setProgress('Package is being installed...');
                     this.showWait(true);
                 }
             }

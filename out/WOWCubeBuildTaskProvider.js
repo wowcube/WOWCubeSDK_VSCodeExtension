@@ -149,6 +149,14 @@ class WOWCubeBuildTaskTerminal {
                 }
             }
             var compilerpath = Configuration_1.Configuration.getCompilerPath("cpp");
+            if (compilerpath.length === 0) {
+                vscode.window.showErrorMessage("C++ Compiler support package for WOWCube SDK is not detected.\nPlease make sure WOWCube SDK is installed, it is up to date and C++ support package for WOWCube SDK is installed");
+                this._channel.appendLine('C++ Compiler support package for WOWCube SDK is not detected!');
+                this._channel.appendLine('Please use Manage External Tools panel to install the package first.\r\n\r\n');
+                this.closeEmitter.fire(0);
+                resolve();
+                return;
+            }
             compilerpath += 'em/upstream/emscripten/';
             var command = '"' + compilerpath + Configuration_1.Configuration.getCC("cpp") + '"';
             var sourcefile = this.workspace + '/' + build_json.sourceFile;
@@ -248,13 +256,6 @@ class WOWCubeBuildTaskTerminal {
             }
             //return version value in case it was changed
             Configuration_1.Configuration.setCurrentVersion(initialVersion);
-            if (compilerpath.length === 0) {
-                vscode.window.showErrorMessage("C++ Compiler support package for WOWCube SDK is not detected.\nPlease make sure WOWCube SDK is installed, it is up to date and C++ support package for WOWCube SDK is installed");
-                this._channel.appendLine('C++ Compiler support package for WOWCube SDK is not detected.\r\n\r\n');
-                this.closeEmitter.fire(0);
-                resolve();
-                return;
-            }
             var child = cp.exec(command, { cwd: compilerpath }, (error, stdout, stderr) => {
                 if (error) {
                     //reject({ error, stdout, stderr });
