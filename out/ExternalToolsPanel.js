@@ -214,28 +214,38 @@ class ExternalToolsPanel {
     fixPackageFilesPermissons(onSuccess, onError) {
         var p = os.platform();
         switch (p) {
-            case 'darwin': //mac
+            /*
+            case 'darwin'://mac
+            {
+                //on mac, package files should have RWX (700) permission to avoid 'permission denied' error after package installation
+                try
                 {
-                    //on mac, package files should have RWX (700) permission to avoid 'permission denied' error after package installation
-                    try {
-                        var rootpath = Configuration_1.Configuration.getToolsPath();
-                        if (rootpath !== '') {
-                            var chmodr = require('chmodr');
-                            chmodr(rootpath, 0o700, (err) => {
-                                if (err) {
-                                    ExternalToolsPanel.currentPanel?._channel.appendLine('Failed to set package file permissions,' + err);
-                                    onError('Failed to set package file permissions,' + err);
-                                }
-                                else {
-                                    ExternalToolsPanel.currentPanel?._channel.appendLine('Package file permissions have been successfully changed');
-                                    onSuccess();
-                                }
-                            });
+                    var rootpath = Configuration.getToolsPath();
+                    if(rootpath!=='')
+                    {
+                        var chmodr = require('chmodr');
+
+                        chmodr(rootpath, 0o700, (err:string) =>
+                        {
+                        if (err)
+                        {
+                            ExternalToolsPanel.currentPanel?._channel.appendLine('Failed to set package file permissions,'+err);
+                            onError('Failed to set package file permissions,'+err);
                         }
+                         else
+                         {
+                            ExternalToolsPanel.currentPanel?._channel.appendLine('Package file permissions have been successfully changed');
+                            onSuccess();
+                         }
+                        });
                     }
-                    catch (e) { }
                 }
-                break;
+                catch(e)
+                {}
+            }
+            break;
+            */
+            case 'darwin': //mac
             case 'win32': //windows
             case 'linux':
             default:

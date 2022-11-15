@@ -345,6 +345,7 @@ export class ExternalToolsPanel {
     
             switch(p)
             {
+                /*
                 case 'darwin'://mac
                 {    
                     //on mac, package files should have RWX (700) permission to avoid 'permission denied' error after package installation
@@ -374,6 +375,8 @@ export class ExternalToolsPanel {
                     {}
                 }
                 break;
+                */
+                case 'darwin'://mac
                 case 'win32': //windows
                 case 'linux':
                 default:
