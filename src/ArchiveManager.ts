@@ -76,7 +76,7 @@ export class ArchiveManager
         command+='-d ';
         command+='"'+outFolder+'" ';
 
-        var child:cp.ChildProcess = cp.exec(command, { cwd: ""}, (error, stdout, stderr) => 
+        var child:cp.ChildProcess = cp.exec(command, { cwd: "", maxBuffer:2048*1024}, (error, stdout, stderr) => 
         {
             if (error) 
             {
