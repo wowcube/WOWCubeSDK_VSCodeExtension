@@ -183,3 +183,8 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 1.20.2
 * Regression bugfix
+
+### 2.0.0
+* C++ compiler support for building cubeapp applications
+* External tools management
+* Minor bugfix
