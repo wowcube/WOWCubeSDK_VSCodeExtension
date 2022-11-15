@@ -5,6 +5,8 @@ import { Uri } from "vscode";
 import {Configuration} from './Configuration';
 import {Output} from './Output';
 import * as unzipper from 'unzipper';
+import * as cp from 'child_process';
+import * as os from 'os';
 
 export class ArchiveManager 
 {
@@ -23,8 +25,30 @@ export class ArchiveManager
 
     public static doUnzip(zipFilename:string, outFolder:string, finishedCallback:Function, errorCallback:Function)
     {
+        var p = os.platform();
+
+        switch(p)
+        {
+            case 'darwin'://mac
+            {
+                this.doUnzipSystem(zipFilename, outFolder, finishedCallback, errorCallback);
+            }
+            case 'win32': //windows
+            {
+                this.doUnzipNode(zipFilename, outFolder, finishedCallback, errorCallback);
+            }
+            break;
+            case 'linux':
+            default:
+            //unsupported os
+            break;        
+        }
+    }
+
+    public static doUnzipNode(zipFilename:string, outFolder:string, finishedCallback:Function, errorCallback:Function)
+    {
         if(this._currentSession!==null) return;
-        
+
         this._currentSession = zipFilename;
         
         fs.createReadStream(zipFilename)
@@ -39,5 +63,47 @@ export class ArchiveManager
             this._currentSession = null;
             errorCallback(e);
         });
+    }
+
+    public static doUnzipSystem(zipFilename:string, outFolder:string, finishedCallback:Function, errorCallback:Function)
+    {
+        if(this._currentSession!==null) return;
+        
+        this._currentSession = zipFilename;
+        
+        var command:string = 'unzip -X -K -o ';
+        command+='"'+zipFilename+'" ';
+        command+='-d ';
+        command+='"'+outFolder+'" ';
+
+        var child:cp.ChildProcess = cp.exec(command, { cwd: ""}, (error, stdout, stderr) => 
+        {
+            if (error) 
+            {
+                //reject({ error, stdout, stderr });
+            }
+            if (stderr && stderr.length > 0) 
+            {
+                this._channel.appendLine(stderr);
+                this._channel.show(true);
+            }
+
+            if (stdout && stdout.length > 0) 
+            {
+                this._channel.appendLine(stdout);
+                this._channel.show(true);
+            }
+
+            if(child.exitCode===0)
+            {
+                this._currentSession = null;
+                finishedCallback();
+            }
+            else
+            {
+                this._currentSession = null;
+                errorCallback(`Unable to unpack the package, process exit code is ${child.exitCode}`);
+            }
+        });	
     }
 }
