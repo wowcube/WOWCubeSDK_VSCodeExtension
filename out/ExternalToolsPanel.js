@@ -116,6 +116,8 @@ class ExternalToolsPanel {
                         vscode.window.showInformationMessage("Package '" + message.value.packname + "' will be removed from the computer", ...["Remove Package", "Cancel"]).then((answer) => {
                             if (answer === "Remove Package") {
                                 var toolspath = Configuration_1.Configuration.getToolsPath();
+                                ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management:  Uninstalling '" + message.value.packname + "' package");
+                                ExternalToolsPanel.currentPanel?._channel.show(true);
                                 if (toolspath === '') {
                                     ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unable to locate tools folder");
                                     ExternalToolsPanel.currentPanel?._channel.show(true);

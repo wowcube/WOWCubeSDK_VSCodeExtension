@@ -227,6 +227,9 @@ export class ExternalToolsPanel {
                                 {
                                     var toolspath = Configuration.getToolsPath();
     
+                                    ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management:  Uninstalling '"+message.value.packname+"' package");
+                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+
                                     if(toolspath==='')
                                     {
                                         ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unable to locate tools folder");
