@@ -55,7 +55,7 @@ class ArchiveManager {
         command += '"' + zipFilename + '" ';
         command += '-d ';
         command += '"' + outFolder + '" ';
-        var child = cp.exec(command, { cwd: "", maxBuffer: 2048 * 1024 }, (error, stdout, stderr) => {
+        var child = cp.exec(command, { cwd: "", maxBuffer: 20480 * 1024 }, (error, stdout, stderr) => {
             if (error) {
                 //reject({ error, stdout, stderr });
             }
