@@ -80,18 +80,19 @@ export class ArchiveManager
         {
             if (error) 
             {
-                //reject({ error, stdout, stderr });
+                this._currentSession = null;
+                errorCallback(`Unable to unpack the package with: ${error}`);
             }
             if (stderr && stderr.length > 0) 
             {
-                this._channel.appendLine(stderr);
-                this._channel.show(true);
+                //this._channel.appendLine(stderr);
+                //this._channel.show(true);
             }
 
             if (stdout && stdout.length > 0) 
             {
-                this._channel.appendLine(stdout);
-                this._channel.show(true);
+                //this._channel.appendLine(stdout);
+                //this._channel.show(true);
             }
 
             if(child.exitCode===0)
