@@ -223,7 +223,18 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 			if(compilerpath.length===0)
 			{
-				vscode.window.showErrorMessage("C++ Compiler support package for WOWCube SDK is not detected.\nPlease make sure WOWCube SDK is installed, it is up to date and C++ support package for WOWCube SDK is installed"); 
+				vscode.window.showErrorMessage(
+					"C++ Compiler support package for WOWCube SDK is not detected.\nPlease make sure WOWCube SDK is installed, it is up to date and C++ support package for WOWCube SDK is installed",
+					...["Manage Packages"]
+				).then((answer)=>
+				{
+					if(answer==="Manage Packages")
+					{
+						vscode.commands.executeCommand('WOWCubeSDK.openExternalTools');
+					}
+				});
+
+				//vscode.window.showErrorMessage("C++ Compiler support package for WOWCube SDK is not detected.\nPlease make sure WOWCube SDK is installed, it is up to date and C++ support package for WOWCube SDK is installed"); 
 				this._channel.appendLine('C++ Compiler support package for WOWCube SDK is not detected!');
 				this._channel.appendLine('Please use Manage External Tools panel to install the package first.\r\n\r\n');
 
