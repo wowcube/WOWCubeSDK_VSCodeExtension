@@ -165,14 +165,14 @@ class WOWCubeBuildTaskTerminal {
             compilerpath += 'em/upstream/emscripten/';
             var command = '"' + compilerpath + Configuration_1.Configuration.getCC("cpp") + '"';
             var sourcefile = this.workspace + '/' + build_json.sourceFile;
-            var currDir = this.workspace + "\\src";
+            var currDir = this.workspace + Configuration_1.Configuration.getSlash() + 'src';
             var srcdir = build_json.sourceFile;
             var pos = srcdir.indexOf('/');
             if (pos !== -1) {
                 if (srcdir.substring(0, pos) !== 'src') {
                     this._channel.appendLine('NOTE: Non-standard source files folder name is used. Please consider using `src` as a name of the folder.\r\n');
                 }
-                currDir = this.workspace + "\\" + srcdir.substring(0, pos);
+                currDir = this.workspace + Configuration_1.Configuration.getSlash() + srcdir.substring(0, pos);
             }
             var builddir = this.workspace + "/binary";
             pos = build_json.scriptFile.indexOf('/');
@@ -259,15 +259,34 @@ class WOWCubeBuildTaskTerminal {
                     }
                 });
             }
+            else {
+                this._channel.appendLine('WARNING: Folder `' + currDir + '` doesnt exist or can not be opened. Cubeapp may work incorrectly.\r\n');
+                this._channel.show(true);
+            }
             //return version value in case it was changed
             Configuration_1.Configuration.setCurrentVersion(initialVersion);
             var child = cp.exec(command, { cwd: compilerpath }, (error, stdout, stderr) => {
-                if (error) {
-                    //reject({ error, stdout, stderr });
-                }
                 if (stderr && stderr.length > 0) {
-                    this._channel.appendLine(stderr);
-                    this._channel.show(true);
+                    var functionNames = ['sendMessage', 'recvMessage', 'getTime', 'getUserName', 'toggleDebugInfo', 'saveState', 'loadState', 'random', 'LOG', 'getTap',
+                        'TOPOLOGY_getAdjacentFacelet', 'TOPOLOGY_getFacelet', 'TOPOLOGY_getPlace', 'TOPOLOGY_getOppositeFacelet', 'TOPOLOGY_getAngle',
+                        'TOPOLOGY_getFaceletOrientation', 'TOPOLOGY_getPlaceOrientation', 'TOPOLOGY_isAssembled', 'TOPOLOGY_getTwist', 'TopologyDebugGetFace',
+                        'TopologyDebugGetPosition', 'TopologyDebugGetHorizontal', 'LB_getInfo', 'LB_getScore', 'MS_getFaceAccelX',
+                        'MS_getFaceAccelY', 'MS_getFaceAccelZ', 'MS_getFaceGyroX', 'MS_getFaceGyroY', 'MS_getFaceGyroZ',
+                        'GFX_getAssetId', 'GFX_clear', 'GFX_drawText', 'GFX_drawPoint', 'GFX_drawCircle',
+                        'GFX_drawSolidCircle', 'GFX_drawArc', 'GFX_drawLine', 'GFX_drawRectangle', 'GFX_bakeImage',
+                        'GFX_setRenderTarget', 'GFX_drawImage', 'GFX_drawBakedImage', 'GFX_drawParticles', 'GFX_render',
+                        'GFX_clearCache', 'GFX_cacheImages', 'SND_getAssetId', 'SND_play', 'SND_cacheSounds', 'EVENT_getList'
+                    ];
+                    //remove warning for Cubios exports
+                    for (var i = 0; i < functionNames.length; i++) {
+                        stderr = stderr.replace('warning: undefined symbol: ' + functionNames[i] + ' (referenced by top-level compiled C/C++ code)\n', '');
+                    }
+                    //remove other warnings
+                    stderr = stderr.replace('em++: warning: warnings in JS library compilation [-Wjs-compiler]', '');
+                    if (stderr.length > 2) {
+                        this._channel.appendLine(stderr);
+                        this._channel.show(true);
+                    }
                 }
                 if (stdout && stdout.length > 0) {
                     this._channel.appendLine(stdout);

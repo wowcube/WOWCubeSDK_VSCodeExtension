@@ -142,3 +142,9 @@
 * C++ compiler support for building cubeapp applications
 * External tools management
 * Minor bugfix
+
+### 2.0.1
+* OSX bugfix
+
+### 2.0.2
+* Improved terminal output
