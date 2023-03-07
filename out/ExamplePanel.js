@@ -146,7 +146,7 @@ class ExamplePanel {
         var fullpath = '';
         var needDeleteFolder = false;
         try {
-            var ex = Providers_1.Providers.examples.examples_pawn.e;
+            var ex = Providers_1.Providers.examples.examples_cpp.e;
             var availableVersions = ex.get(this._key);
             var currVersion = Configuration_1.Configuration.getCurrentVersion();
             if (this._forceVersion !== "") {

@@ -148,3 +148,6 @@
 
 ### 2.0.2
 * Improved terminal output
+
+### 2.0.3
+* GFX Engine

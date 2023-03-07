@@ -100,7 +100,7 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 		var categories:Array<string> = new Array<string>();
 
 		//Get existing categories of examples
-		var catInfoPath = Configuration.getWOWSDKPath()+'sdk/examples/categories.json';
+		var catInfoPath = Configuration.getWOWSDKPath()+'sdk/examples/categories_'+lang+'.json';
 		const cat = require(catInfoPath);
 
 		for(var i=0;i<cat.categories.length;i++)
@@ -321,7 +321,22 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 					{
 						if(file!=='.DS_Store')
 						{
-							files.push([file,sourceFiles+file]);
+							if(!fs.lstatSync(sourceFiles+file).isDirectory())
+							{
+								files.push([file,sourceFiles+file]);
+							}
+							else
+							{	var dir = file;
+
+								//at the moment, only one level of inner folders is supported
+								fs.readdirSync(sourceFiles+file).forEach(f => 
+								{
+									if(f!=='.DS_Store')
+									{
+									files.push([dir+' / '+f,sourceFiles+dir+'/'+f]);
+									}
+								});
+							}
 						}
 					});
 			}
@@ -339,7 +354,7 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 		try
 		{
 			this.examples_pawn = this.getExamples('pawn');
-			this.examples_cpp = this.getExamples('pawn');
+			this.examples_cpp = this.getExamples('cpp');
 
 			var categories_pawn:Array<string> = this.examples_pawn.c;
 			var articles_pawn = this.examples_pawn.e;

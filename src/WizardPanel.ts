@@ -143,6 +143,8 @@ export class WizardPanel {
                             {
                                 WizardPanel.currentLanguage = message.value;
                                 Configuration.setLastLanguage(WizardPanel.currentLanguage);
+
+                                this._panel.webview.postMessage({type:'languageChange',value:message.value});
                             }
                     }
                 },
@@ -587,8 +589,39 @@ export class WizardPanel {
                                     <div style="margin:5px;"><strong>Basic cubeapp with splash screens</strong></div>
                                     <div class="itemdesc">Creates a project of WOWCube cubeapp application with in-game splash screens support</div>
                                     <div class="itemdesc">Demonstrates the use of in-game splash screens</div>
-                                </div>
-                            </div>
+                                </div>`;
+
+                                if(lastLanguage=='cpp')
+                                {
+                                    ret+=`
+                                    <div id="i5" class="item">
+                                        <div style="margin:5px;"><strong>Basic cubeapp with Gfx Engine support</strong></div>
+                                        <div class="itemdesc">Creates a project of WOWCube cubeapp application with Gfx Engine support</div>
+                                        <div class="itemdesc">Demonstrates principles of work with a compound multi-screen device</div>
+                                    </div>
+                                    <div id="i6" class="item">
+                                        <div style="margin:5px;"><strong>Basic cubeapp with resources and Gfx Engine support</strong></div>
+                                        <div class="itemdesc">Creates a project of WOWCube cubeapp application with Gfx Engine support and some resources</div>
+                                        <div class="itemdesc">Demonstrates how to use application resources with Gfx Engine</div>
+                                    </div>
+                                    `;
+                                }
+                                else
+                                {
+                                    ret+=`
+                                    <div id="i5" class="item" style="display:none">
+                                        <div style="margin:5px;"><strong>Basic cubeapp with Gfx Engine support</strong></div>
+                                        <div class="itemdesc">Creates a project of WOWCube cubeapp application with Gfx Engine support</div>
+                                        <div class="itemdesc">Demonstrates principles of work with a compound multi-screen device</div>
+                                    </div>
+                                    <div id="i6" class="item">
+                                        <div style="margin:5px;"><strong>Basic cubeapp with resources and Gfx Engine support</strong></div>
+                                        <div class="itemdesc">Creates a project of WOWCube cubeapp application with Gfx Engine support and some resources</div>
+                                        <div class="itemdesc">Demonstrates how to use application resources with Gfx Engine</div>
+                                     </div> 
+                                    `;   
+                                }
+                            ret+=`</div>
                             
                         </div>
 

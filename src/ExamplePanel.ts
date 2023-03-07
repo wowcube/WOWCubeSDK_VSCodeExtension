@@ -214,7 +214,7 @@ export class ExamplePanel {
             try
             {
 
-            var ex = Providers.examples.examples_pawn.e;
+            var ex = Providers.examples.examples_cpp.e;
             var availableVersions = ex.get(this._key);
     
             var currVersion = Configuration.getCurrentVersion();

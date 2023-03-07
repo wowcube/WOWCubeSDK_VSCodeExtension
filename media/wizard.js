@@ -132,6 +132,19 @@ class TemplateItem
                     document.getElementById('foldername').value = message.value;
                     break;
                 }
+            case 'languageChange':
+                {
+                    if(message.value=='pawn')
+                    {
+                        document.getElementById('i5').style.display = 'none';
+                        document.getElementById('i6').style.display = 'none';
+                    }
+                    else
+                    {
+                        document.getElementById('i5').style.display = 'block';
+                        document.getElementById('i6').style.display = 'block';
+                    }
+                }
         }
     });
 }());

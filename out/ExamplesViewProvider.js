@@ -71,7 +71,7 @@ class ExamplesViewProvider {
     getExamples(lang) {
         var categories = new Array();
         //Get existing categories of examples
-        var catInfoPath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/categories.json';
+        var catInfoPath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/categories_' + lang + '.json';
         const cat = require(catInfoPath);
         for (var i = 0; i < cat.categories.length; i++) {
             categories.push(cat.categories[i]);
@@ -223,7 +223,18 @@ class ExamplesViewProvider {
             if (fs.existsSync(sourceFiles) === true) {
                 fs.readdirSync(sourceFiles).forEach(file => {
                     if (file !== '.DS_Store') {
-                        files.push([file, sourceFiles + file]);
+                        if (!fs.lstatSync(sourceFiles + file).isDirectory()) {
+                            files.push([file, sourceFiles + file]);
+                        }
+                        else {
+                            var dir = file;
+                            //at the moment, only one level of inner folders is supported
+                            fs.readdirSync(sourceFiles + file).forEach(f => {
+                                if (f !== '.DS_Store') {
+                                    files.push([dir + ' / ' + f, sourceFiles + dir + '/' + f]);
+                                }
+                            });
+                        }
                     }
                 });
             }
@@ -236,7 +247,7 @@ class ExamplesViewProvider {
         //get examples
         try {
             this.examples_pawn = this.getExamples('pawn');
-            this.examples_cpp = this.getExamples('pawn');
+            this.examples_cpp = this.getExamples('cpp');
             var categories_pawn = this.examples_pawn.c;
             var articles_pawn = this.examples_pawn.e;
             var names_pawn = this.examples_pawn.n;
