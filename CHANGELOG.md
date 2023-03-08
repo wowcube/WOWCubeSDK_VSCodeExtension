@@ -151,3 +151,7 @@
 
 ### 2.0.3
 * GFX Engine
+
+### 2.0.4
+* GFX Engine sample projects
+* Minor tweaks

@@ -197,3 +197,7 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 2.0.3
 * GFX Engine
+
+### 2.0.4
+* GFX Engine sample projects
+* Minor tweaks
