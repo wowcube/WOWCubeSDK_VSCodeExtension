@@ -593,7 +593,7 @@ export class ExamplePanel {
 
         public dispose() 
         {    
-            ExamplePanel.panels.delete(this._key);
+            ExamplePanel.panels.delete(this._language+'___'+this._key);
 
             // Clean up our resources  
             this._panel.dispose();
