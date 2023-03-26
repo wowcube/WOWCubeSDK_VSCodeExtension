@@ -398,7 +398,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				if (stderr && stderr.length > 0) 
 				{
 					var functionNames = ['sendMessage','recvMessage','sendPacket','recvPacket','sendBleData','recvBleData','getTime','getUserName','toggleDebugInfo','saveState','loadState','random','LOG','getTap',
-										 'TOPOLOGY_getAdjacentFacelet','TOPOLOGY_getFacelet','TOPOLOGY_getPlace','TOPOLOGY_getOppositeFacelet','TOPOLOGY_getAngle',
+										 'TOPOLOGY_getAdjacentFacelet','TOPOLOGY_getFacelet','TOPOLOGY_getPlace','TOPOLOGY_getOppositeFacelet','TOPOLOGY_getAngle','TOPOLOGY_getFace',
 										 'TOPOLOGY_getFaceletOrientation','TOPOLOGY_getPlaceOrientation','TOPOLOGY_isAssembled','TOPOLOGY_getTwist','TopologyDebugGetFace',
 										 'TopologyDebugGetPosition','TopologyDebugGetHorizontal','LB_getInfo','LB_getScore','MS_getFaceAccelX',
 										 'MS_getFaceAccelY','MS_getFaceAccelZ','MS_getFaceGyroX','MS_getFaceGyroY','MS_getFaceGyroZ',
