@@ -1,3 +1,6 @@
+### 2.1.0
+* Ability to receive real-time application logs from cubeapps running on WOWCube device via bluetooth 
+
 ### 2.0.7
 ### 2.0.6
 * Minor UI tweaks

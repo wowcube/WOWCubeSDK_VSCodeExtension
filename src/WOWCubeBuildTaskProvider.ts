@@ -757,6 +757,19 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			command+=device.mac;
 			command+=" -r";
 
+			// logging
+			var mn:number = +Configuration.getLoggingMode()-1;
+
+			if(mn!=-1)
+			{
+				this._channel.appendLine('Application logging is enabled for module '+ mn+'.\r\n');
+				command+=" -l -cid "+mn;
+			}
+			else
+			{
+				this._channel.appendLine('Application logging is disabled.\r\n');
+			}
+
 			Providers.btdevices.showWait(true);
 			Configuration.setDeviceBusy(device.mac,true);
 			var child:cp.ChildProcess = cp.exec(command, { cwd: ""}, (error, stdout, stderr) => 
@@ -768,15 +781,28 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				{
 					Providers.btdevices.setDeviceStatus(device.mac,1);
 
-					this._channel.appendLine('Done.\r\n');
+					if(Configuration.getLoggingMode()=='0')
+					{
+						this._channel.appendLine('Cubeapp is started.\r\n');
+					}
+					else
+					{
+						this._channel.appendLine('Cubeapp is closed.\r\n');
+					}
 
 					this.closeEmitter.fire(0);
 					resolve();
 				}
 				else
 				{
-					this._channel.appendLine('Failed to start cubeapp application on selected device.\r\n');
-
+					if(Configuration.getLoggingMode()=='0')
+					{
+						this._channel.appendLine('Failed to start cubeapp application on selected device.\r\n');
+					}
+					else
+					{
+						this._channel.appendLine('Failed to start cubeapp application on selected device or inconsistent application log data has been received.\r\n');
+					}
 					this.closeEmitter.fire(0);
 					resolve();
 				}

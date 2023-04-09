@@ -43,6 +43,11 @@ class DeviceDetailsPanel {
                 case 'warn':
                     vscode.window.showWarningMessage(message.value);
                     break;
+                case 'loggingmode':
+                    {
+                        Configuration_1.Configuration.setLoggingMode(message.value);
+                    }
+                    break;
                 case 'cubselect':
                     {
                         const options = {
@@ -325,6 +330,53 @@ class DeviceDetailsPanel {
                             </div>
 
                             <div style="margin-top:40px;">
+                                <div style="display:inline-block;font-size:14px;"><strong>Logging</strong></div>
+                                <br/>
+                                <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Select the option to receive application logs via bluetooth</div>
+                                <br/>
+                                <select id="loggingmode" class='selector' style="width:100%;min-width:100px;">`;
+        var lm = Configuration_1.Configuration.getLoggingMode();
+        ret += `<option value="0" `;
+        if (lm == '0')
+            ret += `selected`;
+        ret += `>DO NOT receive application logs</option>`;
+        ret += `<option value="1" `;
+        if (lm == '1')
+            ret += `selected`;
+        ret += `>Receive application logs from module 0</option>`;
+        ret += `<option value="2" `;
+        if (lm == '2')
+            ret += `selected`;
+        ret += `>Receive application logs from module 1</option>`;
+        ret += `<option value="3" `;
+        if (lm == '3')
+            ret += `selected`;
+        ret += `>Receive application logs from module 2</option>`;
+        ret += `<option value="4" `;
+        if (lm == '4')
+            ret += `selected`;
+        ret += `>Receive application logs from module 3</option>`;
+        ret += `<option value="5" `;
+        if (lm == '5')
+            ret += `selected`;
+        ret += `>Receive application logs from module 4</option>`;
+        ret += `<option value="6" `;
+        if (lm == '6')
+            ret += `selected`;
+        ret += `>Receive application logs from module 5</option>`;
+        ret += `<option value="7" `;
+        if (lm == '7')
+            ret += `selected`;
+        ret += `>Receive application logs from module 6</option>`;
+        ret += `<option value="8" `;
+        if (lm == '8')
+            ret += `selected`;
+        ret += `>Receive application logs from module 7</option>`;
+        ret += `</select>
+                                <br/>
+                            </div>
+
+                            <div style="margin-top:60px;">
                                 <div style="display:inline-block;font-size:14px;"><strong>Application Uploader</strong></div>
                                 <br/>
                                 <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Select CUB application file to upload</div>
@@ -715,7 +767,17 @@ class DeviceDetailsPanel {
             command += name;
             command += " -a ";
             command += mac;
-            var s = "Starting '" + name + "'...";
+            // logging
+            var mn = +Configuration_1.Configuration.getLoggingMode() - 1;
+            var s = "";
+            if (mn != -1) {
+                this._channel.appendLine('Application logging is enabled for module ' + mn + '.\r\n');
+                s = "Starting '" + name + "' with application logging enabled for module " + mn + "...";
+                command += " -l -cid " + mn;
+            }
+            else {
+                s = "Starting '" + name + "'...";
+            }
             this._channel.appendLine(s);
             this._channel.show(true);
             Configuration_1.Configuration.setDeviceBusy(mac, true);
@@ -746,11 +808,25 @@ class DeviceDetailsPanel {
                     this._channel.appendLine("Failed to start the cubeapp");
                 }
                 else {
-                    this._channel.appendLine("Cubeapp started");
+                    if (Configuration_1.Configuration.getLoggingMode() == '0') {
+                        this._channel.appendLine('Cubeapp is started.\r\n');
+                    }
+                    else {
+                        this._channel.appendLine('Cubeapp is closed.\r\n');
+                    }
                 }
                 this._panel.webview.postMessage({ type: 'endRequest' });
                 Providers_1.Providers.btdevices.showWait(false);
                 resolve();
+            });
+            var that = this;
+            child?.stdout?.on('data', function (data) {
+                that._channel.appendLine(data);
+                that._channel.show(true);
+            });
+            child?.stderr?.on('data', function (data) {
+                that._channel.appendLine(data);
+                that._channel.show(true);
             });
         });
     }
@@ -766,6 +842,22 @@ class DeviceDetailsPanel {
             command += " -a ";
             command += mac;
             command += " -r";
+            // logging
+            var mn = +Configuration_1.Configuration.getLoggingMode() - 1;
+            if (mn != -1) {
+                var ext = source.substring(source.lastIndexOf('.') + 1, source.length) || source;
+                ext = ext.toUpperCase();
+                if (ext == "CUB") {
+                    this._channel.appendLine('Application logging is enabled for module ' + mn + '.\r\n');
+                    command += " -l -cid " + mn;
+                }
+                else {
+                    this._channel.appendLine('Application logging is enabled for module ' + mn + ', however the type of a file being uploaded does not recognize as cubelet file. Application logging will be disabled. \r\n');
+                }
+            }
+            else {
+                this._channel.appendLine('Application logging is disabled.\r\n');
+            }
             Configuration_1.Configuration.setDeviceBusy(mac, true);
             var child = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => {
                 Configuration_1.Configuration.setDeviceBusy(mac, false);

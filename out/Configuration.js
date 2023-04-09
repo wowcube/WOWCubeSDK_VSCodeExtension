@@ -87,6 +87,9 @@ class Configuration {
     static setLastPath(value) { Configuration.setString('wowsdk.conf.wizard', value); }
     static getLastLanguage() { return Configuration.getString('wowsdk.conf.language'); }
     static setLastLanguage(value) { Configuration.setString('wowsdk.conf.language', value); }
+    static getLoggingMode() { var lm = Configuration.getString('wowsdk.conf.loggingmode'); if (lm == "")
+        lm = '1'; return lm; }
+    static setLoggingMode(value) { Configuration.setString('wowsdk.conf.loggingmode', value); }
     static getWDKPrivate() {
         var p = os.platform();
         var homedir = os.homedir();

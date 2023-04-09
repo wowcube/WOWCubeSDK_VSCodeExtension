@@ -225,6 +225,12 @@ class AppList
             showWait(true);
             vscode.postMessage({ type: 'cubupload', value: v });
         });
+
+        document.getElementById('loggingmode').addEventListener('change',() =>
+        {
+           vscode.postMessage({ type: 'loggingmode', value: document.getElementById('loggingmode').value });
+        });
+        
     };
 
     window.addEventListener('deleteressed', (e)=>

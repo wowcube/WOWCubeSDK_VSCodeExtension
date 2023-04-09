@@ -125,6 +125,9 @@ export class Configuration
     public static getLastLanguage() {return Configuration.getString('wowsdk.conf.language');}
     public static setLastLanguage(value:string) {Configuration.setString('wowsdk.conf.language',value);}
 
+    public static getLoggingMode() {var lm:string = Configuration.getString('wowsdk.conf.loggingmode'); if(lm=="") lm='1'; return lm;}
+    public static setLoggingMode(value:string) {Configuration.setString('wowsdk.conf.loggingmode',value);}
+
     public static getWDKPrivate()
     {
         var p = os.platform();

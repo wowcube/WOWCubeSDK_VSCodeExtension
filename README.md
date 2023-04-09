@@ -16,7 +16,7 @@ This extension is designed for WOWCube cubeapp application developers. It simpli
 
 ## Requirements
 
- WOWCube Development Kit version 0.9.0 or later must be installed on the computer.
+ WOWCube Development Kit version 0.9.6 or later must be installed on the computer.
 
 ## Extension Settings
 
@@ -27,6 +27,7 @@ This extension contributes the next settings:
 * `wowsdk.conf.wowsdkversion"`: a version of WOWCube SDK that will be used
 * `wwowsdk.conf.currentdevice`: selected WOWCube device
 * `wowsdk.conf.detecteddevices`: a list of paired WOWCube devices
+* `wowsdk.conf.loggingmode`: current mode of retrieval of application logs over bluetooth connection
 
 
 ## Third-party Components
@@ -43,6 +44,9 @@ https://code.visualstudio.com/docs/customization/colorizer
 Although the extension can be used on Linux, it provides limited functionality and DOES NOT support any bluetooth-related features. 
 
 ## Release Notes
+
+### 2.1.0
+* Ability to receive real-time application logs from cubeapps running on WOWCube device via bluetooth 
 
 ### 2.0.7
 ### 2.0.6
