@@ -164,7 +164,7 @@ export class AdHocPanel {
                 formData.append('file',fs.createReadStream(this._cubfile));
 
                 const options = {
-                    host: 'wowstore.wowcube.com',
+                    host: 'store.wowcube.com',
                     path: '/api/upload',
                     method: 'POST',
                     protocol: 'https:', // note : in the end
