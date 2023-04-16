@@ -1,3 +1,6 @@
+### 2.1.1
+* WOWCube store domain name tweak 
+
 ### 2.1.0
 * Ability to receive real-time application logs from cubeapps running on WOWCube device via bluetooth 
 
