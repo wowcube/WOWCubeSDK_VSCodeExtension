@@ -101,7 +101,7 @@ class TemplateItem
             }
         }); 
 
-           for(var i=1;i<7;i++)
+           for(var i=1;i<8;i++)
            {
                items.push(new TemplateItem(i,document.getElementById("i"+i)));
            }
@@ -109,7 +109,7 @@ class TemplateItem
  
     window.addEventListener('itempressed', (e)=>
     {        
-            for(var i=1;i<7;i++)
+            for(var i=1;i<8;i++)
            {
                items[i-1].setSelected(false);
                
@@ -138,11 +138,13 @@ class TemplateItem
                     {
                         document.getElementById('i5').style.display = 'none';
                         document.getElementById('i6').style.display = 'none';
+                        document.getElementById('i7').style.display = 'none';
                     }
                     else
                     {
                         document.getElementById('i5').style.display = 'block';
                         document.getElementById('i6').style.display = 'block';
+                        document.getElementById('i7').style.display = 'block';
                     }
                 }
         }

@@ -604,6 +604,11 @@ export class WizardPanel {
                                         <div class="itemdesc">Creates a project of WOWCube cubeapp application with Gfx Engine support and some resources</div>
                                         <div class="itemdesc">Demonstrates how to use application resources with Gfx Engine</div>
                                     </div>
+                                    <div id="i7" class="item">
+                                        <div style="margin:5px;"><strong>GFX cubeapp with splash screen support</strong></div>
+                                        <div class="itemdesc">Creates a project of WOWCube cubeapp application with Gfx Engine support, splash screen and resources</div>
+                                        <div class="itemdesc">Demonstrates how to use splash screens with Gfx Engine</div>
+                                    </div>
                                     `;
                                 }
                                 else
@@ -614,11 +619,16 @@ export class WizardPanel {
                                         <div class="itemdesc">Creates a project of WOWCube cubeapp application with Gfx Engine support</div>
                                         <div class="itemdesc">Demonstrates principles of work with a compound multi-screen device</div>
                                     </div>
-                                    <div id="i6" class="item">
+                                    <div id="i6" class="item" style="display:none">
                                         <div style="margin:5px;"><strong>Basic cubeapp with resources and Gfx Engine support</strong></div>
                                         <div class="itemdesc">Creates a project of WOWCube cubeapp application with Gfx Engine support and some resources</div>
                                         <div class="itemdesc">Demonstrates how to use application resources with Gfx Engine</div>
                                      </div> 
+                                     <div id="i7" class="item" style="display:none">
+                                        <div style="margin:5px;"><strong>GFX cubeapp with splash screen support</strong></div>
+                                        <div class="itemdesc">Creates a project of WOWCube cubeapp application with Gfx Engine support, splash screen and resources</div>
+                                         <div class="itemdesc">Demonstrates how to use splash screens with Gfx Engine</div>
+                                     </div>
                                     `;   
                                 }
                             ret+=`</div>

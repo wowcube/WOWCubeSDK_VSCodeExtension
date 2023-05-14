@@ -45,6 +45,9 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ## Release Notes
 
+### 2.1.2
+* GFX + splash screen project template is added
+
 ### 2.1.1
 * WOWCube store domain name tweak 
 
