@@ -372,6 +372,10 @@ class DeviceDetailsPanel {
         if (lm == '8')
             ret += `selected`;
         ret += `>Receive application logs from module 7</option>`;
+        ret += `<option value="9" `;
+        if (lm == '8')
+            ret += `selected`;
+        ret += `>Receive application logs from all modules</option>`;
         ret += `</select>
                                 <br/>
                             </div>
@@ -771,8 +775,14 @@ class DeviceDetailsPanel {
             var mn = +Configuration_1.Configuration.getLoggingMode() - 1;
             var s = "";
             if (mn != -1) {
-                this._channel.appendLine('Application logging is enabled for module ' + mn + '.\r\n');
-                s = "Starting '" + name + "' with application logging enabled for module " + mn + "...";
+                if (mn != 8) {
+                    this._channel.appendLine('Application logging is enabled for module ' + mn + '.\r\n');
+                    s = "Starting '" + name + "' with application logging enabled for module " + mn + "...";
+                }
+                else {
+                    this._channel.appendLine('Application logging is enabled for all modules.\r\n');
+                    s = "Starting '" + name + "' with application logging enabled for all modules...";
+                }
                 command += " -l -cid " + mn;
             }
             else {

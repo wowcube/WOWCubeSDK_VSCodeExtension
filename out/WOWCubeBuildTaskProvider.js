@@ -524,7 +524,12 @@ class WOWCubeBuildTaskTerminal {
             // logging
             var mn = +Configuration_1.Configuration.getLoggingMode() - 1;
             if (mn != -1) {
-                this._channel.appendLine('Application logging is enabled for module ' + mn + '.\r\n');
+                if (mn != 8) {
+                    this._channel.appendLine('Application logging is enabled for module ' + mn + '.\r\n');
+                }
+                else {
+                    this._channel.appendLine('Application logging is enabled for all modules.\r\n');
+                }
                 command += " -l -cid " + mn;
             }
             else {

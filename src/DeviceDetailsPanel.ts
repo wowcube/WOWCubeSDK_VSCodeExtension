@@ -467,7 +467,7 @@ export class DeviceDetailsPanel {
                                     ret+=`<option value="6" `; if(lm=='6') ret+=`selected`; ret+=`>Receive application logs from module 5</option>`;
                                     ret+=`<option value="7" `; if(lm=='7') ret+=`selected`; ret+=`>Receive application logs from module 6</option>`;
                                     ret+=`<option value="8" `; if(lm=='8') ret+=`selected`; ret+=`>Receive application logs from module 7</option>`;
-
+                                    ret+=`<option value="9" `; if(lm=='8') ret+=`selected`; ret+=`>Receive application logs from all modules</option>`;
                                 ret+=`</select>
                                 <br/>
                             </div>
@@ -1025,8 +1025,16 @@ export class DeviceDetailsPanel {
 
                 if(mn!=-1)
                 {
-                    this._channel.appendLine('Application logging is enabled for module '+ mn+'.\r\n');
-                    s = "Starting '"+name+"' with application logging enabled for module "+mn+"...";
+                    if(mn!=8)
+                    {
+                        this._channel.appendLine('Application logging is enabled for module '+ mn+'.\r\n');
+                        s = "Starting '"+name+"' with application logging enabled for module "+mn+"...";
+                    }
+                    else
+                    {
+                        this._channel.appendLine('Application logging is enabled for all modules.\r\n');
+                        s = "Starting '"+name+"' with application logging enabled for all modules...";
+                    }
                     command+=" -l -cid "+mn;
                 }
                 else
