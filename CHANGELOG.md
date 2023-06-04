@@ -1,3 +1,7 @@
+### 2.1.4
+* Removed debug information from pawn cublets built for WOWCube emulator
+* Ad-hoc descriptions are now saved to project file
+
 ### 2.1.3
 * Ability to receive logs from all modules
 

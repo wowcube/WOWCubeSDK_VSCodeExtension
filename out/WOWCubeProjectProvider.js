@@ -99,6 +99,8 @@ class WOWCubeProjectProvider {
                                     }
                                 }
                             }
+                            //handle adhoc description
+                            params.adhocDescription = Project_1.Project.AdHocDescription;
                             this.updateTextDocument(document, params);
                         }
                     }

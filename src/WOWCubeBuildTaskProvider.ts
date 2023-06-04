@@ -580,7 +580,9 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				min = vers[1];
 			}
 
-
+/*
+			//Uncomment this in order to be able to generate a pawn cubeapp with debug info attached. 
+			//This may only come in handy if you use internal debug tools tho, it's not usable anyhow for the most. 
 			if(this.target==='emulator')
 			{
 				command+=' -d3 -v2 -i"'+includepath+'" ';
@@ -589,6 +591,8 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			{
 				command+=' -d1 -O3 -v2 -i"'+includepath+'" ';
 			}
+*/
+			command+=' -d1 -O3 -v2 -i"'+includepath+'" ';
 
 			command+='-o"'+destfile+'" ';
 			command+='"'+sourcefile+'"';	

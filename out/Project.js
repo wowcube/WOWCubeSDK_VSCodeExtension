@@ -18,6 +18,39 @@ class Project {
         catch (e) { }
         return false;
     }
+    static getAdhocDescription(workspace) {
+        var s = "No description";
+        try {
+            var json = JSON.parse(fs.readFileSync(workspace + '/wowcubeapp-build.json', 'utf-8'));
+            if (typeof json.adhocDescription != 'undefined') {
+                s = json.adhocDescription;
+            }
+        }
+        catch (e) { }
+        Project.AdHocDescription = s;
+        return s;
+    }
+    static setAdhocDescription(workspace, s) {
+        var res = true;
+        try {
+            if (s.length == 0)
+                s = "No description";
+            if (s.length > 8192) {
+                s = s.substring(0, 8188);
+                s += '...';
+            }
+            ;
+            Project.AdHocDescription = s;
+            var json = JSON.parse(fs.readFileSync(workspace + '/wowcubeapp-build.json', 'utf-8'));
+            json.adhocDescription = s;
+            var str = JSON.stringify(json);
+            fs.writeFileSync(workspace + '/wowcubeapp-build.json', str);
+        }
+        catch (e) {
+            res = false;
+        }
+        return res;
+    }
     static validateAssets(workspace, autosave) {
         try {
             //load current project file
@@ -206,6 +239,8 @@ class Project {
                 }
             }
             Project.Options = json.projectOptions;
+            //get and validate ad-hoc description
+            json.adhocDescription = Project.getAdhocDescription(workspace);
             //save changes
             var str = JSON.stringify(json, null, 2);
             if (autosave === true) {
@@ -223,4 +258,5 @@ Project.Images = new Array();
 Project.Sounds = new Array();
 Project.CurrentLanguage = 'pawn';
 Project.Options = null;
+Project.AdHocDescription = 'No description';
 //# sourceMappingURL=Project.js.map

@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { Uri } from "vscode";
 import {Output} from "./Output";
+import { Project } from './Project';
 import {Configuration} from './Configuration';
 import * as FormData from "form-data";
 
@@ -100,6 +101,7 @@ export class AdHocPanel {
                         break;
                         case 'generate':
                             {
+                                Project.setAdhocDescription(AdHocPanel.workspace as string,message.value);
                                 this.uploadAdHoc(message.value);
                             }
                         break;
@@ -284,6 +286,8 @@ export class AdHocPanel {
             var lastPath = Configuration.getLastPath();
             if(typeof(lastPath)==='undefined') lastPath='';
 
+            var lastDescription = Project.getAdhocDescription(AdHocPanel.workspace as string);
+
             var ret =  `      
                 <!DOCTYPE html>
                 <html lang="en">
@@ -310,7 +314,7 @@ export class AdHocPanel {
                         <div class="view">   
                         <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Add some description to your ad-hoc build</div> 
                         <div style="margin-right:10px"> 
-                        <textarea id="description" style="resize: none;height:100px;" data-role="none"></textarea>    
+                        <textarea id="description" style="resize: none;height:100px;" data-role="none">`+lastDescription+`</textarea>    
                         </div               
                         </div>
                         

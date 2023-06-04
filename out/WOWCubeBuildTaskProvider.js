@@ -400,12 +400,19 @@ class WOWCubeBuildTaskTerminal {
                 maj = vers[0];
                 min = vers[1];
             }
-            if (this.target === 'emulator') {
-                command += ' -d3 -v2 -i"' + includepath + '" ';
-            }
-            else {
-                command += ' -d1 -O3 -v2 -i"' + includepath + '" ';
-            }
+            /*
+                        //Uncomment this in order to be able to generate a pawn cubeapp with debug info attached.
+                        //This may only come in handy if you use internal debug tools tho, it's not usable anyhow for the most.
+                        if(this.target==='emulator')
+                        {
+                            command+=' -d3 -v2 -i"'+includepath+'" ';
+                        }
+                        else
+                        {
+                            command+=' -d1 -O3 -v2 -i"'+includepath+'" ';
+                        }
+            */
+            command += ' -d1 -O3 -v2 -i"' + includepath + '" ';
             command += '-o"' + destfile + '" ';
             command += '"' + sourcefile + '"';
             command += ' ABI_VERSION_MAJOR=' + maj;

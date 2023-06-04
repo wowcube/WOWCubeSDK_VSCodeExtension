@@ -132,6 +132,10 @@ import {Output} from './Output';
 								}
 							}
 						}
+
+						//handle adhoc description
+						params.adhocDescription = Project.AdHocDescription;
+
 						this.updateTextDocument(document,params);
 					}	   
 				   }

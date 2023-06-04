@@ -15,6 +15,8 @@ export class Project
 
     public static Options:any = null;
 
+    public static AdHocDescription: string = 'No description';
+
     //sets SDK version to currently opened project file
     public static setSDKVersion(workspace:string, version:string):boolean
     {
@@ -37,6 +39,48 @@ export class Project
         return false;
     }
 
+    public static getAdhocDescription(workspace:string):string
+    {
+        var s:string = "No description";
+        try
+        {
+            var json = JSON.parse(fs.readFileSync(workspace+'/wowcubeapp-build.json', 'utf-8'));
+
+            if(typeof json.adhocDescription!='undefined')
+            {
+                s = json.adhocDescription; 
+            }
+        }
+        catch(e)
+        {}
+
+        Project.AdHocDescription = s;
+        return s;
+    }
+
+    public static setAdhocDescription(workspace:string, s:string):boolean
+    {
+        var res:boolean = true;
+        try
+        {
+            if(s.length==0) s = "No description";
+            if(s.length>8192) { s = s.substring(0,8188); s+='...'};
+
+            Project.AdHocDescription = s;
+
+            var json = JSON.parse(fs.readFileSync(workspace+'/wowcubeapp-build.json', 'utf-8'));
+
+            json.adhocDescription = s;
+
+            var str = JSON.stringify(json);
+            fs.writeFileSync(workspace+'/wowcubeapp-build.json',str);
+        }
+        catch(e)
+        {
+            res = false;
+        }
+        return res;
+    }
     public static validateAssets(workspace:string,autosave:boolean):boolean
     {
         try
@@ -314,9 +358,11 @@ export class Project
                     }
                 }
             }
-
-            
+    
             Project.Options = json.projectOptions;
+
+            //get and validate ad-hoc description
+            json.adhocDescription = Project.getAdhocDescription(workspace);
 
             //save changes
             var str = JSON.stringify(json,null,2);

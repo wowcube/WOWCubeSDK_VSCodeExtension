@@ -6,6 +6,7 @@ const vscode = require("vscode");
 const getNonce_1 = require("./getNonce");
 const fs = require("fs");
 const Output_1 = require("./Output");
+const Project_1 = require("./Project");
 const Configuration_1 = require("./Configuration");
 const FormData = require("form-data");
 class AdHocPanel {
@@ -41,6 +42,7 @@ class AdHocPanel {
                     break;
                 case 'generate':
                     {
+                        Project_1.Project.setAdhocDescription(AdHocPanel.workspace, message.value);
                         this.uploadAdHoc(message.value);
                     }
                     break;
@@ -190,6 +192,7 @@ class AdHocPanel {
         var lastPath = Configuration_1.Configuration.getLastPath();
         if (typeof (lastPath) === 'undefined')
             lastPath = '';
+        var lastDescription = Project_1.Project.getAdhocDescription(AdHocPanel.workspace);
         var ret = `      
                 <!DOCTYPE html>
                 <html lang="en">
@@ -214,7 +217,7 @@ class AdHocPanel {
                         <div class="view">   
                         <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Add some description to your ad-hoc build</div> 
                         <div style="margin-right:10px"> 
-                        <textarea id="description" style="resize: none;height:100px;" data-role="none"></textarea>    
+                        <textarea id="description" style="resize: none;height:100px;" data-role="none">` + lastDescription + `</textarea>    
                         </div               
                         </div>
                         
