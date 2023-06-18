@@ -234,7 +234,10 @@ class DocumentPanel {
         const imgUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media/temp", "Cascade.png"));
         var prev = 1;
         var next = 1;
-        if (fs.existsSync(info) === false) {
+        if (this._language == 'none') {
+            info = "";
+        }
+        if (info.length > 0 && fs.existsSync(info) === false) {
             content = '# this document is empty';
         }
         else {
@@ -275,7 +278,12 @@ class DocumentPanel {
                         next = -1;
                     }
                     var fname = this._file.substring(0, this._file.length - 3);
-                    this._panel.title = "WOWCube SDK " + this._version + ' / ' + this._language + ' / ' + this._folder.substring(this._folder.indexOf('.') + 1) + ' / ' + fname.substring(fname.indexOf('.') + 1);
+                    if (this._language == 'none') {
+                        this._panel.title = this._folder;
+                    }
+                    else {
+                        this._panel.title = "WOWCube SDK " + this._version + ' / ' + this._language + ' / ' + this._folder.substring(this._folder.indexOf('.') + 1) + ' / ' + fname.substring(fname.indexOf('.') + 1);
+                    }
                 }
                 catch (e) {
                     content = '# this document is empty';

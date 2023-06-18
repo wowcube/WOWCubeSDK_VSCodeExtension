@@ -1,3 +1,6 @@
+### 2.1.5
+* Minor changes in order to support SDK Version 5.1
+
 ### 2.1.4
 * Removed debug information from pawn cublets built for WOWCube emulator
 * Ad-hoc descriptions are now saved to project file

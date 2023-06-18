@@ -367,6 +367,7 @@ class ExamplesViewProvider {
                 body += `</ul></li>`;
             }
             body += `</ul></li>`;
+            body += `<li class="liitem" file="${Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/changelog.md'}" folder="SDK Version Changelog" doc="1" lang="none">SDK Version Changelog</li>`;
             body += `</ul></li>`;
             body += `<li><span class="caret">SDK Files</span>
 				<ul class="nested">

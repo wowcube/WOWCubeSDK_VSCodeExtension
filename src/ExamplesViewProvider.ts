@@ -515,6 +515,7 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 				}
 				body+=`</ul></li>`;
 
+				body+=`<li class="liitem" file="${Configuration.getWOWSDKPath()+'sdk/docs/changelog.md'}" folder="SDK Version Changelog" doc="1" lang="none">SDK Version Changelog</li>`;
 
 				body+=`</ul></li>`;
 
