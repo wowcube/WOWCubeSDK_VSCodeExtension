@@ -163,7 +163,7 @@ export class DocumentPanel {
                         docs = Providers.examples.docs_pawn;
                     break;
                     case 'cpp': 
-                        docs = Providers.examples.docs_pawn;
+                        docs = Providers.examples.docs_cpp;
                     break;               
                 }
 
@@ -228,7 +228,7 @@ export class DocumentPanel {
                         docs = Providers.examples.docs_pawn;
                     break;
                     case 'cpp': 
-                        docs = Providers.examples.docs_pawn;
+                        docs = Providers.examples.docs_cpp;
                     break;               
                 }
 

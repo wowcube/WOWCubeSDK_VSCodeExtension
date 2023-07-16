@@ -109,7 +109,7 @@ class DocumentPanel {
                     docs = Providers_1.Providers.examples.docs_pawn;
                     break;
                 case 'cpp':
-                    docs = Providers_1.Providers.examples.docs_pawn;
+                    docs = Providers_1.Providers.examples.docs_cpp;
                     break;
             }
             for (var i = 0; i < docs.length; i++) {
@@ -153,7 +153,7 @@ class DocumentPanel {
                     docs = Providers_1.Providers.examples.docs_pawn;
                     break;
                 case 'cpp':
-                    docs = Providers_1.Providers.examples.docs_pawn;
+                    docs = Providers_1.Providers.examples.docs_cpp;
                     break;
             }
             for (var i = 0; i < docs.length; i++) {

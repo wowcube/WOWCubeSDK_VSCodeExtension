@@ -667,7 +667,9 @@ class DeviceDetailsPanel {
             var utilspath = Configuration_1.Configuration.getUtilsPath();
             var command = '"' + utilspath + Configuration_1.Configuration.getLoader() + '"';
             command += " rm -n ";
+            command += '"';
             command += name;
+            command += '"';
             command += " -a ";
             command += mac;
             var s = "Deleting '" + name + "' from device...";
@@ -718,7 +720,9 @@ class DeviceDetailsPanel {
             var utilspath = Configuration_1.Configuration.getUtilsPath();
             var command = '"' + utilspath + Configuration_1.Configuration.getLoader() + '"';
             command += " rm -s -n ";
+            command += '"';
             command += name;
+            command += '"';
             command += " -a ";
             command += mac;
             var s = "Clearing '" + name + "' data...";
@@ -768,7 +772,9 @@ class DeviceDetailsPanel {
             var utilspath = Configuration_1.Configuration.getUtilsPath();
             var command = '"' + utilspath + Configuration_1.Configuration.getLoader() + '"';
             command += " ra -n ";
+            command += '"';
             command += name;
+            command += '"';
             command += " -a ";
             command += mac;
             // logging

@@ -45,6 +45,10 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ## Release Notes
 
+### 2.1.6
+* Fixed CPP documentation navigation bug
+* Support for long cubapp names 
+
 ### 2.1.5
 * Minor changes in order to support SDK Version 5.1
 

@@ -868,7 +868,9 @@ export class DeviceDetailsPanel {
                 var command = '"'+utilspath+Configuration.getLoader()+'"';
     
                 command+=" rm -n ";
+                command+='"';
                 command+=name;
+                command+='"';
                 command+=" -a ";
                 command+=mac;
     
@@ -942,7 +944,9 @@ export class DeviceDetailsPanel {
                 var command = '"'+utilspath+Configuration.getLoader()+'"';
     
                 command+=" rm -s -n ";
+                command+='"';
                 command+=name;
+                command+='"';
                 command+=" -a ";
                 command+=mac;
     
@@ -1015,7 +1019,9 @@ export class DeviceDetailsPanel {
                 var command = '"'+utilspath+Configuration.getLoader()+'"';
     
                 command+=" ra -n ";
+                command+='"';
                 command+=name;
+                command+='"';
                 command+=" -a ";
                 command+=mac;
     
