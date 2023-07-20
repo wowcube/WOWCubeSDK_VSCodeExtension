@@ -1,3 +1,6 @@
+### 2.1.7
+* Improved validation of cubeapp version value
+
 ### 2.1.6
 * Fixed CPP documentation navigation bug
 * Support for long cubapp names 

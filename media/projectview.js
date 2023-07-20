@@ -68,14 +68,42 @@
         
         if(ret)
         {
-            if(/\d{1,2}\.\d{1,2}\.\d{1,2}?/.test(v.value))
+            if(/^\d{1,2}\.\d{1,2}\.\d{1,5}/.test(v.value))
             {
+                var r = /^(\d{1,2})\.(\d{1,2})\.(\d{1,5})/
+                var match = v.value.match(r);
+
+                v.value = match[0];
+
+                match = v.value.match(r);
+
+                var maj = Number(match[1]);
+                var min = Number(match[2]);
+                var build = Number(match[3]);
+
+                if(maj>15) 
+                {
+                    vt.className="negative";
+                    vscode.postMessage({ type: 'error', value: "Major version of cubeapp application should not exceed 15"}); ret = false;
+                }
+
+                if(min>15) 
+                {
+                    vt.className="negative";
+                    vscode.postMessage({ type: 'error', value: "Minor version of cubeapp application should not exceed 15"}); ret = false;
+                }
+                
+                if(build>65535) 
+                {
+                    vt.className="negative";
+                    vscode.postMessage({ type: 'error', value: "Build version of cubeapp application should not exceed 65535"}); ret = false;
+                }
                 // Successful match
             } 
             else
             {
                 vt.className="negative";
-                vscode.postMessage({ type: 'error', value: "Please make sure cubeapp version format is X.X.X"}); ret = false;
+                vscode.postMessage({ type: 'error', value: "Please make sure cubeapp version format is XX.XX.XX"}); ret = false;
             }
         }
 
