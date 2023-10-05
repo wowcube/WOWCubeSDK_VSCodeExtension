@@ -8,6 +8,8 @@ import {Configuration} from './Configuration';
 import { Project } from "./Project";
 import {Output} from './Output';
 
+import * as crypto from 'crypto';
+
 export class WizardPanel {
 
     public static currentPanel: WizardPanel | undefined;
@@ -219,6 +221,10 @@ export class WizardPanel {
 
                 var br = this.beautifyClassName(name);
 
+                //application UUID
+	            var arr:Uint8Array = crypto.pseudoRandomBytes(10);
+	            var uuid:string = arr.reduce(((t,e)=>t+=(e&=63)<36?e.toString(36):e<62?(e-26).toString(36).toUpperCase():e>62?"-":"_"),"");
+
                 if(br.err===1)
                 {
                     this._channel.appendLine('Project wizard: class name beautification error: '+br.desc);
@@ -243,6 +249,14 @@ export class WizardPanel {
                                                   {
                                                     throw new Error("Unable to generate main source file");
                                                   }
+
+                    if(!this.replaceInFileAndSave(fullpath+'/src/'+br.str+'.cpp',
+                                                  fullpath+'/src/'+br.str+'.cpp',
+                                                  '##APPUUID##',
+                                                  uuid))
+                                                  {
+                                                    throw new Error("Unable to generate main source file");
+                                                  }
                     }
                     else if((currentTemplate.files[i]==='_main.h'))
                     {
@@ -253,6 +267,14 @@ export class WizardPanel {
                                                      {
                                                       throw new Error("Unable to generate main header file");
                                                      }
+
+                    if(!this.replaceInFileAndSave(fullpath+'/src/'+br.str+'.h',
+                                                     fullpath+'/src/'+br.str+'.h',
+                                                     '##APPUUID##',
+                                                     uuid))
+                                                     {
+                                                      throw new Error("Unable to generate main header file");
+                                                     }                                                     
 
                     }
                     else

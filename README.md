@@ -28,6 +28,7 @@ This extension contributes the next settings:
 * `wwowsdk.conf.currentdevice`: selected WOWCube device
 * `wowsdk.conf.detecteddevices`: a list of paired WOWCube devices
 * `wowsdk.conf.loggingmode`: current mode of retrieval of application logs over bluetooth connection
+* `wowsdk.conf.autocheckforupdates`: a flag that indicates whether auto-check for updates is turned on or off
 
 
 ## Third-party Components
@@ -44,6 +45,9 @@ https://code.visualstudio.com/docs/customization/colorizer
 Although the extension can be used on Linux, it provides limited functionality and DOES NOT support any bluetooth-related features. 
 
 ## Release Notes
+
+### 2.1.8
+* Option for toggling automatic checks for available updates
 
 ### 2.1.7
 * Improved validation of cubeapp version value

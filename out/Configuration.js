@@ -83,6 +83,9 @@ class Configuration {
         catch (e) { }
         return devices;
     }
+    static getAutoCheckForUpdates() { var v = Configuration.getString('wowsdk.conf.autocheckforupdates'); if (v == "")
+        v = '1'; return v; }
+    static setAutoCheckForUpdates(value) { Configuration.setString('wowsdk.conf.autocheckforupdates', value); }
     static getLastPath() { return Configuration.getString('wowsdk.conf.wizard'); }
     static setLastPath(value) { Configuration.setString('wowsdk.conf.wizard', value); }
     static getLastLanguage() { return Configuration.getString('wowsdk.conf.language'); }
@@ -591,4 +594,5 @@ Configuration._lastSetSDKPath = null;
 Configuration._lastSetSDKVersion = null;
 Configuration._busyDevices = new Map();
 Configuration._detectedSDKVersions = new Array();
+Configuration._autoCheckForUpdates = null;
 //# sourceMappingURL=Configuration.js.map

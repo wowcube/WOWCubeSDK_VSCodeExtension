@@ -39,6 +39,13 @@ class SettingsViewProvider {
                 }
                 let version = Configuration_1.Configuration.getCurrentVersion();
                 this._view.webview.postMessage({ type: 'setVersion', value: version });
+                let check = Configuration_1.Configuration.getAutoCheckForUpdates();
+                if (check == '1') {
+                    this._view.webview.postMessage({ type: 'setAutoCheck', value: true });
+                }
+                else {
+                    this._view.webview.postMessage({ type: 'setAutoCheck', value: false });
+                }
             }
         });
         webviewView.webview.options =
@@ -52,6 +59,16 @@ class SettingsViewProvider {
         webviewView.webview.html = await this._getHtmlForWebview(webviewView.webview);
         webviewView.webview.onDidReceiveMessage(data => {
             switch (data.type) {
+                case 'autoCheckPressed':
+                    {
+                        if (data.value == true) {
+                            Configuration_1.Configuration.setAutoCheckForUpdates('1');
+                        }
+                        else {
+                            Configuration_1.Configuration.setAutoCheckForUpdates('0');
+                        }
+                    }
+                    break;
                 case 'checkPath':
                     {
                         if (this.validateSDKPath(Configuration_1.Configuration.getWOWSDKPath()) === false) {
@@ -154,6 +171,13 @@ class SettingsViewProvider {
             this._view?.webview.postMessage({ type: 'addVersion', value: versions[i] });
         }
         this._view?.webview.postMessage({ type: 'setVersion', value: version });
+        let check = Configuration_1.Configuration.getAutoCheckForUpdates();
+        if (check == '1') {
+            this._view?.webview.postMessage({ type: 'setAutoCheck', value: true });
+        }
+        else {
+            this._view?.webview.postMessage({ type: 'setAutoCheck', value: false });
+        }
     }
     async doCheckUpdate() {
         return new Promise((resolve, reject) => {
@@ -415,6 +439,7 @@ class SettingsViewProvider {
                 body += `<option value="` + versions[i] + `" selected>` + versions[i] + `</option>`;
             }
         }
+        let check = Configuration_1.Configuration.getAutoCheckForUpdates();
         body += `</select>
 
 			<br/>
@@ -422,7 +447,16 @@ class SettingsViewProvider {
 			<button id="manageToolsButton" class="share-adhoc-button">Manage External Tools</button>
 			<br/>
 			<button id="checkForUpdatesButton" class="share-adhoc-button">Check For Updates</button>
-
+			<br/>
+			<div>`;
+        if (check == '1') {
+            body += `<input type="checkbox" id="autoCheck" checked="true"></input>`;
+        }
+        else {
+            body += `<input type="checkbox" id="autoCheck"></input>`;
+        }
+        body += `<label>Check for updates automatically</label>
+			</div>
 			<script nonce="${nonce}" src="${scriptUri}"></script>
 		</body>
 		</html>`;

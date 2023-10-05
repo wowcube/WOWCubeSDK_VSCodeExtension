@@ -12,6 +12,8 @@ export class Configuration
     private static _busyDevices:Map<string,boolean> = new Map<string,boolean>();
     private static _detectedSDKVersions:Array<string> = new Array<string>();
 
+    private static _autoCheckForUpdates:any = null;
+
     public static context:any;
     
     public static getString(key:string)
@@ -119,6 +121,9 @@ export class Configuration
         return devices;
     }
 
+    public static getAutoCheckForUpdates() { var v:string = Configuration.getString('wowsdk.conf.autocheckforupdates'); if(v=="") v='1'; return v; }
+    public static setAutoCheckForUpdates(value:string) { Configuration.setString('wowsdk.conf.autocheckforupdates',value);}
+    
     public static getLastPath() { return Configuration.getString('wowsdk.conf.wizard');}
     public static setLastPath(value:string) {Configuration.setString('wowsdk.conf.wizard',value);}
 

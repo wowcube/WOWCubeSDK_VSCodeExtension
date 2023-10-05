@@ -9,6 +9,7 @@ const path = require("path");
 const vscode_1 = require("vscode");
 const Configuration_1 = require("./Configuration");
 const Output_1 = require("./Output");
+const crypto = require("crypto");
 class WizardPanel {
     constructor(panel, extensionUri) {
         this._disposables = [];
@@ -150,6 +151,9 @@ class WizardPanel {
             const iconFilename = templatespath + "icon.png";
             fs.copyFileSync(iconFilename, fullpath + '/assets/icon.png');
             var br = this.beautifyClassName(name);
+            //application UUID
+            var arr = crypto.pseudoRandomBytes(10);
+            var uuid = arr.reduce(((t, e) => t += (e &= 63) < 36 ? e.toString(36) : e < 62 ? (e - 26).toString(36).toUpperCase() : e > 62 ? "-" : "_"), "");
             if (br.err === 1) {
                 this._channel.appendLine('Project wizard: class name beautification error: ' + br.desc);
                 this._channel.appendLine('Project wizard: default class name will be used instead');
@@ -164,9 +168,15 @@ class WizardPanel {
                     if (!this.replaceInFileAndSave(templatespath + currentTemplate.id + "/" + currentTemplate.files[i], fullpath + '/src/' + br.str + '.cpp', '##CNAME##', br.str)) {
                         throw new Error("Unable to generate main source file");
                     }
+                    if (!this.replaceInFileAndSave(fullpath + '/src/' + br.str + '.cpp', fullpath + '/src/' + br.str + '.cpp', '##APPUUID##', uuid)) {
+                        throw new Error("Unable to generate main source file");
+                    }
                 }
                 else if ((currentTemplate.files[i] === '_main.h')) {
                     if (!this.replaceInFileAndSave(templatespath + currentTemplate.id + "/" + currentTemplate.files[i], fullpath + '/src/' + br.str + '.h', '##CNAME##', br.str)) {
+                        throw new Error("Unable to generate main header file");
+                    }
+                    if (!this.replaceInFileAndSave(fullpath + '/src/' + br.str + '.h', fullpath + '/src/' + br.str + '.h', '##APPUUID##', uuid)) {
                         throw new Error("Unable to generate main header file");
                     }
                 }

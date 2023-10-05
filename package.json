@@ -3,7 +3,7 @@
   "displayName": "WOWCubeSDK",
   "description": "WOWCube SDK extension for developing Cubeapp applications for WOWCube device",
   "icon": "media/icon.png",
-  "version": "2.1.7",
+  "version": "2.1.8",
   "publisher": "cubios-inc",
   "engines": {
     "vscode": "^1.64.0"
@@ -121,6 +121,12 @@
             "type": "string",
             "default": "1",
             "description": "Current logging mode",
+            "scope": "application"
+          },
+          "wowsdk.conf.autocheckforupdates": {
+            "type": "string",
+            "default": "1",
+            "description": "Auto-check for updates flag",
             "scope": "application"
           }
         }

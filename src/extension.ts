@@ -93,7 +93,11 @@ export async function activate(context: vscode.ExtensionContext)
 		context.subscriptions.push(vscode.window.registerCustomEditorProvider(WOWCubeProjectProvider.viewType, Providers.project));
 
 		//check for updates when extension starts
+		let check:string = Configuration.getAutoCheckForUpdates();
+		if(check=='1')
+		{
 		Providers.settings.doCheckUpdate();
+		}
 }
 
 // this method is called when your extension is deactivated

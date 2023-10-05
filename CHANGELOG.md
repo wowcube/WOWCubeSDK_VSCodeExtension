@@ -1,3 +1,6 @@
+### 2.1.8
+* Option for toggling automatic checks for available updates
+
 ### 2.1.7
 * Improved validation of cubeapp version value
 

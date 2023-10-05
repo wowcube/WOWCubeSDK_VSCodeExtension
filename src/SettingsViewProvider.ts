@@ -55,6 +55,16 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 
 				let version:string = Configuration.getCurrentVersion();
 				this._view.webview.postMessage({type:'setVersion',value:version});
+
+				let check:string = Configuration.getAutoCheckForUpdates();
+				if(check=='1')
+				{
+					this._view.webview.postMessage({type:'setAutoCheck',value:true});
+				}
+				else
+				{
+					this._view.webview.postMessage({type:'setAutoCheck',value:false});
+				}
 			}
 		});
 
@@ -72,6 +82,18 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 
 		webviewView.webview.onDidReceiveMessage(data => {
 			switch (data.type) {
+				case 'autoCheckPressed':
+				{
+					if(data.value==true)
+					{
+						Configuration.setAutoCheckForUpdates('1');
+					}
+					else
+					{
+						Configuration.setAutoCheckForUpdates('0');
+					}
+				}
+				break;
 				case 'checkPath':
 					{
 						if(this.validateSDKPath(Configuration.getWOWSDKPath())===false)
@@ -201,6 +223,16 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 		}
 
 		this._view?.webview.postMessage({ type: 'setVersion',value:version });
+
+		let check:string = Configuration.getAutoCheckForUpdates();
+		if(check=='1')
+		{
+			this._view?.webview.postMessage({type:'setAutoCheck',value:true});
+		}
+		else
+		{
+			this._view?.webview.postMessage({type:'setAutoCheck',value:false});
+		}		
 	}
 
 	public async doCheckUpdate(): Promise<void> 
@@ -566,6 +598,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				}
 			}
 			
+			let check:string = Configuration.getAutoCheckForUpdates();
 
 			body+=`</select>
 
@@ -574,7 +607,20 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			<button id="manageToolsButton" class="share-adhoc-button">Manage External Tools</button>
 			<br/>
 			<button id="checkForUpdatesButton" class="share-adhoc-button">Check For Updates</button>
+			<br/>
+			<div>`;
 
+			if(check=='1')
+			{
+				body+=`<input type="checkbox" id="autoCheck" checked="true"></input>`;
+			}
+			else
+			{
+				body+=`<input type="checkbox" id="autoCheck"></input>`;
+			}
+
+			body+=`<label>Check for updates automatically</label>
+			</div>
 			<script nonce="${nonce}" src="${scriptUri}"></script>
 		</body>
 		</html>`;
