@@ -255,7 +255,7 @@ class Configuration {
         }
         //enumerate available sdk versions, if any
         if (fs.existsSync(path) === false || fs.existsSync(path + '/sdk') === false) {
-            Configuration._detectedSDKVersions.push('1.0.0');
+            //Configuration._detectedSDKVersions.push('1.0.0');
             return;
         }
         var dirs = fs.readdirSync(path + '/sdk').filter(function (file) {
@@ -572,7 +572,7 @@ class Configuration {
         //detect SDK path 
         var path = await Configuration.getWOWSDKPathAsync();
         if (typeof (path) === 'undefined' || path.length === 0) {
-            vscode.window.showErrorMessage("WOWCube SDK is not detected.\nPlease make sure WOWCube SDK is installed and up to date");
+            vscode.window.showErrorMessage("WOWCube Development Kit is not detected.\nPlease make sure WOWCube Development Kit is installed and up to date");
         }
         else {
             Configuration.loadVersionFolders(path);

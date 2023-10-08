@@ -224,7 +224,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			if(compilerpath.length===0)
 			{
 				vscode.window.showErrorMessage(
-					"C++ Compiler support package for WOWCube SDK is not detected.\nPlease make sure WOWCube SDK is installed, it is up to date and C++ support package for WOWCube SDK is installed",
+					"C++ Compiler support package for WOWCube Development Kit is not detected.\nPlease make sure WOWCube Development Kit is installed, it is up to date and C++ support package for WOWCube Development Kit is installed",
 					...["Manage Packages"]
 				).then((answer)=>
 				{
@@ -235,7 +235,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				});
 
 				//vscode.window.showErrorMessage("C++ Compiler support package for WOWCube SDK is not detected.\nPlease make sure WOWCube SDK is installed, it is up to date and C++ support package for WOWCube SDK is installed"); 
-				this._channel.appendLine('C++ Compiler support package for WOWCube SDK is not detected!');
+				this._channel.appendLine('C++ Compiler support package for WOWCube Development Kit is not detected!');
 				this._channel.appendLine('Please use Manage External Tools panel to install the package first.\r\n\r\n');
 
 				this.closeEmitter.fire(0);
@@ -605,8 +605,8 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 			if(pawnpath.length===0)
 			{
-				vscode.window.showErrorMessage("WOWCube SDK is not detected.\nPlease make sure WOWCube SDK is installed and up to date"); 
-				this._channel.appendLine('WOWCube SDK path is not set or operating system is not supported.\r\n\r\n');
+				vscode.window.showErrorMessage("WOWCube Development Kit is not detected.\nPlease make sure WOWCube Development Kit is installed and up to date"); 
+				this._channel.appendLine('WOWCube Development Kit path is not set or operating system is not supported.\r\n\r\n');
 
 				this.closeEmitter.fire(0);
 				resolve();

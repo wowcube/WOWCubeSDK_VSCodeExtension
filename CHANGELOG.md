@@ -1,3 +1,6 @@
+### 2.1.9
+* Fix for extension startup issues
+
 ### 2.1.8
 * Option for toggling automatic checks for available updates
 

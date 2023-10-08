@@ -488,7 +488,7 @@ export class ExternalToolsPanel {
 
                             if(fs.existsSync(compilerpath)===false)
                             {
-                                this._channel.appendLine("External Tools management: Path \""+compilerpath+"\" is invalid, C++ Compiler support package for WOWCube SDK is not installed");
+                                this._channel.appendLine("External Tools management: Path \""+compilerpath+"\" is invalid, C++ Compiler support package for WOWCube Development Kit is not installed");
                                 this._channel.show(true);
                 
                                 return false;
@@ -498,7 +498,7 @@ export class ExternalToolsPanel {
 
                             if(fs.existsSync(compilerpath)===false)
                             {
-                                this._channel.appendLine("External Tools management: File \""+command+"\" does not exist, C++ Compiler support package for WOWCube SDK is not installed or corrupted");
+                                this._channel.appendLine("External Tools management: File \""+command+"\" does not exist, C++ Compiler support package for WWOWCube Development Kit is not installed or corrupted");
                                 this._channel.show(true);
                 
                                 return false;

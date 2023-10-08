@@ -170,6 +170,15 @@ export class WizardPanel {
             var ret = {path:'',desc:''};
 
             const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/'+WizardPanel.currentLanguage+'/';
+
+            if(!fs.existsSync(templatespath))
+            {
+                ret.desc = "Project templates are missing, please check WOWCube Development Kit installaton...";
+                ret.path = '';
+
+                return ret;
+            }
+                        
             const templates = require(templatespath+'templates.json');
 
             var fullpath = '';
@@ -328,6 +337,15 @@ export class WizardPanel {
             var ret = {path:'',desc:''};
 
             const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/'+WizardPanel.currentLanguage+'/';
+
+            if(!fs.existsSync(templatespath))
+            {
+                ret.desc = "Project templates are missing, please check WOWCube Development Kit installaton...";
+                ret.path = '';
+
+                return ret;
+            }
+
             //const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/';//+WizardPanel.currentLanguage+'/';
             const templates = require(templatespath+'templates.json');
 

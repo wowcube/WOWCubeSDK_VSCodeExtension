@@ -2,6 +2,10 @@
 
 This extension is designed for WOWCube cubeapp application developers. It simplifies WOWCube device content management and makes overall process of development of the apps more enjoyable.
 
+## Pre-requisites
+
+ WOWCube Development Kit version 0.9.6 or later must be installed on the computer and can be downloaded from https://wowcube.com/devkit
+
 ## Features
 
 * New Cubeapp application wizard
@@ -13,10 +17,6 @@ This extension is designed for WOWCube cubeapp application developers. It simpli
 * Installed cubeapp applications management
 * Installed cubeapp data management
 * Built-in WOWCube Development Kit updater  
-
-## Requirements
-
- WOWCube Development Kit version 0.9.6 or later must be installed on the computer.
 
 ## Extension Settings
 
@@ -45,6 +45,9 @@ https://code.visualstudio.com/docs/customization/colorizer
 Although the extension can be used on Linux, it provides limited functionality and DOES NOT support any bluetooth-related features. 
 
 ## Release Notes
+
+### 2.1.9
+* Fix for extension startup issues
 
 ### 2.1.8
 * Option for toggling automatic checks for available updates
