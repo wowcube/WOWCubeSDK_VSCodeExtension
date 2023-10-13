@@ -318,14 +318,14 @@ class SettingsViewProvider {
             //Pawn
             var pawnpath = Configuration_1.Configuration.getPawnPath();
             if (fs.existsSync(pawnpath) === false) {
-                this._channel.appendLine("SDK Settigs Error: Path \"" + pawnpath + "\" is invalid");
+                this._channel.appendLine("SDK Settings Error: Path \"" + pawnpath + "\" is invalid");
                 this._channel.show(true);
                 return false;
             }
             else {
                 var exe = pawnpath + Configuration_1.Configuration.getPawnCC();
                 if (fs.existsSync(exe) === false) {
-                    this._channel.appendLine("SDK Settigs Error: File " + exe + " does not exist");
+                    this._channel.appendLine("SDK Settings Error: File " + exe + " does not exist");
                     this._channel.show(true);
                     return false;
                 }
@@ -333,34 +333,34 @@ class SettingsViewProvider {
             //let's assume if this folder exists, all subfolders for other languages exist too
             var includepath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/pawn/include/';
             if (fs.existsSync(includepath) === false) {
-                this._channel.appendLine("SDK Settigs Error: Path \"" + includepath + "\" is invalid");
+                this._channel.appendLine("SDK Settings Error: Path \"" + includepath + "\" is invalid");
                 this._channel.show(true);
                 return false;
             }
             //CPP
             var cpppath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/cpp/';
             if (fs.existsSync(cpppath) === false) {
-                this._channel.appendLine("SDK Settigs Error: Path \"" + cpppath + "\" is invalid");
+                this._channel.appendLine("SDK Settings Error: Path \"" + cpppath + "\" is invalid");
                 this._channel.show(true);
                 return false;
             }
             //Utils
             var utilspath = Configuration_1.Configuration.getUtilsPath();
             if (fs.existsSync(utilspath) === false) {
-                this._channel.appendLine("SDK Settigs Error: Path \"" + utilspath + "\" is invalid");
+                this._channel.appendLine("SDK Settings Error: Path \"" + utilspath + "\" is invalid");
                 this._channel.show(true);
                 return false;
             }
             else {
                 var exe = utilspath + Configuration_1.Configuration.getBuilder();
                 if (fs.existsSync(exe) === false) {
-                    this._channel.appendLine("SDK Settigs Error: File " + exe + " does not exist");
+                    this._channel.appendLine("SDK Settings Error: File " + exe + " does not exist");
                     this._channel.show(true);
                     return false;
                 }
                 exe = utilspath + Configuration_1.Configuration.getLoader();
                 if (fs.existsSync(exe) === false) {
-                    this._channel.appendLine("SDK Settigs Error: File " + exe + " does not exist");
+                    this._channel.appendLine("SDK Settings Error: File " + exe + " does not exist");
                     this._channel.show(true);
                     return false;
                 }
@@ -368,14 +368,14 @@ class SettingsViewProvider {
             //Emulator
             var emulpath = Configuration_1.Configuration.getEmulPath();
             if (fs.existsSync(emulpath) === false) {
-                this._channel.appendLine("SDK Settigs Error: Path \"" + emulpath + "\" is invalid");
+                this._channel.appendLine("SDK Settings Error: Path \"" + emulpath + "\" is invalid");
                 this._channel.show(true);
                 return false;
             }
             else {
                 var exe = emulpath + Configuration_1.Configuration.getEmulator();
                 if (fs.existsSync(exe) === false) {
-                    this._channel.appendLine("SDK Settigs Error: File " + exe + " does not exist");
+                    this._channel.appendLine("SDK Settings Error: File " + exe + " does not exist");
                     this._channel.show(true);
                     return false;
                 }

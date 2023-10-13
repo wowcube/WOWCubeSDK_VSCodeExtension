@@ -15,6 +15,8 @@ import {Output} from './Output';
     public static currentPanel: WOWCubeProjectProvider | undefined;
 	public static readonly viewType = 'WOWCubeSDK.projectPanel';
     private _view?: vscode.WebviewView;
+    private _disposables: vscode.Disposable[] = [];
+    private _currentState:number = -1;
 
     private writeEmitter = Output.terminal();
 	onDidWrite: vscode.Event<string> = this.writeEmitter.event;
@@ -24,7 +26,6 @@ import {Output} from './Output';
 
 	constructor(private readonly context: vscode.ExtensionContext) 
     {
-
     }
 
 	/**
@@ -39,6 +40,24 @@ import {Output} from './Output';
 		webviewPanel.webview.options = {
 			enableScripts: true,
 		};
+
+		webviewPanel.onDidChangeViewState(  
+			e => {
+				if (webviewPanel.visible) 
+				{  
+					if(this._currentState!==1)
+					{
+						this._currentState = 1;
+						updateWebview();
+					}
+					
+				}
+				else
+				{
+					this._currentState = 0;
+				}
+			},
+			null);
 
 		webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview,document);
 

@@ -167,17 +167,20 @@ class Configuration {
             switch (p) {
                 case 'darwin': //mac
                     {
-                        if (fs.existsSync("/Applications/WOWCube Development Kit.app")) {
-                            path = "/Applications/WOWCube Development Kit.app/Contents/";
-                            this.setWOWSDKPath(path);
-                        }
+                        //if(fs.existsSync("/Applications/WOWCube Development Kit.app"))
+                        //{
+                        //apparently, if we get here it means there is no record in config yet, so the only option is to set a path that 
+                        //we believe would be used by pervailing number of users
+                        path = "/Applications/WOWCube Development Kit.app/Contents/"; //default path
+                        this.setWOWSDKPath(path);
+                        //}
                     }
                     break;
                 case 'win32': //windows
                     {
                         var regedit = require('regedit');
                         var done = false;
-                        path = "/";
+                        path = "C:\\Program Files\\WOWCube Development Kit\\"; //default path
                         regedit.list('HKCU\\SOFTWARE\\WOWCube Development Kit', (err, result) => {
                             if (err === null) {
                                 var key = result['HKCU\\SOFTWARE\\WOWCube Development Kit'];
@@ -268,6 +271,7 @@ class Configuration {
                 Configuration._detectedSDKVersions.push(dirs[i]);
             }
         }
+        Configuration._detectedSDKVersions.sort();
     }
     static getCurrentVersion() {
         var v;
@@ -286,9 +290,9 @@ class Configuration {
             }
         }
         if (versionFound === false) {
-            //if current saved version is not in the list of versions present in the bundle, reset to the first version in the list
+            //if current saved version is not in the list of versions present in the bundle, reset to the last (most recent) version in the list
             if (Configuration._detectedSDKVersions.length > 0)
-                v = Configuration._detectedSDKVersions[0];
+                v = Configuration._detectedSDKVersions[Configuration._detectedSDKVersions.length - 1];
             Configuration.setCurrentVersion(v);
         }
         return v;

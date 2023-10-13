@@ -9,6 +9,8 @@ const Output_1 = require("./Output");
 class WOWCubeProjectProvider {
     constructor(context) {
         this.context = context;
+        this._disposables = [];
+        this._currentState = -1;
         this.writeEmitter = Output_1.Output.terminal();
         this.onDidWrite = this.writeEmitter.event;
         this.closeEmitter = Output_1.Output.terminalClose();
@@ -25,6 +27,17 @@ class WOWCubeProjectProvider {
         webviewPanel.webview.options = {
             enableScripts: true,
         };
+        webviewPanel.onDidChangeViewState(e => {
+            if (webviewPanel.visible) {
+                if (this._currentState !== 1) {
+                    this._currentState = 1;
+                    updateWebview();
+                }
+            }
+            else {
+                this._currentState = 0;
+            }
+        }, null);
         webviewPanel.webview.html = this.getHtmlForWebview(webviewPanel.webview, document);
         function updateWebview() {
             webviewPanel.webview.postMessage({

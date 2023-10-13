@@ -435,7 +435,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			var pawnpath = Configuration.getPawnPath();
 			if(fs.existsSync(pawnpath)===false)
 			{
-				this._channel.appendLine("SDK Settigs Error: Path \""+pawnpath+"\" is invalid");
+				this._channel.appendLine("SDK Settings Error: Path \""+pawnpath+"\" is invalid");
 				this._channel.show(true);
 
 				return false;
@@ -445,7 +445,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				var exe = pawnpath+ Configuration.getPawnCC();
 				if(fs.existsSync(exe)===false)
 				{
-					this._channel.appendLine("SDK Settigs Error: File "+exe+" does not exist");
+					this._channel.appendLine("SDK Settings Error: File "+exe+" does not exist");
 					this._channel.show(true);
 
 					return false;
@@ -456,7 +456,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			var includepath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/pawn/include/';
 			if(fs.existsSync(includepath)===false)
 			{
-				this._channel.appendLine("SDK Settigs Error: Path \""+includepath+"\" is invalid");
+				this._channel.appendLine("SDK Settings Error: Path \""+includepath+"\" is invalid");
 				this._channel.show(true);
 
 				return false;
@@ -466,7 +466,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			var cpppath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/cpp/';
 			if(fs.existsSync(cpppath)===false)
 			{
-				this._channel.appendLine("SDK Settigs Error: Path \""+cpppath+"\" is invalid");
+				this._channel.appendLine("SDK Settings Error: Path \""+cpppath+"\" is invalid");
 				this._channel.show(true);
 			
 				return false;
@@ -476,7 +476,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			var utilspath = Configuration.getUtilsPath();
 			if(fs.existsSync(utilspath)===false)
 			{
-				this._channel.appendLine("SDK Settigs Error: Path \""+utilspath+"\" is invalid");
+				this._channel.appendLine("SDK Settings Error: Path \""+utilspath+"\" is invalid");
 				this._channel.show(true);
 
 				return false;
@@ -486,7 +486,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				var exe = utilspath+Configuration.getBuilder();
 				if(fs.existsSync(exe)===false)
 				{
-					this._channel.appendLine("SDK Settigs Error: File "+exe+" does not exist");
+					this._channel.appendLine("SDK Settings Error: File "+exe+" does not exist");
 					this._channel.show(true);
 
 					return false;
@@ -495,7 +495,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				exe = utilspath+Configuration.getLoader();
 				if(fs.existsSync(exe)===false)
 				{
-					this._channel.appendLine("SDK Settigs Error: File "+exe+" does not exist");
+					this._channel.appendLine("SDK Settings Error: File "+exe+" does not exist");
 					this._channel.show(true);
 
 					return false;
@@ -506,7 +506,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			var emulpath = Configuration.getEmulPath();
 			if(fs.existsSync(emulpath)===false)
 			{
-				this._channel.appendLine("SDK Settigs Error: Path \""+emulpath+"\" is invalid");
+				this._channel.appendLine("SDK Settings Error: Path \""+emulpath+"\" is invalid");
 				this._channel.show(true);
 
 				return false;
@@ -516,7 +516,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 				var exe = emulpath+Configuration.getEmulator();
 				if(fs.existsSync(exe)===false)
 				{
-					this._channel.appendLine("SDK Settigs Error: File "+exe+" does not exist");
+					this._channel.appendLine("SDK Settings Error: File "+exe+" does not exist");
 					this._channel.show(true);
 
 					return false;

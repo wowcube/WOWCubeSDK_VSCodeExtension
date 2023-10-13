@@ -3,7 +3,7 @@
   "displayName": "WOWCube SDK Extension",
   "description": "Develop Cubeapp applications for WOWCube device with WOWCube Development Kit",
   "icon": "media/icon.png",
-  "version": "2.1.9",
+  "version": "2.1.10",
   "publisher": "cubios-inc",
   "engines": {
     "vscode": "^1.64.0"

@@ -1,3 +1,7 @@
+### 2.1.10
+* Improved handling of initial configuration of the extension
+* Fix for incorrect rendering of additional C++ project include directories
+
 ### 2.1.9
 * Fix for extension startup issues
 
