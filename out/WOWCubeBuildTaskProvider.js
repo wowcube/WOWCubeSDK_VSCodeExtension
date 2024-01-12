@@ -108,6 +108,7 @@ class WOWCubeBuildTaskTerminal {
     doCompileCpp(action) {
         return new Promise((resolve, reject) => {
             this._channel.clear();
+            this._channel.show(true);
             this._channel.appendLine('Compiling cub file...\r\n');
             const initialVersion = Configuration_1.Configuration.getCurrentVersion();
             const build_json = JSON.parse(fs.readFileSync(this.workspace + '/wowcubeapp-build.json', 'utf-8'));
@@ -131,6 +132,8 @@ class WOWCubeBuildTaskTerminal {
                             this._channel.appendLine("\tVersion " + versions[i]);
                         }
                         this._channel.appendLine('\r\nFailed to compile.\r\n');
+                        this.closeEmitter.fire(0);
+                        resolve();
                         return;
                     }
                     else {
@@ -323,6 +326,7 @@ class WOWCubeBuildTaskTerminal {
     doCompilePawn(action) {
         return new Promise((resolve, reject) => {
             this._channel.clear();
+            this._channel.show(true);
             this._channel.appendLine('Compiling cub file...\r\n');
             const initialVersion = Configuration_1.Configuration.getCurrentVersion();
             const build_json = JSON.parse(fs.readFileSync(this.workspace + '/wowcubeapp-build.json', 'utf-8'));

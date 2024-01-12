@@ -117,7 +117,8 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			this.fileWatcher.onDidDelete(() => this.doBuild());
 		}
 		*/	
-					//pre-process json file
+		
+		//pre-process json file
 		if(Project.validateAssets(this.workspace,true)===false)
 		{
 			this._channel.appendLine('Project file failed to validate, the project may produce build or runtime errors! Please check the project file.\r\n');
@@ -160,6 +161,8 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 		return new Promise<void>((resolve,reject) => 
         {
 			this._channel.clear();
+			this._channel.show(true);
+
 			this._channel.appendLine('Compiling cub file...\r\n');
 			const initialVersion = Configuration.getCurrentVersion();
 
@@ -197,6 +200,9 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 						}    
 						
 						this._channel.appendLine('\r\nFailed to compile.\r\n');
+
+						this.closeEmitter.fire(0);
+						resolve();
 						return;
 					}
 					else
@@ -463,6 +469,8 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 		return new Promise<void>((resolve,reject) => 
         {
 			this._channel.clear();
+			this._channel.show(true);
+			
 			this._channel.appendLine('Compiling cub file...\r\n');
 			const initialVersion = Configuration.getCurrentVersion();
 
