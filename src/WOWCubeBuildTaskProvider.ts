@@ -289,10 +289,16 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			var maj = '0';
 			var min = '1';
 
+			var maj_i:number = 0;
+			var min_i:number = 1;
+
 			if(vers.length===2)
 			{
 				maj = vers[0];
 				min = vers[1];
+
+				maj_i = +maj;
+				min_i = +min;
 			}
 
 
@@ -363,20 +369,32 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			command+=' --no-entry';
 			command+=' -o "'+destfile+'"';
 
-			//add mandatory SDK files
-			command+=' "'+sdkpath+'AppManager.cpp"';
-			command+=' "'+sdkpath+'native.cpp"';
-			command+=' "'+sdkpath+'Screen.cpp"';
-			command+=' "'+sdkpath+'Scene.cpp"';
-			command+=' "'+sdkpath+'NetworkMessage.cpp"';
-			command+=' "'+sdkpath+'Sound.cpp"';
+			//add mandatory SDK files depending on SDK version
+			if(maj_i>=5)	//5.x
+			{
+				command+=' "'+sdkpath+'AppManager.cpp"';
+				command+=' "'+sdkpath+'native.cpp"';
+				command+=' "'+sdkpath+'Screen.cpp"';
+				command+=' "'+sdkpath+'Scene.cpp"';
+				command+=' "'+sdkpath+'NetworkMessage.cpp"';
+				command+=' "'+sdkpath+'Sound.cpp"';
 
-			//gfx
-			command+=' "'+sdkpath+'Gfx/Background.cpp"';
-			command+=' "'+sdkpath+'Gfx/OffscreenRenderTarget.cpp"';
-			command+=' "'+sdkpath+'Gfx/Sprite.cpp"';
-			command+=' "'+sdkpath+'Gfx/Text.cpp"';
-			command+=' "'+sdkpath+'Gfx/AnimatedSprite.cpp"';
+				//gfx
+				command+=' "'+sdkpath+'Gfx/Background.cpp"';
+				command+=' "'+sdkpath+'Gfx/OffscreenRenderTarget.cpp"';
+				command+=' "'+sdkpath+'Gfx/Sprite.cpp"';
+				command+=' "'+sdkpath+'Gfx/Text.cpp"';
+				command+=' "'+sdkpath+'Gfx/AnimatedSprite.cpp"';
+			}
+
+			if(maj_i>=6)	//6.x
+			{
+				command+=' "'+sdkpath+'SaveMessage.cpp"';
+				command+=' "'+sdkpath+'Scramble.cpp"';
+
+				//gfx
+				command+=' "'+sdkpath+'Gfx/QRCode.cpp"';
+			}
 
 			//fetch sources and add them to command line
 			if(fs.existsSync(currDir)===true)
@@ -403,15 +421,16 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			{
 				if (stderr && stderr.length > 0) 
 				{
-					var functionNames = ['sendMessage','recvMessage','sendPacket','recvPacket','sendBleData','recvBleData','getTime','getUserName','toggleDebugInfo','saveState','loadState','random','LOG','getTap',
+					var functionNames = ['sendMessage','recvMessage','sendPacket','recvPacket','sendBleData','recvBleData','getTime','getUserName','toggleDebugInfo','saveState','loadState','random','LOG','getTap','getAppVersion',
 										 'TOPOLOGY_getAdjacentFacelet','TOPOLOGY_getFacelet','TOPOLOGY_getPlace','TOPOLOGY_getOppositeFacelet','TOPOLOGY_getAngle','TOPOLOGY_getFace',
 										 'TOPOLOGY_getFaceletOrientation','TOPOLOGY_getPlaceOrientation','TOPOLOGY_isAssembled','TOPOLOGY_getTwist','TopologyDebugGetFace',
 										 'TopologyDebugGetPosition','TopologyDebugGetHorizontal','LB_getInfo','LB_getScore','MS_getFaceAccelX',
 										 'MS_getFaceAccelY','MS_getFaceAccelZ','MS_getFaceGyroX','MS_getFaceGyroY','MS_getFaceGyroZ',
 										 'GFX_getAssetId','GFX_clear','GFX_drawText','GFX_drawPoint','GFX_drawCircle',
-										 'GFX_drawSolidCircle','GFX_drawArc','GFX_drawLine','GFX_drawRectangle','GFX_bakeImage',
+										 'GFX_drawSolidCircle','GFX_drawArc','GFX_drawSector','GFX_drawLine','GFX_drawRectangle','GFX_bakeImage',
 										 'GFX_setRenderTarget','GFX_drawImage','GFX_drawBakedImage','GFX_drawParticles','GFX_render',
-										 'GFX_clearCache','GFX_cacheImages','GFX_setFpsWindow','SND_getAssetId','SND_play','SND_cacheSounds','EVENT_getList'
+										 'GFX_clearCache','GFX_removeBakedImage','GFX_cacheImages','GFX_setFpsWindow','GFX_getAssetsCount','GFX_drawQrCode','GFX_setFillShader','GFX_setLinearGradientShader','GFX_setRadialGradientShader','GFX_removeShader',
+										 'SND_getAssetId','SND_play','SND_cacheSounds','SND_isPlaying','SND_stop','SND_getAssetsCount','EVENT_getList'
 										  ];
 					
 					//remove warning for Cubios exports
