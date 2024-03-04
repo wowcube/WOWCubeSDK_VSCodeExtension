@@ -292,6 +292,30 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 		return sites;
 	}
 
+	private getWOWConnectDocumentation()
+	{
+		var docs:Array<[string,string]> = new Array<[string,string]>();
+
+		try
+		{
+			var sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/';
+
+		 //fetch docs folder for topics
+         if(fs.existsSync(sourceDocs)===true)
+                {
+					const res = require(sourceDocs+"wowconnect-resources.json").resources;
+
+					for(var i=0;i<res.length;i++)
+					{
+						docs.push([res[i].name, res[i].url]);
+					}
+                }			
+		}
+		catch(e)
+		{}
+		return docs;
+	}
+
 	private getSDKFiles(lang:string)
 	{
 		var files:Array<[string,string]> = new Array<[string,string]>();
@@ -370,6 +394,9 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 
 			//get online resources
 			var sites = this.getOnlineResources();
+
+			//get wowconnect resources
+			var docs_wowconnect = this.getWOWConnectDocumentation();
 
 			//get sdk files
 			var files_pawn = this.getSDKFiles('pawn');
@@ -539,6 +566,14 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 					}
 					body+=`</ul></li>`;
 
+				body+=`</ul></li>`;
+
+				body+=`<li><span class="caret">WOWConnect Library</span>
+				<ul class="nested">`;
+				for(var i=0;i<docs_wowconnect.length;i++)
+				{
+					body+=`<li class="liitem" file="${Configuration.getWOWSDKPath()+'sdk/docs/wowconnect/'+docs_wowconnect[i][1]}" doc="1" lang="none" folder="${docs_wowconnect[i][0]}">${docs_wowconnect[i][0]}</li>`;
+				}
 				body+=`</ul></li>`;
 
 				body+=`<li><span class="caret">Online Resources</span>

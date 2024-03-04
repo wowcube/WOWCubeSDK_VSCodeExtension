@@ -203,6 +203,21 @@ class ExamplesViewProvider {
         }
         return sites;
     }
+    getWOWConnectDocumentation() {
+        var docs = new Array();
+        try {
+            var sourceDocs = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/';
+            //fetch docs folder for topics
+            if (fs.existsSync(sourceDocs) === true) {
+                const res = require(sourceDocs + "wowconnect-resources.json").resources;
+                for (var i = 0; i < res.length; i++) {
+                    docs.push([res[i].name, res[i].url]);
+                }
+            }
+        }
+        catch (e) { }
+        return docs;
+    }
     getSDKFiles(lang) {
         var files = new Array();
         try {
@@ -259,6 +274,8 @@ class ExamplesViewProvider {
             this.docs_cpp = this.getDocumentation('cpp');
             //get online resources
             var sites = this.getOnlineResources();
+            //get wowconnect resources
+            var docs_wowconnect = this.getWOWConnectDocumentation();
             //get sdk files
             var files_pawn = this.getSDKFiles('pawn');
             var files_cpp = this.getSDKFiles('cpp');
@@ -384,6 +401,12 @@ class ExamplesViewProvider {
                 body += `<li class="liitem" path="${files_cpp[i][1]}">${files_cpp[i][0]}</li>`;
             }
             body += `</ul></li>`;
+            body += `</ul></li>`;
+            body += `<li><span class="caret">WOWConnect Library</span>
+				<ul class="nested">`;
+            for (var i = 0; i < docs_wowconnect.length; i++) {
+                body += `<li class="liitem" file="${Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/wowconnect/' + docs_wowconnect[i][1]}" doc="1" lang="none" folder="${docs_wowconnect[i][0]}">${docs_wowconnect[i][0]}</li>`;
+            }
             body += `</ul></li>`;
             body += `<li><span class="caret">Online Resources</span>
 				<ul class="nested">`;
