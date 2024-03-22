@@ -446,27 +446,43 @@ class WOWCubeBuildTaskTerminal {
                 return;
             }
             var child = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => {
+                var criticalWaring = false;
                 if (error) {
                     //reject({ error, stdout, stderr });
                 }
                 if (stderr && stderr.length > 0) {
+                    if (stderr.indexOf('warning 202:') != -1) {
+                        criticalWaring = true;
+                        stderr = stderr.replace(new RegExp('warning 202:', 'g'), 'critical warning 202:');
+                    }
                     this._channel.appendLine(stderr);
                     this._channel.show(true);
                 }
                 if (stdout && stdout.length > 0) {
+                    if (stdout.indexOf('warning 202:') != -1) {
+                        criticalWaring = true;
+                        stderr = stderr.replace(new RegExp('warning 202:', 'g'), 'critical warning 202:');
+                    }
                     this._channel.appendLine(stdout);
                     this._channel.show(true);
                 }
                 const date = new Date();
                 this.setSharedState(date.toTimeString() + ' ' + date.toDateString());
                 if (child.exitCode === 0) {
-                    this._channel.appendLine('File compiled successfully.\r\n');
-                    if (action === 'compile') {
-                        this.closeEmitter.fire(0);
-                        resolve();
+                    if (!criticalWaring) {
+                        this._channel.appendLine('File compiled successfully.\r\n');
+                        if (action === 'compile') {
+                            this.closeEmitter.fire(0);
+                            resolve();
+                        }
+                        else {
+                            this.doBuild(this.target);
+                        }
                     }
                     else {
-                        this.doBuild(this.target);
+                        this._channel.appendLine("File compiled with critical warnings, the image can't be run.\r\n");
+                        this.closeEmitter.fire(0);
+                        resolve();
                     }
                 }
                 else {

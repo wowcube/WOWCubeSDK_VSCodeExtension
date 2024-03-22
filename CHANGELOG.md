@@ -1,3 +1,6 @@
+### 2.2.1
+* Improved compilation errors handling for Pawn
+
 ### 2.2.0
 * SDK Version 6.0 support
 * Minor bug fixes and improvements 
