@@ -4,7 +4,8 @@ import * as path from 'path';
 import { Uri } from "vscode";
 import {Configuration} from './Configuration';
 import {Output} from './Output';
-import * as unzipper from 'unzipper';
+//import * as unzipper from 'unzipper';
+
 import * as cp from 'child_process';
 import * as os from 'os';
 
@@ -50,7 +51,23 @@ export class ArchiveManager
         if(this._currentSession!==null) return;
 
         this._currentSession = zipFilename;
-        
+     
+        var AdmZip = require("adm-zip");
+        var zip = new AdmZip(zipFilename);
+
+        try
+        {
+            zip.extractAllTo(outFolder, true,true);
+            this._currentSession = null;
+            finishedCallback();
+        }
+        catch(err)
+        {
+            this._currentSession = null;
+            errorCallback(err);
+        }
+
+        /*
         fs.createReadStream(zipFilename)
         .pipe(unzipper.Extract({ path: outFolder }))
         .on('close',()=>
@@ -63,6 +80,7 @@ export class ArchiveManager
             this._currentSession = null;
             errorCallback(e);
         });
+        */
     }
 
     public static doUnzipSystem(zipFilename:string, outFolder:string, finishedCallback:Function, errorCallback:Function)

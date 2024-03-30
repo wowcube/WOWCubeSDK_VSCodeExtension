@@ -1,9 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ArchiveManager = void 0;
-const fs = require("fs");
 const Output_1 = require("./Output");
-const unzipper = require("unzipper");
+//import * as unzipper from 'unzipper';
 const cp = require("child_process");
 const os = require("os");
 class ArchiveManager {
@@ -36,16 +35,31 @@ class ArchiveManager {
         if (this._currentSession !== null)
             return;
         this._currentSession = zipFilename;
+        var AdmZip = require("adm-zip");
+        var zip = new AdmZip(zipFilename);
+        try {
+            zip.extractAllTo(outFolder, true, true);
+            this._currentSession = null;
+            finishedCallback();
+        }
+        catch (err) {
+            this._currentSession = null;
+            errorCallback(err);
+        }
+        /*
         fs.createReadStream(zipFilename)
-            .pipe(unzipper.Extract({ path: outFolder }))
-            .on('close', () => {
+        .pipe(unzipper.Extract({ path: outFolder }))
+        .on('close',()=>
+        {
             this._currentSession = null;
             finishedCallback();
         })
-            .on('error', (e) => {
+        .on('error',(e)=>
+        {
             this._currentSession = null;
             errorCallback(e);
         });
+        */
     }
     static doUnzipSystem(zipFilename, outFolder, finishedCallback, errorCallback) {
         if (this._currentSession !== null)

@@ -158,6 +158,7 @@ export class ExternalToolsPanel {
                                                                 ExternalToolsPanel.currentPanel?._channel.show(true);
         
                                                                 //delete source package file
+                                                                
                                                                 try
                                                                 {
                                                                     if(fs.existsSync(value))
@@ -169,6 +170,7 @@ export class ExternalToolsPanel {
                                                                 {
                                                                     ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: but the temporary file has not been deleted due error: ${e}`);
                                                                 }
+                                                                
 
                                                                 ExternalToolsPanel.currentPanel?.reload();
                                                             },

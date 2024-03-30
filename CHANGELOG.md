@@ -1,3 +1,6 @@
+### 2.2.3
+* Fix for incorrect installing of C++ Compiler support package on certain verions of Windows
+
 ### 2.2.1
 * Improved compilation errors handling for Pawn
 
