@@ -163,7 +163,8 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			this._channel.clear();
 			this._channel.show(true);
 
-			this._channel.appendLine('Compiling cub file...\r\n');
+			this._channel.appendLine('Compiling cub file...');
+			this._channel.appendLine('Please be patient as compilation of C++ project may take time, especially for the first time. \r\n');
 			const initialVersion = Configuration.getCurrentVersion();
 
 			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));

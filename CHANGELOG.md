@@ -1,3 +1,6 @@
+### 2.2.4
+* Minor UI tweaks
+
 ### 2.2.3
 * Fix for incorrect installing of C++ Compiler support package on certain verions of Windows
 
