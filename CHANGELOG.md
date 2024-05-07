@@ -1,3 +1,6 @@
+### 2.2.5
+* Fix for incorrect logging mode selection
+
 ### 2.2.4
 * Minor UI tweaks
 

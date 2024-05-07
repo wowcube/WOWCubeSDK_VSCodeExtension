@@ -373,7 +373,7 @@ class DeviceDetailsPanel {
             ret += `selected`;
         ret += `>Receive application logs from module 7</option>`;
         ret += `<option value="9" `;
-        if (lm == '8')
+        if (lm == '9')
             ret += `selected`;
         ret += `>Receive application logs from all modules</option>`;
         ret += `</select>
