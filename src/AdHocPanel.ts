@@ -300,7 +300,7 @@ export class AdHocPanel {
                     <link href="${styleWaitUri}" rel="stylesheet"> 
                     <title>Share Ad-Hoc Cubeapp</title>
                 </head>
-                <body>
+                <body style="min-width:420px";>
                     <script type="text/javascript" src="${scriptUri}" nonce="${nonce}"></script>
                       
                     <div style="padding:0px;">
@@ -311,7 +311,7 @@ export class AdHocPanel {
                     if(ready===true)
                     {
                         ret+=`
-                        <div class="view">   
+                        <div class="view" style="min-width:420px;">   
                         <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Add some description to your ad-hoc build</div> 
                         <div style="margin-right:10px"> 
                         <textarea id="description" style="resize: none;height:100px;" data-role="none">`+lastDescription+`</textarea>    

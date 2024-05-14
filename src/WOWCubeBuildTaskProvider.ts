@@ -668,7 +668,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 						criticalWaring = true;
 						stderr = stderr.replace(new RegExp('warning 202:', 'g'),'critical warning 202:');
 					}
-
+					
 					this._channel.appendLine(stdout);
 					this._channel.show(true);
 				}

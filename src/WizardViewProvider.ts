@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { getNonce } from "./getNonce";
+import { Providers } from './Providers';
 
 export class WizardViewProvider implements vscode.WebviewViewProvider
 {

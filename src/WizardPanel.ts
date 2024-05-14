@@ -564,7 +564,7 @@ export class WizardPanel {
                     <link href="${styleMainCodeUri}" rel="stylesheet"> 
                     <title>New Cubeapp Wizard</title>
                 </head>
-                <body>
+                <body style="min-width:500px;">
                     <script type="text/javascript" src="${scriptUri}" nonce="${nonce}"></script>
                       
                     <div style="padding:0px;">
@@ -572,7 +572,7 @@ export class WizardPanel {
                         <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Create new WOWCube cubeapp application project from template</div>
                         <div class="separator"></div>
 
-                        <div class="view">
+                        <div class="view" style="min-width:500px;">
                         
                             <div style="margin-top:0px;">
                                 <div class="badge"> <div class="badge_text">1</div></div>
@@ -675,7 +675,7 @@ export class WizardPanel {
                             
                         </div>
 
-                        <button id="generate_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">GENERATE NEW PROJECT</button>
+                        <button id="generate_button" style="min-width:500px; position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">GENERATE NEW PROJECT</button>
                     </div>
                 </body>
                 </html> 

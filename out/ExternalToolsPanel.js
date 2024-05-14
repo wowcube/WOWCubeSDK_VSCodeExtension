@@ -274,7 +274,7 @@ class ExternalToolsPanel {
                     <link href="${styleWaitUri}" rel="stylesheet">
                     <title>External Tools</title>
                 </head>
-                <body>
+                <body style="min-width:500px;">
                     <script type="text/javascript" src="${scriptUri}" nonce="${nonce}"></script>
                       
                     <div style="padding:0px;">
@@ -282,7 +282,7 @@ class ExternalToolsPanel {
                         <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Manage external tools supported by WOWCube Development Kit</div>
                         <div class="separator"></div>
 
-                        <div class="view">
+                        <div class="view" style="min-width:430px;">
 
                             <div class="items">
                                 <div id="i1" class="item">
