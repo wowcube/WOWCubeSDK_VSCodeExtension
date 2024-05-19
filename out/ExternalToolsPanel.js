@@ -6,6 +6,7 @@ const vscode = require("vscode");
 const getNonce_1 = require("./getNonce");
 const fs = require("fs");
 const os = require("os");
+const cp = require("child_process");
 const Configuration_1 = require("./Configuration");
 const Output_1 = require("./Output");
 const DownloadManager_1 = require("./DownloadManager");
@@ -49,6 +50,7 @@ class ExternalToolsPanel {
                             return;
                         }
                         this._url = Configuration_1.Configuration.getPackageDownloadURL(message.value.pack);
+                        ExternalToolsPanel.currentPack = message.value.pack;
                         ExternalToolsPanel._filename = toolspath + "package.zip";
                         if (this._url === '') {
                             this._channel.appendLine("External Tools management: Unable to find download url for the package");
@@ -70,6 +72,40 @@ class ExternalToolsPanel {
                                 var toolspath = Configuration_1.Configuration.getToolsPath();
                                 ExternalToolsPanel.currentPanel?.setProgress('Package is being installed...');
                                 ArchiveManager_1.ArchiveManager.doUnzip(value, toolspath, () => {
+                                    if (ExternalToolsPanel.currentPack == 'rust') {
+                                        //delete rust installer
+                                        try {
+                                            var rustinit_command = '"' + Configuration_1.Configuration.getFullToolPath("rustup-init.exe") + '"';
+                                            rustinit_command += ' -y';
+                                            var child = cp.exec(rustinit_command, { cwd: "" }, (error, stdout, stderr) => {
+                                                if (stderr && stderr.length > 0) {
+                                                    if (stderr.length > 2) {
+                                                        ExternalToolsPanel.currentPanel?._channel.appendLine(stderr);
+                                                        ExternalToolsPanel.currentPanel?._channel.show(true);
+                                                    }
+                                                }
+                                                if (stdout && stdout.length > 0) {
+                                                    ExternalToolsPanel.currentPanel?._channel.appendLine(stdout);
+                                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+                                                }
+                                                if (child.exitCode === 0) {
+                                                    ExternalToolsPanel.currentPanel?._channel.appendLine('RUST INSTALLED.\r\n');
+                                                }
+                                                else {
+                                                    ExternalToolsPanel.currentPanel?._channel.appendLine('FAILED TO INSTALL.\r\n');
+                                                }
+                                            });
+                                            /*
+                                            if(fs.existsSync(value))
+                                            {
+                                                fs.unlink(value, () => {}); // Delete temp file
+                                            }
+                                            */
+                                        }
+                                        catch (e) {
+                                            ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: but the temporary file has not been deleted due error: ${e}`);
+                                        }
+                                    }
                                     ExternalToolsPanel.currentPanel?.fixPackageFilesPermissons(() => {
                                         //success;
                                         ExternalToolsPanel.currentPanel?.showWait(false);
@@ -365,6 +401,7 @@ class ExternalToolsPanel {
 }
 exports.ExternalToolsPanel = ExternalToolsPanel;
 ExternalToolsPanel.viewType = "WOWCubeSDK.externalToolsPanel";
+ExternalToolsPanel.currentPack = "";
 ExternalToolsPanel._filename = "";
 function getWebviewOptions(extensionUri) {
     return {

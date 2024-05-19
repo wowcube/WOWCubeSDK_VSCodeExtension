@@ -439,6 +439,10 @@ class Configuration {
         }
         return url;
     }
+    static getFullToolPath(toolname) {
+        var p = this.getToolsPath();
+        return p + toolname;
+    }
     static getToolsPath() {
         var p = os.platform();
         var homedir = os.homedir();

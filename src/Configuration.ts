@@ -593,6 +593,12 @@ export class Configuration
         return url;
     }
 
+    public static getFullToolPath(toolname:string)
+    {
+        var p:string = this.getToolsPath();
+        return p+toolname;
+    }
+
     public static getToolsPath()
     {
         var p = os.platform();

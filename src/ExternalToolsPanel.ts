@@ -4,6 +4,7 @@ import { getNonce } from "./getNonce";
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import * as cp from 'child_process';
 import { Uri } from "vscode";
 import {Configuration} from './Configuration';
 import { Project } from "./Project";
@@ -15,6 +16,7 @@ export class ExternalToolsPanel {
 
     public static currentPanel: ExternalToolsPanel | undefined;
     public static readonly viewType = "WOWCubeSDK.externalToolsPanel";
+    public static currentPack: string = "";
 
     private readonly _panel: vscode.WebviewPanel;  
     private readonly _extensionUri: vscode.Uri;  
@@ -110,6 +112,8 @@ export class ExternalToolsPanel {
                                 }
 
                                 this._url = Configuration.getPackageDownloadURL(message.value.pack);
+
+                                ExternalToolsPanel.currentPack = message.value.pack;
                                 ExternalToolsPanel._filename = toolspath+"package.zip";
 
                                 if(this._url==='')
@@ -148,6 +152,55 @@ export class ExternalToolsPanel {
                                                 ExternalToolsPanel.currentPanel?.setProgress('Package is being installed...');
                                                 ArchiveManager.doUnzip(value,toolspath,()=>
                                                     {
+                                                        if(ExternalToolsPanel.currentPack=='rust')
+                                                        {
+                                                            //delete rust installer
+                                                            try
+                                                            {
+                                                                var rustinit_command = '"'+Configuration.getFullToolPath("rustup-init.exe")+'"';
+                                                                    
+                                                                rustinit_command+= ' -y';
+
+                                                                var child:cp.ChildProcess = cp.exec(rustinit_command, { cwd: ""}, (error, stdout, stderr) => 
+			                                                    {
+                                                                    if (stderr && stderr.length > 0) 
+                                                                    {                                                    
+                                                                        if(stderr.length>2)
+                                                                        {
+                                                                            ExternalToolsPanel.currentPanel?._channel.appendLine(stderr);
+                                                                            ExternalToolsPanel.currentPanel?._channel.show(true);
+                                                                        }
+                                                                    }
+                                                    
+                                                                    if (stdout && stdout.length > 0) 
+                                                                    {
+                                                                        ExternalToolsPanel.currentPanel?._channel.appendLine(stdout);
+                                                                        ExternalToolsPanel.currentPanel?._channel.show(true);
+                                                                    }
+                                                                                                        
+                                                                    if(child.exitCode===0)
+                                                                    {
+                                                                        ExternalToolsPanel.currentPanel?._channel.appendLine('RUST INSTALLED.\r\n');
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        ExternalToolsPanel.currentPanel?._channel.appendLine('FAILED TO INSTALL.\r\n');
+                                                                    }
+                                                                });
+
+                                                                /*
+                                                                if(fs.existsSync(value))
+                                                                {
+                                                                    fs.unlink(value, () => {}); // Delete temp file
+                                                                }
+                                                                */
+                                                            }
+                                                            catch(e)
+                                                            {
+                                                                ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: but the temporary file has not been deleted due error: ${e}`);
+                                                            }                                                           
+                                                        }
+
                                                         ExternalToolsPanel.currentPanel?.fixPackageFilesPermissons(
                                                             ()=>
                                                             {
@@ -158,7 +211,6 @@ export class ExternalToolsPanel {
                                                                 ExternalToolsPanel.currentPanel?._channel.show(true);
         
                                                                 //delete source package file
-                                                                
                                                                 try
                                                                 {
                                                                     if(fs.existsSync(value))
