@@ -62,21 +62,23 @@ class ExternalToolsPanel {
                         DownloadManager_1.DownloadManager.getFileLength(this._url).then(function (value) {
                             const url = value.url;
                             const len = value.length;
-                            DownloadManager_1.DownloadManager.doDownload(url, ExternalToolsPanel._filename, len, (value, progress) => {
-                                console.log(value + '%');
-                                console.log(progress.transferred);
-                                ExternalToolsPanel.currentPanel?._channel.appendLine(`Downloaded ${value}% / ${progress.transferred} of ${len}`);
-                                ExternalToolsPanel.currentPanel?._channel.show(true);
-                                ExternalToolsPanel.currentPanel?.setProgress('Package is being downloaded: ' + value + '%');
-                            }).then(function (value) {
-                                var toolspath = Configuration_1.Configuration.getToolsPath();
-                                ExternalToolsPanel.currentPanel?.setProgress('Package is being installed...');
-                                ArchiveManager_1.ArchiveManager.doUnzip(value, toolspath, () => {
-                                    if (ExternalToolsPanel.currentPack == 'rust') {
-                                        //delete rust installer
+                            if (ExternalToolsPanel.currentPack == 'rust') {
+                                DownloadManager_1.DownloadManager.doDownload(url, ExternalToolsPanel._filename, len, (value, progress) => {
+                                    console.log(value + '%');
+                                    console.log(progress.transferred);
+                                    ExternalToolsPanel.currentPanel?._channel.appendLine(`Downloaded ${value}% / ${progress.transferred} of ${len}`);
+                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+                                    ExternalToolsPanel.currentPanel?.setProgress('Package is being downloaded: ' + value + '%');
+                                }).then(function (value) {
+                                    var toolspath = Configuration_1.Configuration.getToolsPath();
+                                    ExternalToolsPanel.currentPanel?.setProgress('Package is being installed...');
+                                    ExternalToolsPanel.currentPanel?._channel.appendLine(`\nDownloading and installing Rust compiler package components, please wait...\n`);
+                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+                                    ArchiveManager_1.ArchiveManager.doUnzip(value, toolspath, () => {
                                         try {
-                                            var rustinit_command = '"' + Configuration_1.Configuration.getFullToolPath("rustup-init.exe") + '"';
-                                            rustinit_command += ' -y';
+                                            //var rustinit_command = '"'+Configuration.getFullToolPath("rustup-init.exe")+'"';
+                                            //rustinit_command+= ' -y';
+                                            var rustinit_command = '"' + Configuration_1.Configuration.getFullToolPath("install.bat") + '"';
                                             var child = cp.exec(rustinit_command, { cwd: "" }, (error, stdout, stderr) => {
                                                 if (stderr && stderr.length > 0) {
                                                     if (stderr.length > 2) {
@@ -85,14 +87,25 @@ class ExternalToolsPanel {
                                                     }
                                                 }
                                                 if (stdout && stdout.length > 0) {
+                                                    if (stdout.includes("Rust is installed now")) {
+                                                        stdout = "Rust is installed now. Great!";
+                                                    }
                                                     ExternalToolsPanel.currentPanel?._channel.appendLine(stdout);
                                                     ExternalToolsPanel.currentPanel?._channel.show(true);
                                                 }
                                                 if (child.exitCode === 0) {
-                                                    ExternalToolsPanel.currentPanel?._channel.appendLine('RUST INSTALLED.\r\n');
+                                                    //success;
+                                                    ExternalToolsPanel.currentPanel?.showWait(false);
+                                                    ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
+                                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+                                                    ExternalToolsPanel.currentPanel?.reload();
                                                 }
                                                 else {
-                                                    ExternalToolsPanel.currentPanel?._channel.appendLine('FAILED TO INSTALL.\r\n');
+                                                    vscode.window.showErrorMessage("Unable to install Rust package");
+                                                    ExternalToolsPanel.currentPanel?.showWait(false);
+                                                    ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unalbe to completely install the package");
+                                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+                                                    ExternalToolsPanel.currentPanel?.reload();
                                                 }
                                             });
                                             /*
@@ -103,44 +116,64 @@ class ExternalToolsPanel {
                                             */
                                         }
                                         catch (e) {
-                                            ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: but the temporary file has not been deleted due error: ${e}`);
+                                            ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: Unalbe to completely install the package, ${e}`);
                                         }
-                                    }
-                                    ExternalToolsPanel.currentPanel?.fixPackageFilesPermissons(() => {
-                                        //success;
-                                        ExternalToolsPanel.currentPanel?.showWait(false);
-                                        ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
-                                        ExternalToolsPanel.currentPanel?._channel.show(true);
-                                        //delete source package file
-                                        try {
-                                            if (fs.existsSync(value)) {
-                                                fs.unlink(value, () => { }); // Delete temp file
-                                            }
-                                        }
-                                        catch (e) {
-                                            ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: but the temporary file has not been deleted due error: ${e}`);
-                                        }
-                                        ExternalToolsPanel.currentPanel?.reload();
                                     }, (e) => {
-                                        //error
                                         vscode.window.showErrorMessage(e);
                                         ExternalToolsPanel.currentPanel?.showWait(false);
-                                        ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unalbe to completely install the package, the following error has ocurred while changing package file permissions: " + e);
-                                        ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Please try to install the package again or allow file execution permissions to all package files recursively");
+                                        ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: Unalbe to install the package, ${e}`);
                                         ExternalToolsPanel.currentPanel?._channel.show(true);
                                         ExternalToolsPanel.currentPanel?.reload();
                                     });
-                                }, (e) => {
-                                    vscode.window.showErrorMessage(e);
-                                    ExternalToolsPanel.currentPanel?.showWait(false);
-                                    ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unalbe to install the package, " + e);
-                                    ExternalToolsPanel.currentPanel?._channel.show(true);
-                                    ExternalToolsPanel.currentPanel?.reload();
                                 });
-                            }, function (error) {
-                                vscode.window.showErrorMessage(error);
-                                ExternalToolsPanel.currentPanel?.showWait(false);
-                            });
+                            }
+                            else {
+                                DownloadManager_1.DownloadManager.doDownload(url, ExternalToolsPanel._filename, len, (value, progress) => {
+                                    console.log(value + '%');
+                                    console.log(progress.transferred);
+                                    ExternalToolsPanel.currentPanel?._channel.appendLine(`Downloaded ${value}% / ${progress.transferred} of ${len}`);
+                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+                                    ExternalToolsPanel.currentPanel?.setProgress('Package is being downloaded: ' + value + '%');
+                                }).then(function (value) {
+                                    var toolspath = Configuration_1.Configuration.getToolsPath();
+                                    ExternalToolsPanel.currentPanel?.setProgress('Package is being installed...');
+                                    ArchiveManager_1.ArchiveManager.doUnzip(value, toolspath, () => {
+                                        ExternalToolsPanel.currentPanel?.fixPackageFilesPermissons(() => {
+                                            //success;
+                                            ExternalToolsPanel.currentPanel?.showWait(false);
+                                            ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
+                                            ExternalToolsPanel.currentPanel?._channel.show(true);
+                                            //delete source package file
+                                            try {
+                                                if (fs.existsSync(value)) {
+                                                    fs.unlink(value, () => { }); // Delete temp file
+                                                }
+                                            }
+                                            catch (e) {
+                                                ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: but the temporary file has not been deleted due error: ${e}`);
+                                            }
+                                            ExternalToolsPanel.currentPanel?.reload();
+                                        }, (e) => {
+                                            //error
+                                            vscode.window.showErrorMessage(e);
+                                            ExternalToolsPanel.currentPanel?.showWait(false);
+                                            ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unalbe to completely install the package, the following error has ocurred while changing package file permissions: " + e);
+                                            ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Please try to install the package again or allow file execution permissions to all package files recursively");
+                                            ExternalToolsPanel.currentPanel?._channel.show(true);
+                                            ExternalToolsPanel.currentPanel?.reload();
+                                        });
+                                    }, (e) => {
+                                        vscode.window.showErrorMessage(e);
+                                        ExternalToolsPanel.currentPanel?.showWait(false);
+                                        ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unalbe to install the package, " + e);
+                                        ExternalToolsPanel.currentPanel?._channel.show(true);
+                                        ExternalToolsPanel.currentPanel?.reload();
+                                    });
+                                }, function (error) {
+                                    vscode.window.showErrorMessage(error);
+                                    ExternalToolsPanel.currentPanel?.showWait(false);
+                                });
+                            }
                         }, function (error) {
                             vscode.window.showErrorMessage(error);
                             ExternalToolsPanel.currentPanel?.showWait(false);
@@ -298,6 +331,7 @@ class ExternalToolsPanel {
         const nonce = (0, getNonce_1.getNonce)();
         const baseUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media')).toString().replace('%22', '');
         var emInstall = this.validateToolInstallation('emscripten');
+        var rustInstall = this.validateToolInstallation('rust');
         var ret = `      
                 <!DOCTYPE html>
                 <html lang="en">
@@ -341,12 +375,17 @@ class ExternalToolsPanel {
                                     <div style="margin:5px;"><strong>RUST Compiler support package for WOWCube SDK</strong></div>
                                     
                                     <div style="display:inline-block; width: calc(100% - 145px);">
-                                        <div class="itemdesc"><i>COMING SOON</i></div>
                                         <div class="itemdesc">The package provides the development tools needed to write programs in Rust.</div>
-                                        </div>
-                                        <button class="install_button" style="display:inline-block;width:120px;" pack="rust" packname="RUST Compiler support">Install</button>
-                                    <div class="itemdesc neutral" style="margin-top:10px">NOT INSTALLED</div>
-                                </div>
+                                        </div>`;
+        if (rustInstall == true) {
+            ret += `<button class="remove_button" style="display:inline-block;width:120px;" pack="rust" packname="RUST Compiler support">Remove</button>
+                                          <div class="itemstatus itemdesc positive" style="margin-top:10px" pack="rust">INSTALLED</div>`;
+        }
+        else {
+            ret += `<button class="install_button" style="display:inline-block;width:120px;" pack="rust" packname="RUST Compiler support">Install</button>
+                                          <div class="itemstatus itemdesc neutral" style="margin-top:10px" pack="rust">NOT INSTALLED</div>`;
+        }
+        ret += `</div>
                             </div>
                             
                             <div class="wait" id="wait">
@@ -371,6 +410,24 @@ class ExternalToolsPanel {
         }
         if (tool.length > 0) {
             switch (tool) {
+                case 'rust':
+                    {
+                        var compilerpath = Configuration_1.Configuration.getCompilerPath("rust");
+                        compilerpath += 'cargo/';
+                        if (fs.existsSync(compilerpath) === false) {
+                            this._channel.appendLine("External Tools management: Path \"" + compilerpath + "\" is invalid, Rust Compiler support package for WOWCube Development Kit is not installed");
+                            this._channel.show(true);
+                            return false;
+                        }
+                        compilerpath = Configuration_1.Configuration.getCompilerPath("rust");
+                        compilerpath += 'rustup/';
+                        if (fs.existsSync(compilerpath) === false) {
+                            this._channel.appendLine("External Tools management: Path \"" + compilerpath + "\" is invalid, Rust Compiler support package for WOWCube Development Kit is not installed");
+                            this._channel.show(true);
+                            return false;
+                        }
+                    }
+                    break;
                 case 'emscripten':
                     {
                         var compilerpath = Configuration_1.Configuration.getCompilerPath("cpp");

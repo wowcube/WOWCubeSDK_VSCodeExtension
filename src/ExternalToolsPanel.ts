@@ -133,6 +133,109 @@ export class ExternalToolsPanel {
                                         const url:string = value.url;
                                         const len = value.length;
 
+                                        if(ExternalToolsPanel.currentPack=='rust')
+                                        {
+                                            DownloadManager.doDownload(url,ExternalToolsPanel._filename,len,(value:Number,progress:any) =>
+                                            {
+                                                console.log(value+'%');
+                                                console.log(progress.transferred);
+                                
+                                                ExternalToolsPanel.currentPanel?._channel.appendLine(`Downloaded ${value}% / ${progress.transferred} of ${len}`);
+                                                ExternalToolsPanel.currentPanel?._channel.show(true);
+
+                                                ExternalToolsPanel.currentPanel?.setProgress('Package is being downloaded: '+value+'%');
+                                            }
+                                            ).then
+                                            (
+                                                function(value:any) 
+                                                {
+                                                    var toolspath = Configuration.getToolsPath();
+
+                                                    ExternalToolsPanel.currentPanel?.setProgress('Package is being installed...');
+                                                    ExternalToolsPanel.currentPanel?._channel.appendLine(`\nDownloading and installing Rust compiler package components, please wait...\n`);
+                                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+
+                                                    ArchiveManager.doUnzip(value,toolspath,()=>
+                                                    {
+                                                        try
+                                                        {
+                                                            //var rustinit_command = '"'+Configuration.getFullToolPath("rustup-init.exe")+'"';
+                                                                
+                                                            //rustinit_command+= ' -y';
+
+                                                            var rustinit_command = '"'+Configuration.getFullToolPath("install.bat")+'"';
+
+                                                            var child:cp.ChildProcess = cp.exec(rustinit_command, { cwd: ""}, (error, stdout, stderr) => 
+                                                            {
+                                                                if (stderr && stderr.length > 0) 
+                                                                {                                                    
+                                                                    if(stderr.length>2)
+                                                                    {
+                                                                        ExternalToolsPanel.currentPanel?._channel.appendLine(stderr);
+                                                                        ExternalToolsPanel.currentPanel?._channel.show(true);
+                                                                    }
+                                                                }
+                                                
+                                                                if (stdout && stdout.length > 0) 
+                                                                {
+                                                                    if(stdout.includes("Rust is installed now"))
+                                                                    {
+                                                                        stdout="Rust is installed now. Great!";
+                                                                    }
+                                                                    
+                                                                    ExternalToolsPanel.currentPanel?._channel.appendLine(stdout);
+                                                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+                                                                }
+                                                                                                    
+                                                                if(child.exitCode===0)
+                                                                {
+                                                                    //success;
+                                                                    ExternalToolsPanel.currentPanel?.showWait(false);
+
+                                                                    ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
+                                                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+
+                                                                    ExternalToolsPanel.currentPanel?.reload();
+                                                                }
+                                                                else
+                                                                {
+                                                                    vscode.window.showErrorMessage("Unable to install Rust package"); 
+                                                                    ExternalToolsPanel.currentPanel?.showWait(false);
+            
+                                                                    ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unalbe to completely install the package");
+                                                                    ExternalToolsPanel.currentPanel?._channel.show(true);
+    
+                                                                    ExternalToolsPanel.currentPanel?.reload();
+                                                                }
+                                                            });
+
+                                                            /*
+                                                            if(fs.existsSync(value))
+                                                            {
+                                                                fs.unlink(value, () => {}); // Delete temp file
+                                                            }
+                                                            */
+                                                        }
+                                                        catch(e)
+                                                        {
+                                                            ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: Unalbe to completely install the package, ${e}`);
+                                                        }    
+                                                    }, (e:any)=>
+                                                    {
+                                                        vscode.window.showErrorMessage(e); 
+                                                        ExternalToolsPanel.currentPanel?.showWait(false);
+
+                                                        ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: Unalbe to install the package, ${e}`);
+                                                        ExternalToolsPanel.currentPanel?._channel.show(true);
+
+                                                        ExternalToolsPanel.currentPanel?.reload();
+                                                    } 
+                                                    );
+                                                }
+                                            );
+                                        }
+                                        else
+                                        {
                                         DownloadManager.doDownload(url,ExternalToolsPanel._filename,len,(value:Number,progress:any) =>
                                                                                         {
                                                                                             console.log(value+'%');
@@ -152,55 +255,6 @@ export class ExternalToolsPanel {
                                                 ExternalToolsPanel.currentPanel?.setProgress('Package is being installed...');
                                                 ArchiveManager.doUnzip(value,toolspath,()=>
                                                     {
-                                                        if(ExternalToolsPanel.currentPack=='rust')
-                                                        {
-                                                            //delete rust installer
-                                                            try
-                                                            {
-                                                                var rustinit_command = '"'+Configuration.getFullToolPath("rustup-init.exe")+'"';
-                                                                    
-                                                                rustinit_command+= ' -y';
-
-                                                                var child:cp.ChildProcess = cp.exec(rustinit_command, { cwd: ""}, (error, stdout, stderr) => 
-			                                                    {
-                                                                    if (stderr && stderr.length > 0) 
-                                                                    {                                                    
-                                                                        if(stderr.length>2)
-                                                                        {
-                                                                            ExternalToolsPanel.currentPanel?._channel.appendLine(stderr);
-                                                                            ExternalToolsPanel.currentPanel?._channel.show(true);
-                                                                        }
-                                                                    }
-                                                    
-                                                                    if (stdout && stdout.length > 0) 
-                                                                    {
-                                                                        ExternalToolsPanel.currentPanel?._channel.appendLine(stdout);
-                                                                        ExternalToolsPanel.currentPanel?._channel.show(true);
-                                                                    }
-                                                                                                        
-                                                                    if(child.exitCode===0)
-                                                                    {
-                                                                        ExternalToolsPanel.currentPanel?._channel.appendLine('RUST INSTALLED.\r\n');
-                                                                    }
-                                                                    else
-                                                                    {
-                                                                        ExternalToolsPanel.currentPanel?._channel.appendLine('FAILED TO INSTALL.\r\n');
-                                                                    }
-                                                                });
-
-                                                                /*
-                                                                if(fs.existsSync(value))
-                                                                {
-                                                                    fs.unlink(value, () => {}); // Delete temp file
-                                                                }
-                                                                */
-                                                            }
-                                                            catch(e)
-                                                            {
-                                                                ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: but the temporary file has not been deleted due error: ${e}`);
-                                                            }                                                           
-                                                        }
-
                                                         ExternalToolsPanel.currentPanel?.fixPackageFilesPermissons(
                                                             ()=>
                                                             {
@@ -259,6 +313,7 @@ export class ExternalToolsPanel {
                                                 ExternalToolsPanel.currentPanel?.showWait(false);
                                             }
                                         );
+                                        }
                                     },
                                     function(error:any) 
                                     {
@@ -453,6 +508,7 @@ export class ExternalToolsPanel {
                 ).toString().replace('%22', '');
 
             var emInstall = this.validateToolInstallation('emscripten');
+            var rustInstall = this.validateToolInstallation('rust');
 
             var ret =  `      
                 <!DOCTYPE html>
@@ -502,12 +558,21 @@ export class ExternalToolsPanel {
                                     <div style="margin:5px;"><strong>RUST Compiler support package for WOWCube SDK</strong></div>
                                     
                                     <div style="display:inline-block; width: calc(100% - 145px);">
-                                        <div class="itemdesc"><i>COMING SOON</i></div>
                                         <div class="itemdesc">The package provides the development tools needed to write programs in Rust.</div>
-                                        </div>
-                                        <button class="install_button" style="display:inline-block;width:120px;" pack="rust" packname="RUST Compiler support">Install</button>
-                                    <div class="itemdesc neutral" style="margin-top:10px">NOT INSTALLED</div>
-                                </div>
+                                        </div>`;
+
+                                if(rustInstall==true)
+                                {
+                                    ret+=`<button class="remove_button" style="display:inline-block;width:120px;" pack="rust" packname="RUST Compiler support">Remove</button>
+                                          <div class="itemstatus itemdesc positive" style="margin-top:10px" pack="rust">INSTALLED</div>`;
+                                }
+                                else
+                                {
+                                    ret+=`<button class="install_button" style="display:inline-block;width:120px;" pack="rust" packname="RUST Compiler support">Install</button>
+                                          <div class="itemstatus itemdesc neutral" style="margin-top:10px" pack="rust">NOT INSTALLED</div>`;
+                                }
+
+                                ret+=`</div>
                             </div>
                             
                             <div class="wait" id="wait">
@@ -535,6 +600,31 @@ export class ExternalToolsPanel {
             {
                 switch(tool)
                 {
+                    case 'rust':
+                        {
+                            var compilerpath = Configuration.getCompilerPath("rust");
+                            compilerpath+='cargo/';
+
+                            if(fs.existsSync(compilerpath)===false)
+                            {
+                                this._channel.appendLine("External Tools management: Path \""+compilerpath+"\" is invalid, Rust Compiler support package for WOWCube Development Kit is not installed");
+                                this._channel.show(true);
+                
+                                return false;
+                            }
+
+                            compilerpath = Configuration.getCompilerPath("rust");
+                            compilerpath+='rustup/';
+
+                            if(fs.existsSync(compilerpath)===false)
+                            {
+                                this._channel.appendLine("External Tools management: Path \""+compilerpath+"\" is invalid, Rust Compiler support package for WOWCube Development Kit is not installed");
+                                this._channel.show(true);
+                
+                                return false;
+                            }
+                        }
+                    break;
                     case 'emscripten':
                         {
                             var compilerpath = Configuration.getCompilerPath("cpp");
