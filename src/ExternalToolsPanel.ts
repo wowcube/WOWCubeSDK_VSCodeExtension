@@ -11,6 +11,7 @@ import { Project } from "./Project";
 import {Output} from './Output';
 import { DownloadManager } from "./DownloadManager";
 import {ArchiveManager} from "./ArchiveManager";
+import { Script } from "./Script";
 
 export class ExternalToolsPanel {
 
@@ -159,9 +160,27 @@ export class ExternalToolsPanel {
                                                     {
                                                         try
                                                         {
-                                                            //var rustinit_command = '"'+Configuration.getFullToolPath("rustup-init.exe")+'"';
-                                                                
-                                                            //rustinit_command+= ' -y';
+                                                            var rustini_script = Configuration.getFullToolPath("install.bat");
+                                                            if(Script.load(rustini_script))
+                                                            {
+                                                                var cargo:string = Configuration.getToolsPath()+'rust/cargo';
+                                                                var rustup:string = Configuration.getToolsPath()+'rust/rustup';
+                                                                var ruinit = Configuration.getFullToolPath("rustup-init.exe");
+
+                                                                Script.setValue("%%CARGOHOME%%",cargo);
+                                                                Script.setValue("%%RUSTUPHOME%%",rustup);
+                                                                Script.setValue("%%RUSTUPINIT",ruinit);
+
+                                                                if(!Script.save())
+                                                                {
+                                                                    throw new Error("Unable to generate installation script.");
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                throw new Error("Unable to generate installation script.");
+                                                            }
+
 
                                                             var rustinit_command = '"'+Configuration.getFullToolPath("install.bat")+'"';
 

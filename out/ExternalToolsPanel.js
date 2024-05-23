@@ -11,6 +11,7 @@ const Configuration_1 = require("./Configuration");
 const Output_1 = require("./Output");
 const DownloadManager_1 = require("./DownloadManager");
 const ArchiveManager_1 = require("./ArchiveManager");
+const Script_1 = require("./Script");
 class ExternalToolsPanel {
     constructor(panel, extensionUri) {
         this._disposables = [];
@@ -76,8 +77,21 @@ class ExternalToolsPanel {
                                     ExternalToolsPanel.currentPanel?._channel.show(true);
                                     ArchiveManager_1.ArchiveManager.doUnzip(value, toolspath, () => {
                                         try {
-                                            //var rustinit_command = '"'+Configuration.getFullToolPath("rustup-init.exe")+'"';
-                                            //rustinit_command+= ' -y';
+                                            var rustini_script = Configuration_1.Configuration.getFullToolPath("install.bat");
+                                            if (Script_1.Script.load(rustini_script)) {
+                                                var cargo = Configuration_1.Configuration.getToolsPath() + 'rust/cargo';
+                                                var rustup = Configuration_1.Configuration.getToolsPath() + 'rust/rustup';
+                                                var ruinit = Configuration_1.Configuration.getFullToolPath("rustup-init.exe");
+                                                Script_1.Script.setValue("%%CARGOHOME%%", cargo);
+                                                Script_1.Script.setValue("%%RUSTUPHOME%%", rustup);
+                                                Script_1.Script.setValue("%%RUSTUPINIT", ruinit);
+                                                if (!Script_1.Script.save()) {
+                                                    throw new Error("Unable to generate installation script.");
+                                                }
+                                            }
+                                            else {
+                                                throw new Error("Unable to generate installation script.");
+                                            }
                                             var rustinit_command = '"' + Configuration_1.Configuration.getFullToolPath("install.bat") + '"';
                                             var child = cp.exec(rustinit_command, { cwd: "" }, (error, stdout, stderr) => {
                                                 if (stderr && stderr.length > 0) {
