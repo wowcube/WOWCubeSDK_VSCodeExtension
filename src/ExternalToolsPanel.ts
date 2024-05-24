@@ -208,7 +208,26 @@ export class ExternalToolsPanel {
                                                                                                     
                                                                 if(child.exitCode===0)
                                                                 {
-                                                                    //success;
+                                                                    //success
+
+                                                                    var fname = Configuration.getFullToolPath("install.bat");
+                                                                    if(fs.existsSync(fname))
+                                                                    {
+                                                                        fs.unlink(fname, () => {}); // Delete installation script
+                                                                    }
+
+                                                                    fname = Configuration.getFullToolPath("rustup-init.exe");
+                                                                    if(fs.existsSync(fname))
+                                                                    {
+                                                                        fs.unlink(fname, () => {}); // Delete rustup-init
+                                                                    }
+
+                                                                    fname = Configuration.getFullToolPath("package.zip");
+                                                                    if(fs.existsSync(fname))
+                                                                    {
+                                                                        fs.unlink(fname, () => {}); // Delete downloaded archive
+                                                                    }
+
                                                                     ExternalToolsPanel.currentPanel?.showWait(false);
 
                                                                     ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
@@ -227,13 +246,6 @@ export class ExternalToolsPanel {
                                                                     ExternalToolsPanel.currentPanel?.reload();
                                                                 }
                                                             });
-
-                                                            /*
-                                                            if(fs.existsSync(value))
-                                                            {
-                                                                fs.unlink(value, () => {}); // Delete temp file
-                                                            }
-                                                            */
                                                         }
                                                         catch(e)
                                                         {
@@ -556,7 +568,7 @@ export class ExternalToolsPanel {
                                     <div style="margin:5px;"><strong>C++ Compiler support package for WOWCube SDK</strong></div>
 
                                     <div style="display:inline-block; width: calc(100% - 145px);">
-                                        <div class="itemdesc">The package provides the ability to compile and build cubeapps in the C++ programming language.</div>
+                                        <div class="itemdesc">The package provides the toolset for compiling and building cubeapps with C++ programming language.</div>
                                         </div>`;
                                      
                                 if(emInstall==true)
@@ -577,7 +589,7 @@ export class ExternalToolsPanel {
                                     <div style="margin:5px;"><strong>RUST Compiler support package for WOWCube SDK</strong></div>
                                     
                                     <div style="display:inline-block; width: calc(100% - 145px);">
-                                        <div class="itemdesc">The package provides the development tools needed to write programs in Rust.</div>
+                                        <div class="itemdesc">The package provides development tools required for writing cubeapps with Rust programming language.</div>
                                         </div>`;
 
                                 if(rustInstall==true)

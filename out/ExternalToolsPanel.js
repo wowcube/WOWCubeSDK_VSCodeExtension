@@ -108,7 +108,19 @@ class ExternalToolsPanel {
                                                     ExternalToolsPanel.currentPanel?._channel.show(true);
                                                 }
                                                 if (child.exitCode === 0) {
-                                                    //success;
+                                                    //success
+                                                    var fname = Configuration_1.Configuration.getFullToolPath("install.bat");
+                                                    if (fs.existsSync(fname)) {
+                                                        fs.unlink(fname, () => { }); // Delete installation script
+                                                    }
+                                                    fname = Configuration_1.Configuration.getFullToolPath("rustup-init.exe");
+                                                    if (fs.existsSync(fname)) {
+                                                        fs.unlink(fname, () => { }); // Delete rustup-init
+                                                    }
+                                                    fname = Configuration_1.Configuration.getFullToolPath("package.zip");
+                                                    if (fs.existsSync(fname)) {
+                                                        fs.unlink(fname, () => { }); // Delete downloaded archive
+                                                    }
                                                     ExternalToolsPanel.currentPanel?.showWait(false);
                                                     ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
                                                     ExternalToolsPanel.currentPanel?._channel.show(true);
@@ -122,12 +134,6 @@ class ExternalToolsPanel {
                                                     ExternalToolsPanel.currentPanel?.reload();
                                                 }
                                             });
-                                            /*
-                                            if(fs.existsSync(value))
-                                            {
-                                                fs.unlink(value, () => {}); // Delete temp file
-                                            }
-                                            */
                                         }
                                         catch (e) {
                                             ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: Unalbe to completely install the package, ${e}`);
@@ -373,7 +379,7 @@ class ExternalToolsPanel {
                                     <div style="margin:5px;"><strong>C++ Compiler support package for WOWCube SDK</strong></div>
 
                                     <div style="display:inline-block; width: calc(100% - 145px);">
-                                        <div class="itemdesc">The package provides the ability to compile and build cubeapps in the C++ programming language.</div>
+                                        <div class="itemdesc">The package provides the toolset for compiling and building cubeapps with C++ programming language.</div>
                                         </div>`;
         if (emInstall == true) {
             ret += `  <button class="remove_button" style="display:inline-block;width:120px;" pack="cpp" packname="C++ Compiler support">Remove</button>
@@ -389,7 +395,7 @@ class ExternalToolsPanel {
                                     <div style="margin:5px;"><strong>RUST Compiler support package for WOWCube SDK</strong></div>
                                     
                                     <div style="display:inline-block; width: calc(100% - 145px);">
-                                        <div class="itemdesc">The package provides the development tools needed to write programs in Rust.</div>
+                                        <div class="itemdesc">The package provides development tools required for writing cubeapps with Rust programming language.</div>
                                         </div>`;
         if (rustInstall == true) {
             ret += `<button class="remove_button" style="display:inline-block;width:120px;" pack="rust" packname="RUST Compiler support">Remove</button>
