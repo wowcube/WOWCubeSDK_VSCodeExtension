@@ -330,6 +330,31 @@ class WOWCubeProjectProvider {
 
 						`;
         }
+        if (json.language == 'rust') {
+            body += `
+						
+						<div style="margin-top:20px;display:none;visibility:hidden;">
+							<div id="sourcefilet" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;min-width:170px;">Rust Main Source File</div>
+							<input id="sourcefile" value="${json.sourceFile}"></input>
+						</div>
+
+						<div style="margin-top:20px;">
+							<div id="scriptfilet" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">WASM Object File</div>
+							<input id="scriptfile" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.scriptFile}"></input>
+						</div>
+						
+						<div style="margin-top:20px;">
+						<i style="font-size:12px;float:right;margin-right:7px;">Attention! Please do not modify the following values unless you really know what you are doing</i>
+						<br/>
+						<div id="compilerflagst" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Compiler Flags</div>
+						<input id="compilerflags_r" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.projectOptions.rust.flags}"></input>
+						</div>
+
+						<div id="compilersettingst" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Configurtion File</div>
+						<input id="compilersettings_r" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.projectOptions.rust.tomlPath}"></input>
+						</div>
+						`;
+        }
         body += `
 						<input id="language_" style="display:none;visibility:hidden;" value="${json.language}"></input>
 						<input id="interpreter_" style="display:none;wvisibility:hidden;" value="${json.interpreter}"></input>

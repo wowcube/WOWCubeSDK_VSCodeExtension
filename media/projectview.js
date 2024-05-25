@@ -34,6 +34,9 @@
         let incdir4 = document.getElementById('incdir4');
         let incdir5 = document.getElementById('incdir5');
 
+        let cmpflags_r = document.getElementById('compilerflags_r');
+        let cmpsettings_r = document.getElementById('compilersettings_r');
+
         var ret = true;
 
         nt.className="";
@@ -220,6 +223,16 @@
                 obj.projectOptions.cpp.includeFolders.push(incdir5.value);
             }
 
+            if(obj.language==='rust' && obj.interpreter==='wasm')
+            {
+                obj.projectOptions = new Object();
+                obj.projectOptions.rust = new Object(
+                    {
+                        flags: cmpflags_r.value,
+                        tomlPath: cmpsettings_r.value
+                    }
+                );
+            }
             return obj;
         }
         else
@@ -437,6 +450,13 @@
             }
             catch(e){}
 
+            try
+            {
+                document.getElementById('compilerflags_r').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+                document.getElementById('compilersettings_r').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+            }
+            catch(e){}
+
             document.getElementById('targetsdk').addEventListener('change',() =>
             {
                vscode.postMessage({ type: 'update', value: validate() });
@@ -555,6 +575,16 @@
                               document.getElementById('incdir3').value = d.projectOptions.cpp.includeFolders[2];
                               document.getElementById('incdir4').value = d.projectOptions.cpp.includeFolders[3];
                               document.getElementById('incdir5').value = d.projectOptions.cpp.includeFolders[4];
+                            }
+                        }
+                        catch(e){}
+
+                        try
+                        {
+                            if(d.language==='rust' && d.interpreter==='wasm')
+                            {
+                              document.getElementById('compilerflags_r').value = d.projectOptions.rust.flags;
+                              document.getElementById('compilersettings_r').value = d.projectOptions.rust.tomlPath;
                             }
                         }
                         catch(e){}
