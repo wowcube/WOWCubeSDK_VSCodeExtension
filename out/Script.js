@@ -47,6 +47,28 @@ class Script {
         }
         return ret;
     }
+    static setTOMLValue(key, val) {
+        var ret = true;
+        try {
+            if (key.length > 0) {
+                let fullKey = key + ' = ';
+                var key_index = Script.content.indexOf(fullKey);
+                if (key_index != -1) {
+                    var lf_index = Script.content.indexOf("\n", key_index + fullKey.length);
+                    var lpart = Script.content.substring(0, key_index + fullKey.length);
+                    var rpart = Script.content.substring(lf_index);
+                    Script.content = lpart + '"' + val + '"' + rpart;
+                }
+            }
+            else {
+                ret = false;
+            }
+        }
+        catch (e) {
+            ret = false;
+        }
+        return ret;
+    }
 }
 exports.Script = Script;
 Script.content = "";

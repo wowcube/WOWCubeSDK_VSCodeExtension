@@ -458,6 +458,8 @@ export class Configuration
                     {
                         case 'cpp':
                             return 'em++.bat';
+                        case 'rust':
+                            return 'cargo.exe';
                         default:
                             return '';
                     }

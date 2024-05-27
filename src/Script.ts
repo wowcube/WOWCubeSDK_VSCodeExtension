@@ -68,4 +68,37 @@ export class Script
         }
         return ret;
     }
+
+    public static setTOMLValue(key:string, val:string)
+    {
+        var ret:boolean = true;
+        try
+        {
+            if(key.length>0)
+            {
+                let fullKey = key+' = ';
+
+                var key_index = Script.content.indexOf(fullKey);
+                if(key_index!=-1)
+                {
+                    var lf_index = Script.content.indexOf("\n",key_index+fullKey.length);
+
+                    var lpart = Script.content.substring(0,key_index+fullKey.length);
+                    var rpart = Script.content.substring(lf_index);
+
+                    Script.content = lpart+'"'+val+'"'+rpart;
+                }
+            }
+            else 
+            {
+                ret = false;
+            }
+        }
+        catch(e)
+        {
+            ret = false;
+        }
+
+        return ret;
+    }
 }

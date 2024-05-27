@@ -417,7 +417,7 @@ import {Output} from './Output';
 						<input id="compilerflags_r" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.projectOptions.rust.flags}"></input>
 						</div>
 
-						<div id="compilersettingst" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Configurtion File</div>
+						<div id="compilersettingst" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Configuration File</div>
 						<input id="compilersettings_r" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.projectOptions.rust.tomlPath}"></input>
 						</div>
 						`;

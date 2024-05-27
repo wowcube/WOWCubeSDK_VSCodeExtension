@@ -328,6 +328,8 @@ class Configuration {
                     switch (language) {
                         case 'cpp':
                             return 'em++.bat';
+                        case 'rust':
+                            return 'cargo.exe';
                         default:
                             return '';
                     }

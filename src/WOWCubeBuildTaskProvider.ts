@@ -8,6 +8,8 @@ import {Configuration} from './Configuration';
 import { Project } from './Project';
 import {Providers} from './Providers';
 import {Output} from './Output';
+//import { Script } from 'vm';
+import { Script } from "./Script";
 
 interface WOWCubeBuildTaskDefinition extends vscode.TaskDefinition 
 {
@@ -137,6 +139,11 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 					this.doCompileCpp(this.action);
 				}
 				break;
+			case 'rust':
+				{
+					this.doCompileRust(this.action);	
+				}
+				break;
 
 		}
 	}
@@ -156,6 +163,243 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 		this._channel.show(true);
 	}
 
+	private doCompileRust(action:string): Promise<void>
+	{
+		return new Promise<void>((resolve,reject) => 
+        {
+			this._channel.clear();
+			this._channel.show(true);
+
+			this._channel.appendLine('Compiling cub file...');
+			this._channel.appendLine('Please be patient as compilation of C++ project may take time, especially for the first time. \r\n');
+			const initialVersion = Configuration.getCurrentVersion();
+
+			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));
+
+			this._channel.appendLine('Project name: '+build_json.name);
+			this._channel.appendLine('Project version: '+build_json.version);
+			
+			if(typeof(build_json.sdkVersion)!=='undefined')
+			{
+				this._channel.appendLine("NOTE: Target SDK version of the application ("+build_json.sdkVersion+") differs from current SDK version ("+Configuration.getCurrentVersion()+")");
+					
+				var versions  = Configuration.getVersions();
+				var detected:boolean = false;
+
+				for(var i=0;i<versions.length;i++)
+				{
+					if(versions[i]===build_json.sdkVersion)
+					{
+						detected = true;
+						break;
+					}
+				}      
+
+				if(detected===false)
+				{
+					this._channel.appendLine("NOTE: SDK version "+build_json.sdkVersion+" is not installed. Please install required version of SDK or change application Target SDK version to one of the following:\r\n");
+					for(var i=0;i<versions.length;i++)
+					{
+						this._channel.appendLine("\tVersion "+versions[i]);
+					}    
+					
+					this._channel.appendLine('\r\nFailed to compile.\r\n');
+
+					this.closeEmitter.fire(0);
+					resolve();
+					return;
+				}
+				else
+				{
+					this._channel.appendLine("\r\nNOTE: Building with SDK version "+build_json.sdkVersion+"\r\n");
+					Configuration.setCurrentVersion(build_json.sdkVersion);
+				}	
+			}
+			else
+			{
+				this._channel.appendLine("\r\nNOTE: SDK version is missing from the build file");
+				if(Project.setSDKVersion(this.workspace,Configuration.getCurrentVersion()))
+				{
+					this._channel.appendLine("Target SDK version is set to '"+Configuration.getCurrentVersion()+"'\r\n");
+				}
+				else
+				{
+					this._channel.appendLine("Failed to modify the build file, please make sure the file exists and can be written!\r\n");
+				}
+			}
+
+			var compilerpath = Configuration.getCompilerPath("rust");
+
+			if(compilerpath.length===0)
+			{
+				vscode.window.showErrorMessage(
+					"Rust Compiler support package for WOWCube Development Kit is not detected.\nPlease make sure WOWCube Development Kit is installed, it is up to date and Rust support package for WOWCube Development Kit is installed",
+					...["Manage Packages"]
+				).then((answer)=>
+				{
+					if(answer==="Manage Packages")
+					{
+						vscode.commands.executeCommand('WOWCubeSDK.openExternalTools');
+					}
+				});
+
+				this._channel.appendLine('Rust Compiler support package for WOWCube Development Kit is not detected!');
+				this._channel.appendLine('Please use Manage External Tools panel to install the package first.\r\n\r\n');
+
+				this.closeEmitter.fire(0);
+				resolve();
+				return;
+			}
+
+			compilerpath+='cargo/bin/'+Configuration.getCC("rust");
+			
+			//prepare TOML file first
+			var tomlfile:string = this.workspace+'/'+Project.Options.rust.tomlPath;
+			if(Script.load(tomlfile))
+			{
+				Script.setTOMLValue("name",build_json.name);
+				Script.setTOMLValue("version",build_json.version);
+				if(!Script.save())
+				{
+					this._channel.appendLine('Unable to save Rust TOML configuration file!');
+					this._channel.appendLine('Please make sure that correct file name of the TOML file is specified and the file is not currently opened in another application, then try again.\r\n\r\n');
+	
+					this.closeEmitter.fire(0);
+					resolve();
+					return;					
+				}
+			}
+			else
+			{
+				this._channel.appendLine('Unable to open Rust TOML configuration file!');
+				this._channel.appendLine('Please make sure that correct file name of the TOML file is specified and the file is not currently opened in another application, then try again.\r\n\r\n');
+
+				this.closeEmitter.fire(0);
+				resolve();
+				return;
+			}
+
+			//get directories
+			var sourcefile:string = this.workspace+'/'+build_json.sourceFile;
+			var scriptfile:string = this.workspace+'/build.bat';
+			var cargo:string = Configuration.getToolsPath()+'rust/cargo';
+			var rustup:string = Configuration.getToolsPath()+'rust/rustup';
+
+			var currDir = this.workspace+Configuration.getSlash()+'src';
+
+			var srcdir:string = build_json.sourceFile;
+			var pos = srcdir.indexOf('/');
+			if(pos!==-1)
+			{
+				if(srcdir.substring(0,pos)!=='src')
+				{
+					this._channel.appendLine('NOTE: Non-standard source files folder name is used. Please consider using `src` as a name of the folder.\r\n');
+				}
+				currDir = this.workspace+Configuration.getSlash()+srcdir.substring(0,pos);
+			}
+
+			var builddir:string = this.workspace+"/binary";
+			pos = build_json.scriptFile.indexOf('/');
+			if(pos!==-1)
+			{
+				if(build_json.scriptFile.substring(0,pos)!=='binary')
+				{
+					this._channel.appendLine('NOTE: Non-standard intermediary binary files folder name is used. Please consider using `binary` as a name of the folder.\r\n');
+				}
+
+				builddir = this.workspace+"/"+build_json.scriptFile.substring(0,pos);
+			}
+
+			var destfile = this.workspace+'/'+build_json.scriptFile;
+
+			this.makeDirSync(builddir);
+
+			//generate temp script 
+			var script:string = '@echo off\nsetlocal\n\n';
+			script+='set CARGO_HOME='+cargo+'\n';
+			script+='set RUSTUP_HOME='+rustup+'\n';
+			script+='set RUSTFLAGS='+Project.Options.rust.flags+'\n';
+			script+='"'+compilerpath+'" build --manifest-path="'+tomlfile+'" --release --target wasm32-unknown-unknown\n\n'
+
+			//THIS IS WINDOWS ONLY, ON MAC THE SLASHES SHOULD BE DIFFERENT
+			var srcwasm:string = this.workspace+'\\target\\wasm32-unknown-unknown\\release\\';
+			srcwasm+='Test.wasm';
+			var destwasm:string = this.workspace+'\\binary\\';
+			destwasm+='Test.wasm';
+			
+			script+='move "'+srcwasm+'" "'+destwasm+'"\n';
+
+			var wasmgc:string = Configuration.getToolsPath()+'rust/wasm-gc.exe';
+
+			script+='"'+wasmgc+'" "'+destwasm+'"\n';
+
+			try
+			{
+				fs.writeFileSync(scriptfile,script);
+			}
+			catch(e)
+			{
+				this._channel.appendLine('Unable to create temporary build script: '+e);
+				this._channel.appendLine('Failed to compile.\r\n');
+
+				this.closeEmitter.fire(0);
+				resolve();
+				return;
+			}
+
+			var child:cp.ChildProcess = cp.exec(scriptfile, { cwd: ""}, (error, stdout, stderr) => 
+			{
+				if (stderr && stderr.length > 0) 
+				{                                                    
+					if(stderr.length>2)
+					{
+						this._channel.appendLine(stderr);
+						this._channel.show(true);
+					}
+				}
+
+				if (stdout && stdout.length > 0) 
+				{					
+					this._channel.appendLine(stdout);
+					this._channel.show(true);
+				}
+									
+				const date = new Date();
+				this.setSharedState(date.toTimeString() + ' ' + date.toDateString());
+
+				if(child.exitCode===0)
+				{
+					//success
+					var scriptfile:string = this.workspace+'/build.bat';
+					if(fs.existsSync(scriptfile))
+					{
+						fs.unlink(scriptfile, () => {}); // Delete installation script
+					}
+
+					this._channel.appendLine('File compiled successfully.\r\n');
+
+					if(action==='compile')
+					{
+						this.closeEmitter.fire(0);
+						resolve();
+					}
+					else
+					{
+						this.doBuild(this.target);
+					}
+				}
+				else
+				{
+					this._channel.appendLine('Build script execution error');
+					this._channel.appendLine('Failed to compile.\r\n');
+	
+					this.closeEmitter.fire(0);
+					resolve();
+					return;
+				}
+			});
+		});
+	}
 	private doCompileCpp(action:string): Promise<void> 
     {
 		return new Promise<void>((resolve,reject) => 
