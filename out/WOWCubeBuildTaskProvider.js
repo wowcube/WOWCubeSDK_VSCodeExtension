@@ -9,7 +9,6 @@ const Configuration_1 = require("./Configuration");
 const Project_1 = require("./Project");
 const Providers_1 = require("./Providers");
 const Output_1 = require("./Output");
-//import { Script } from 'vm';
 const Script_1 = require("./Script");
 class WOWCubeBuildTaskProvider {
     constructor(workspaceRoot) {

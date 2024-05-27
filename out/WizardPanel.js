@@ -111,6 +111,113 @@ class WizardPanel {
         if (WizardPanel.currentLanguage == 'cpp') {
             ret = this.generate_cpp(name, path, template);
         }
+        if (WizardPanel.currentLanguage == 'rust') {
+            ret = this.generate_rust(name, path, template);
+        }
+        return ret;
+    }
+    generate_rust(name, path, template) {
+        var ret = { path: '', desc: '' };
+        const templatespath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/templates/' + Configuration_1.Configuration.getCurrentVersion() + '/' + WizardPanel.currentLanguage + '/';
+        if (!fs.existsSync(templatespath)) {
+            ret.desc = "Project templates are missing, please check WOWCube Development Kit installaton...";
+            ret.path = '';
+            return ret;
+        }
+        const templates = require(templatespath + 'templates.json');
+        var fullpath = '';
+        var needDeleteFolder = false;
+        try {
+            path = path.replace(/\\/g, "/");
+            if (!path.endsWith("/")) {
+                path += '/';
+            }
+            fullpath = path + name;
+            ret.path = fullpath;
+            if (fs.existsSync(fullpath)) {
+                throw new Error("Project with such name already exists in this folder");
+            }
+            var currentTemplate = null;
+            for (var i = 0; i < templates.length; i++) {
+                if (templates[i].id === template) {
+                    currentTemplate = templates[i];
+                    break;
+                }
+            }
+            if (currentTemplate === null) {
+                throw new Error("Unable to find template source files");
+            }
+            this.makeDirSync(fullpath);
+            needDeleteFolder = true;
+            this.makeDirSync(fullpath + '/.vscode');
+            this.makeDirSync(fullpath + '/binary');
+            this.makeDirSync(fullpath + '/src');
+            this.makeDirSync(fullpath + '/assets');
+            this.makeDirSync(fullpath + '/assets/images');
+            this.makeDirSync(fullpath + '/assets/sounds');
+            //const iconFilename:string = this._extensionUri.fsPath+"/media/templates/icon.png";
+            const iconFilename = templatespath + "icon.png";
+            fs.copyFileSync(iconFilename, fullpath + '/assets/icon.png');
+            var br = this.beautifyClassName(name);
+            //application UUID
+            var arr = crypto.pseudoRandomBytes(10);
+            var uuid = arr.reduce(((t, e) => t += (e &= 63) < 36 ? e.toString(36) : e < 62 ? (e - 26).toString(36).toUpperCase() : e > 62 ? "-" : "_"), "");
+            if (br.err === 1) {
+                this._channel.appendLine('Project wizard: class name beautification error: ' + br.desc);
+                this._channel.appendLine('Project wizard: default class name will be used instead');
+            }
+            else {
+                if (br.length !== 0) {
+                    this._channel.appendLine('Project wizard: ' + br.desc);
+                }
+            }
+            for (var i = 0; i < currentTemplate.files.length; i++) {
+                if (currentTemplate.files[i] === '_main.cpp') {
+                    if (!this.replaceInFileAndSave(templatespath + currentTemplate.id + "/" + currentTemplate.files[i], fullpath + '/src/' + br.str + '.cpp', '##CNAME##', br.str)) {
+                        throw new Error("Unable to generate main source file");
+                    }
+                    if (!this.replaceInFileAndSave(fullpath + '/src/' + br.str + '.cpp', fullpath + '/src/' + br.str + '.cpp', '##APPUUID##', uuid)) {
+                        throw new Error("Unable to generate main source file");
+                    }
+                }
+                else if ((currentTemplate.files[i] === '_main.h')) {
+                    if (!this.replaceInFileAndSave(templatespath + currentTemplate.id + "/" + currentTemplate.files[i], fullpath + '/src/' + br.str + '.h', '##CNAME##', br.str)) {
+                        throw new Error("Unable to generate main header file");
+                    }
+                    if (!this.replaceInFileAndSave(fullpath + '/src/' + br.str + '.h', fullpath + '/src/' + br.str + '.h', '##APPUUID##', uuid)) {
+                        throw new Error("Unable to generate main header file");
+                    }
+                }
+                else {
+                    fs.copyFileSync(templatespath + currentTemplate.id + "/" + currentTemplate.files[i], fullpath + '/src/' + currentTemplate.files[i]);
+                }
+            }
+            for (var i = 0; i < currentTemplate.images.length; i++) {
+                fs.copyFileSync(templatespath + currentTemplate.id + "/" + currentTemplate.images[i], fullpath + '/assets/images/' + currentTemplate.images[i]);
+            }
+            for (var i = 0; i < currentTemplate.sounds.length; i++) {
+                fs.copyFileSync(templatespath + currentTemplate.id + "/" + currentTemplate.sounds[i], fullpath + '/assets/sounds/' + currentTemplate.sounds[i]);
+            }
+            //create json file for build
+            const json = fs.readFileSync(templatespath + currentTemplate.id + "/_build.json").toString();
+            var str = json.replace(/##NAME##/gi, name);
+            str = str.replace(/##CNAME##/gi, br.str);
+            str = str.replace(/##SDKVERSION##/gi, Configuration_1.Configuration.getCurrentVersion());
+            fs.writeFileSync(fullpath + '/wowcubeapp-build.json', str);
+            //create vscode-related configs
+            fs.copyFileSync(templatespath + "_launch.json", fullpath + '/.vscode/launch.json');
+            fs.copyFileSync(templatespath + "_tasks.json", fullpath + '/.vscode/tasks.json');
+            fs.copyFileSync(templatespath + "_extensions.json", fullpath + '/.vscode/extensions.json');
+        }
+        catch (error) {
+            ret.desc = error;
+            ret.path = '';
+            if (needDeleteFolder === true) {
+                if (!this.deleteDir(fullpath)) {
+                    ret.desc += '; unalbe to delete recently created project folder!';
+                }
+            }
+        }
         return ret;
     }
     generate_cpp(name, path, template) {
@@ -415,6 +522,12 @@ class WizardPanel {
         else {
             ret += ` <option value="cpp">C++</option>`;
         }
+        if (lastLanguage === 'rust') {
+            ret += ` <option value="rust" selected>Rust</option>`;
+        }
+        else {
+            ret += ` <option value="rust">Rust</option>`;
+        }
         ret += `
                             </select>
                             </div>
@@ -448,7 +561,9 @@ class WizardPanel {
                                     <div class="itemdesc">Creates a project of WOWCube cubeapp application with in-game splash screens support</div>
                                     <div class="itemdesc">Demonstrates the use of in-game splash screens</div>
                                 </div>`;
-        if (lastLanguage == 'cpp') {
+        if (lastLanguage == 'rust') {
+        }
+        else if (lastLanguage == 'cpp') {
             ret += `
                                     <div id="i5" class="item">
                                         <div style="margin:5px;"><strong>Basic cubeapp with Gfx Engine support</strong></div>

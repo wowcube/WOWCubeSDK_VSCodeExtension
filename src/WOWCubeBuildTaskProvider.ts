@@ -8,7 +8,6 @@ import {Configuration} from './Configuration';
 import { Project } from './Project';
 import {Providers} from './Providers';
 import {Output} from './Output';
-//import { Script } from 'vm';
 import { Script } from "./Script";
 
 interface WOWCubeBuildTaskDefinition extends vscode.TaskDefinition 
