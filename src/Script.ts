@@ -69,7 +69,7 @@ export class Script
         return ret;
     }
 
-    public static setTOMLValue(key:string, val:string)
+    public static setTOMLValue(key:string, val:string, quotes:boolean = true)
     {
         var ret:boolean = true;
         try
@@ -86,7 +86,14 @@ export class Script
                     var lpart = Script.content.substring(0,key_index+fullKey.length);
                     var rpart = Script.content.substring(lf_index);
 
-                    Script.content = lpart+'"'+val+'"'+rpart;
+                    if(quotes)
+                    {
+                        Script.content = lpart+'"'+val+'"'+rpart;
+                    }
+                    else
+                    {
+                        Script.content = lpart+val+rpart;
+                    }
                 }
             }
             else 

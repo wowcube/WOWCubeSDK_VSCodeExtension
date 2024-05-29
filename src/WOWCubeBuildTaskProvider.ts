@@ -170,7 +170,6 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			this._channel.show(true);
 
 			this._channel.appendLine('Compiling cub file...');
-			this._channel.appendLine('Please be patient as compilation of C++ project may take time, especially for the first time. \r\n');
 			const initialVersion = Configuration.getCurrentVersion();
 
 			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));
@@ -252,12 +251,30 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 			compilerpath+='cargo/bin/'+Configuration.getCC("rust");
 			
+			var wasmFilename:string = build_json.scriptFile;
+			wasmFilename = wasmFilename.substring(wasmFilename.lastIndexOf('/')+1);
+			var wasmFilenameNoExt:string = wasmFilename;
+			wasmFilenameNoExt = wasmFilenameNoExt.substring(0,wasmFilenameNoExt.lastIndexOf('.'));
+
 			//prepare TOML file first
 			var tomlfile:string = this.workspace+'/'+Project.Options.rust.tomlPath;
 			if(Script.load(tomlfile))
 			{
-				Script.setTOMLValue("name",build_json.name);
+				
+				Script.setTOMLValue("name",wasmFilenameNoExt);
 				Script.setTOMLValue("version",build_json.version);
+
+				var sdkpath:string = Configuration.getWOWSDKPath();
+
+				//WINDOWS ONLY
+				sdkpath+='sdk\\'+Configuration.getCurrentVersion()+'\\rust\\';
+
+				var pathstring:string = '{ path = "'+sdkpath+'" }';
+
+				pathstring = pathstring.replace(/\\/g, "\\\\");	//path string should have '\\'
+
+				Script.setTOMLValue("wowcube_sdk",pathstring,false);
+
 				if(!Script.save())
 				{
 					this._channel.appendLine('Unable to save Rust TOML configuration file!');
@@ -322,9 +339,9 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 			//THIS IS WINDOWS ONLY, ON MAC THE SLASHES SHOULD BE DIFFERENT
 			var srcwasm:string = this.workspace+'\\target\\wasm32-unknown-unknown\\release\\';
-			srcwasm+='Test.wasm';
+			srcwasm+=wasmFilenameNoExt+'.wasm';
 			var destwasm:string = this.workspace+'\\binary\\';
-			destwasm+='Test.wasm';
+			destwasm+=wasmFilenameNoExt+'.wasm';
 			
 			script+='move "'+srcwasm+'" "'+destwasm+'"\n';
 

@@ -116,7 +116,6 @@ class WOWCubeBuildTaskTerminal {
             this._channel.clear();
             this._channel.show(true);
             this._channel.appendLine('Compiling cub file...');
-            this._channel.appendLine('Please be patient as compilation of C++ project may take time, especially for the first time. \r\n');
             const initialVersion = Configuration_1.Configuration.getCurrentVersion();
             const build_json = JSON.parse(fs.readFileSync(this.workspace + '/wowcubeapp-build.json', 'utf-8'));
             this._channel.appendLine('Project name: ' + build_json.name);
@@ -169,11 +168,21 @@ class WOWCubeBuildTaskTerminal {
                 return;
             }
             compilerpath += 'cargo/bin/' + Configuration_1.Configuration.getCC("rust");
+            var wasmFilename = build_json.scriptFile;
+            wasmFilename = wasmFilename.substring(wasmFilename.lastIndexOf('/') + 1);
+            var wasmFilenameNoExt = wasmFilename;
+            wasmFilenameNoExt = wasmFilenameNoExt.substring(0, wasmFilenameNoExt.lastIndexOf('.'));
             //prepare TOML file first
             var tomlfile = this.workspace + '/' + Project_1.Project.Options.rust.tomlPath;
             if (Script_1.Script.load(tomlfile)) {
-                Script_1.Script.setTOMLValue("name", build_json.name);
+                Script_1.Script.setTOMLValue("name", wasmFilenameNoExt);
                 Script_1.Script.setTOMLValue("version", build_json.version);
+                var sdkpath = Configuration_1.Configuration.getWOWSDKPath();
+                //WINDOWS ONLY
+                sdkpath += 'sdk\\' + Configuration_1.Configuration.getCurrentVersion() + '\\rust\\';
+                var pathstring = '{ path = "' + sdkpath + '" }';
+                pathstring = pathstring.replace(/\\/g, "\\\\"); //path string should have '\\'
+                Script_1.Script.setTOMLValue("wowcube_sdk", pathstring, false);
                 if (!Script_1.Script.save()) {
                     this._channel.appendLine('Unable to save Rust TOML configuration file!');
                     this._channel.appendLine('Please make sure that correct file name of the TOML file is specified and the file is not currently opened in another application, then try again.\r\n\r\n');
@@ -221,9 +230,9 @@ class WOWCubeBuildTaskTerminal {
             script += '"' + compilerpath + '" build --manifest-path="' + tomlfile + '" --release --target wasm32-unknown-unknown\n\n';
             //THIS IS WINDOWS ONLY, ON MAC THE SLASHES SHOULD BE DIFFERENT
             var srcwasm = this.workspace + '\\target\\wasm32-unknown-unknown\\release\\';
-            srcwasm += 'Test.wasm';
+            srcwasm += wasmFilenameNoExt + '.wasm';
             var destwasm = this.workspace + '\\binary\\';
-            destwasm += 'Test.wasm';
+            destwasm += wasmFilenameNoExt + '.wasm';
             script += 'move "' + srcwasm + '" "' + destwasm + '"\n';
             var wasmgc = Configuration_1.Configuration.getToolsPath() + 'rust/wasm-gc.exe';
             script += '"' + wasmgc + '" "' + destwasm + '"\n';

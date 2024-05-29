@@ -172,21 +172,33 @@ class WizardPanel {
                 }
             }
             for (var i = 0; i < currentTemplate.files.length; i++) {
-                if (currentTemplate.files[i] === '_main.cpp') {
-                    if (!this.replaceInFileAndSave(templatespath + currentTemplate.id + "/" + currentTemplate.files[i], fullpath + '/src/' + br.str + '.cpp', '##CNAME##', br.str)) {
+                if (currentTemplate.files[i] === '_cubeapp.rs') {
+                    if (!this.replaceInFileAndSave(templatespath + currentTemplate.id + "/" + currentTemplate.files[i], fullpath + '/src/cubeapp.rs', '##CNAME##', br.str)) {
                         throw new Error("Unable to generate main source file");
                     }
-                    if (!this.replaceInFileAndSave(fullpath + '/src/' + br.str + '.cpp', fullpath + '/src/' + br.str + '.cpp', '##APPUUID##', uuid)) {
-                        throw new Error("Unable to generate main source file");
-                    }
+                    /*
+                if(!this.replaceInFileAndSave(fullpath+'/src/'+br.str+'.rs',
+                                              fullpath+'/src/'+br.str+'.rs',
+                                              '##APPUUID##',
+                                              uuid))
+                                              {
+                                                throw new Error("Unable to generate main source file");
+                                              }
+                    */
                 }
-                else if ((currentTemplate.files[i] === '_main.h')) {
-                    if (!this.replaceInFileAndSave(templatespath + currentTemplate.id + "/" + currentTemplate.files[i], fullpath + '/src/' + br.str + '.h', '##CNAME##', br.str)) {
+                else if ((currentTemplate.files[i] === '_lib.rs')) {
+                    if (!this.replaceInFileAndSave(templatespath + currentTemplate.id + "/" + currentTemplate.files[i], fullpath + '/src/lib.rs', '##CNAME##', br.str)) {
                         throw new Error("Unable to generate main header file");
                     }
-                    if (!this.replaceInFileAndSave(fullpath + '/src/' + br.str + '.h', fullpath + '/src/' + br.str + '.h', '##APPUUID##', uuid)) {
-                        throw new Error("Unable to generate main header file");
-                    }
+                    /*
+                if(!this.replaceInFileAndSave(fullpath+'/src/'+br.str+'.h',
+                                                 fullpath+'/src/'+br.str+'.h',
+                                                 '##APPUUID##',
+                                                 uuid))
+                                                 {
+                                                  throw new Error("Unable to generate main header file");
+                                                 }
+                     */
                 }
                 else {
                     fs.copyFileSync(templatespath + currentTemplate.id + "/" + currentTemplate.files[i], fullpath + '/src/' + currentTemplate.files[i]);
@@ -208,6 +220,8 @@ class WizardPanel {
             fs.copyFileSync(templatespath + "_launch.json", fullpath + '/.vscode/launch.json');
             fs.copyFileSync(templatespath + "_tasks.json", fullpath + '/.vscode/tasks.json');
             fs.copyFileSync(templatespath + "_extensions.json", fullpath + '/.vscode/extensions.json');
+            //copy TOML file
+            fs.copyFileSync(templatespath + "_Cargo.toml", fullpath + '/Cargo.toml');
         }
         catch (error) {
             ret.desc = error;

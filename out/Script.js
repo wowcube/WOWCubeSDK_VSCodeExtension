@@ -47,7 +47,7 @@ class Script {
         }
         return ret;
     }
-    static setTOMLValue(key, val) {
+    static setTOMLValue(key, val, quotes = true) {
         var ret = true;
         try {
             if (key.length > 0) {
@@ -57,7 +57,12 @@ class Script {
                     var lf_index = Script.content.indexOf("\n", key_index + fullKey.length);
                     var lpart = Script.content.substring(0, key_index + fullKey.length);
                     var rpart = Script.content.substring(lf_index);
-                    Script.content = lpart + '"' + val + '"' + rpart;
+                    if (quotes) {
+                        Script.content = lpart + '"' + val + '"' + rpart;
+                    }
+                    else {
+                        Script.content = lpart + val + rpart;
+                    }
                 }
             }
             else {
