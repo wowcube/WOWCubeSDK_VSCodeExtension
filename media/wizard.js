@@ -139,7 +139,7 @@ class TemplateItem
                         document.getElementById('i2').style.display = 'block';
                         document.getElementById('i3').style.display = 'block';
                         document.getElementById('i4').style.display = 'block';
-                                               
+
                         document.getElementById('i5').style.display = 'none';
                         document.getElementById('i6').style.display = 'none';
                         document.getElementById('i7').style.display = 'none';
@@ -156,8 +156,6 @@ class TemplateItem
                     }
                     else if(message.value=='rust')
                     {
-                        document.getElementById('i2').style.display = 'none';
-                        document.getElementById('i3').style.display = 'none';
                         document.getElementById('i4').style.display = 'none';
 
                         document.getElementById('i5').style.display = 'none';

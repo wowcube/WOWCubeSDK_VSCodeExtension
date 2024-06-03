@@ -363,6 +363,8 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				return;
 			}
 
+			var errorHappened:boolean = false;
+
 			var child:cp.ChildProcess = cp.exec(scriptfile, { cwd: ""}, (error, stdout, stderr) => 
 			{
 				if (stderr && stderr.length > 0) 
@@ -371,6 +373,11 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 					{
 						this._channel.appendLine(stderr);
 						this._channel.show(true);
+
+						if(stderr.indexOf("error:")!==-1)
+						{
+							errorHappened = true;
+						}
 					}
 				}
 
@@ -384,7 +391,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				this.setSharedState(date.toTimeString() + ' ' + date.toDateString());
 
 				if(child.exitCode===0)
-				{
+				{	
 					//success
 					var scriptfile:string = this.workspace+'/build.bat';
 					if(fs.existsSync(scriptfile))
@@ -392,16 +399,27 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 						fs.unlink(scriptfile, () => {}); // Delete installation script
 					}
 
-					this._channel.appendLine('File compiled successfully.\r\n');
+					if(!errorHappened)
+					{					
+						this._channel.appendLine('File compiled successfully.\r\n');
 
-					if(action==='compile')
-					{
-						this.closeEmitter.fire(0);
-						resolve();
+						if(action==='compile')
+						{
+							this.closeEmitter.fire(0);
+							resolve();
+						}
+						else
+						{
+							this.doBuild(this.target);
+						}
 					}
 					else
 					{
-						this.doBuild(this.target);
+						this._channel.appendLine('Failed to compile.\r\n');
+	
+						this.closeEmitter.fire(0);
+						resolve();
+						return;
 					}
 				}
 				else

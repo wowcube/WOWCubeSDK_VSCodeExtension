@@ -260,15 +260,15 @@ export class WizardPanel {
                                                   {
                                                     throw new Error("Unable to generate main source file");
                                                   }
-                        /*
-                    if(!this.replaceInFileAndSave(fullpath+'/src/'+br.str+'.rs',
-                                                  fullpath+'/src/'+br.str+'.rs',
+                        
+                    if(!this.replaceInFileAndSave(fullpath+'/src/cubeapp.rs',
+                                                  fullpath+'/src/cubeapp.rs',
                                                   '##APPUUID##',
                                                   uuid))
                                                   {
                                                     throw new Error("Unable to generate main source file");
                                                   }
-                        */
+                        
                     }
                     else if((currentTemplate.files[i]==='_lib.rs'))
                     {
@@ -799,18 +799,13 @@ export class WizardPanel {
                                     <div class="itemdesc">Creates a project of WOWCube cubeapp application with some resources</div>
                                     <div class="itemdesc">Demonstrates how to find and use application resources</div>
                                 </div>
-
+                                
                                 <div id="i4" class="item">
                                     <div style="margin:5px;"><strong>Basic cubeapp with splash screens</strong></div>
                                     <div class="itemdesc">Creates a project of WOWCube cubeapp application with in-game splash screens support</div>
                                     <div class="itemdesc">Demonstrates the use of in-game splash screens</div>
                                 </div>`;
 
-                                if(lastLanguage=='rust')
-                                {
-
-                                }
-                                else
                                 if(lastLanguage=='cpp')
                                 {
                                     ret+=`

@@ -246,11 +246,15 @@ class WOWCubeBuildTaskTerminal {
                 resolve();
                 return;
             }
+            var errorHappened = false;
             var child = cp.exec(scriptfile, { cwd: "" }, (error, stdout, stderr) => {
                 if (stderr && stderr.length > 0) {
                     if (stderr.length > 2) {
                         this._channel.appendLine(stderr);
                         this._channel.show(true);
+                        if (stderr.indexOf("error:") !== -1) {
+                            errorHappened = true;
+                        }
                     }
                 }
                 if (stdout && stdout.length > 0) {
@@ -265,13 +269,21 @@ class WOWCubeBuildTaskTerminal {
                     if (fs.existsSync(scriptfile)) {
                         fs.unlink(scriptfile, () => { }); // Delete installation script
                     }
-                    this._channel.appendLine('File compiled successfully.\r\n');
-                    if (action === 'compile') {
-                        this.closeEmitter.fire(0);
-                        resolve();
+                    if (!errorHappened) {
+                        this._channel.appendLine('File compiled successfully.\r\n');
+                        if (action === 'compile') {
+                            this.closeEmitter.fire(0);
+                            resolve();
+                        }
+                        else {
+                            this.doBuild(this.target);
+                        }
                     }
                     else {
-                        this.doBuild(this.target);
+                        this._channel.appendLine('Failed to compile.\r\n');
+                        this.closeEmitter.fire(0);
+                        resolve();
+                        return;
                     }
                 }
                 else {
