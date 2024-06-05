@@ -1,3 +1,6 @@
+### 2.3.0
+* Experimental support for Rust language
+
 ### 2.2.5
 * Fix for incorrect logging mode selection
 

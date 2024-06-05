@@ -392,10 +392,10 @@ class ExternalToolsPanel {
         ret += `</div>
 
                                 <div id="i2" class="item">
-                                    <div style="margin:5px;"><strong>RUST Compiler support package for WOWCube SDK</strong></div>
+                                    <div style="margin:5px;"><strong>RUST Compiler support package for WOWCube SDK - <span><i class="negative">EXPERIMENTAL</i></span></strong></div>
                                     
                                     <div style="display:inline-block; width: calc(100% - 145px);">
-                                        <div class="itemdesc">The package provides development tools required for writing cubeapps with Rust programming language.</div>
+                                        <div class="itemdesc">The package provides an experimental set of development tools required for writing cubeapps with Rust programming language.</div>
                                         </div>`;
         if (rustInstall == true) {
             ret += `<button class="remove_button" style="display:inline-block;width:120px;" pack="rust" packname="RUST Compiler support">Remove</button>

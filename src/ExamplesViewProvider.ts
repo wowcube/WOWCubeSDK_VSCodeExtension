@@ -23,9 +23,11 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 
 	public docs_pawn:Array<[string, Array<string>]> = [];
 	public docs_cpp:Array<[string, Array<string>]> = [];
+	public docs_rust:Array<[string, Array<string>]> = [];
 
 	public examples_pawn:any;
 	public examples_cpp:any;
+	public examples_rust:any;
 
 	private _currentDocsVersion:string = "";
 
@@ -138,6 +140,9 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 					case 'cpp':
 						path = Configuration.getWOWSDKPath()+'sdk/examples/'+versions[i]+'/cpp/'+categories[j]+'/';
 					break;
+					case 'rust':
+						path = Configuration.getWOWSDKPath()+'sdk/examples/'+versions[i]+'/rust/'+categories[j]+'/';
+					break;					
 				}
 				Configuration.getWOWSDKPath()+'sdk/examples/'+versions[i]+'/'+categories[j]+'/';
 
@@ -198,7 +203,12 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 				{
 					sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/'+this._currentDocsVersion+'/cpp/';
 				}
-				break;		 			
+				break;	
+			case 'rust':
+				{
+					sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/'+this._currentDocsVersion+'/rust/';
+				}
+				break;							 			
 		}
 
 
@@ -231,7 +241,12 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 						{
 							sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/'+this._currentDocsVersion+'/cpp/';
 						}
-						break;		 			
+						break;		 	
+					case 'rust':
+						{
+							sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/'+this._currentDocsVersion+'/rust/';
+						}
+						break;										
 				}
 			}
 		}
@@ -336,7 +351,12 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 						{
 							sourceFiles = Configuration.getWOWSDKPath()+'sdk/'+this._currentDocsVersion+'/cpp/';
 						}
-						break;		 			
+						break;	
+				case 'rust':
+						{
+							sourceFiles = Configuration.getWOWSDKPath()+'sdk/'+this._currentDocsVersion+'/rust/';
+						}
+						break;		 									 			
 			}
 
 			if(fs.existsSync(sourceFiles)===true)
@@ -379,6 +399,7 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 		{
 			this.examples_pawn = this.getExamples('pawn');
 			this.examples_cpp = this.getExamples('cpp');
+			this.examples_rust = this.getExamples('rust');
 
 			var categories_pawn:Array<string> = this.examples_pawn.c;
 			var articles_pawn = this.examples_pawn.e;
@@ -388,9 +409,14 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 			var articles_cpp = this.examples_cpp.e;
 			var names_cpp = this.examples_cpp.n;
 
+			var categories_rust:Array<string> = this.examples_rust.c;
+			var articles_rust = this.examples_rust.e;
+			var names_rust = this.examples_rust.n;
+
 			//get docs
 			this.docs_pawn = this.getDocumentation('pawn');
 			this.docs_cpp = this.getDocumentation('cpp');
+			this.docs_rust = this.getDocumentation('rust');
 
 			//get online resources
 			var sites = this.getOnlineResources();
@@ -401,6 +427,7 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 			//get sdk files
 			var files_pawn = this.getSDKFiles('pawn');
 			var files_cpp = this.getSDKFiles('cpp');
+			var files_rust = this.getSDKFiles('rust');
 
 			//setup web page
 			const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examplesview.js'));
@@ -496,6 +523,38 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 					}
 					body+=`</ul></li>`;
 
+					body+=`<li><span class="caret">Rust</span>
+					<ul class="nested">`;
+
+					for(var i=0;i<categories_rust.length;i++)
+					{
+						body+=`<li><span class="caret">${categories_rust[i]}</span>
+						<ul class="nested">`;
+						
+						articles_rust.forEach((value: Array<string>, key: string) => 
+						{
+								if(key.indexOf(categories_rust[i]+'/')===0)
+								{
+									try
+									{
+										if(names_rust.has(key))
+										{
+											var articleName = names_rust.get(key);
+											body+=`<li class="liitem" key="${key}" lang="cpp">${articleName}</li>`;
+										}
+										else
+										{
+											body+=`<li class="liitem" key="${key}">Unnamed Article</li>`;
+										}
+									}
+									catch(e){}
+								}
+							});
+
+						body+=`</ul></li>`;
+					}
+					body+=`</ul></li>`;
+
 				body+=` </ul>
 				</li>      					
 				<li><span class="caret">Documentation (SDK Version ${this._currentDocsVersion})</span>
@@ -542,6 +601,27 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 				}
 				body+=`</ul></li>`;
 
+				body+=`<li><span class="caret">Rust</span>
+				<ul class="nested">`;
+
+				for(var i=0;i<this.docs_rust.length;i++)
+				{
+					var topic = this.docs_rust[i][0];
+					body+=`<li><span class="caret">${topic.substring(topic.indexOf('.')+1)}</span>
+						<ul class="nested">`;
+
+					for(var j=0;j<this.docs_rust[i][1].length;j++)
+					{
+						var item = this.docs_rust[i][1][j];
+						item = item.substring(0,item.length-3);
+						item = item.substring(item.indexOf('.')+1);
+						body+=`<li class="liitem" file="${this.docs_rust[i][1][j]}" folder="${topic}" doc="1" lang="cpp">${item}</li>`;
+					}
+
+					body+=`</ul></li>`;
+				}
+				body+=`</ul></li>`;
+
 				body+=`<li class="liitem" file="${Configuration.getWOWSDKPath()+'sdk/docs/changelog.md'}" folder="SDK Version Changelog" doc="1" lang="none">SDK Version Changelog</li>`;
 
 				body+=`</ul></li>`;
@@ -563,6 +643,15 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 					for(var i=0;i<files_cpp.length;i++)
 					{
 						body+=`<li class="liitem" path="${files_cpp[i][1]}">${files_cpp[i][0]}</li>`;
+					}
+					body+=`</ul></li>`;
+
+					body+=`<li><span class="caret">Rust</span>
+					<ul class="nested">`;
+					for(var i=0;i<files_rust.length;i++)
+					{
+					    if(files_rust[i][0]==='Cargo.lock' || files_rust[i][0]==='Cargo.toml') continue;
+						body+=`<li class="liitem" path="${files_rust[i][1]}">${files_rust[i][0]}</li>`;
 					}
 					body+=`</ul></li>`;
 

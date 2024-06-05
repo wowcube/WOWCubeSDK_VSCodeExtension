@@ -18,6 +18,7 @@ class ExamplesViewProvider {
         this._channel = Output_1.Output.channel();
         this.docs_pawn = [];
         this.docs_cpp = [];
+        this.docs_rust = [];
         this._currentDocsVersion = "";
     }
     reload() {
@@ -97,6 +98,9 @@ class ExamplesViewProvider {
                     case 'cpp':
                         path = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/' + versions[i] + '/cpp/' + categories[j] + '/';
                         break;
+                    case 'rust':
+                        path = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/' + versions[i] + '/rust/' + categories[j] + '/';
+                        break;
                 }
                 Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/' + versions[i] + '/' + categories[j] + '/';
                 if (fs.existsSync(path)) {
@@ -142,6 +146,11 @@ class ExamplesViewProvider {
                     sourceDocs = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/' + this._currentDocsVersion + '/cpp/';
                 }
                 break;
+            case 'rust':
+                {
+                    sourceDocs = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/' + this._currentDocsVersion + '/rust/';
+                }
+                break;
         }
         //check if we have documentation of needed version
         if (fs.existsSync(sourceDocsRoot) === true) {
@@ -163,6 +172,11 @@ class ExamplesViewProvider {
                     case 'cpp':
                         {
                             sourceDocs = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/' + this._currentDocsVersion + '/cpp/';
+                        }
+                        break;
+                    case 'rust':
+                        {
+                            sourceDocs = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/' + this._currentDocsVersion + '/rust/';
                         }
                         break;
                 }
@@ -234,6 +248,11 @@ class ExamplesViewProvider {
                         sourceFiles = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + this._currentDocsVersion + '/cpp/';
                     }
                     break;
+                case 'rust':
+                    {
+                        sourceFiles = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + this._currentDocsVersion + '/rust/';
+                    }
+                    break;
             }
             if (fs.existsSync(sourceFiles) === true) {
                 fs.readdirSync(sourceFiles).forEach(file => {
@@ -263,15 +282,20 @@ class ExamplesViewProvider {
         try {
             this.examples_pawn = this.getExamples('pawn');
             this.examples_cpp = this.getExamples('cpp');
+            this.examples_rust = this.getExamples('rust');
             var categories_pawn = this.examples_pawn.c;
             var articles_pawn = this.examples_pawn.e;
             var names_pawn = this.examples_pawn.n;
             var categories_cpp = this.examples_cpp.c;
             var articles_cpp = this.examples_cpp.e;
             var names_cpp = this.examples_cpp.n;
+            var categories_rust = this.examples_rust.c;
+            var articles_rust = this.examples_rust.e;
+            var names_rust = this.examples_rust.n;
             //get docs
             this.docs_pawn = this.getDocumentation('pawn');
             this.docs_cpp = this.getDocumentation('cpp');
+            this.docs_rust = this.getDocumentation('rust');
             //get online resources
             var sites = this.getOnlineResources();
             //get wowconnect resources
@@ -279,6 +303,7 @@ class ExamplesViewProvider {
             //get sdk files
             var files_pawn = this.getSDKFiles('pawn');
             var files_cpp = this.getSDKFiles('cpp');
+            var files_rust = this.getSDKFiles('rust');
             //setup web page
             const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examplesview.js'));
             // Do the same for the stylesheet.
@@ -350,6 +375,28 @@ class ExamplesViewProvider {
                 body += `</ul></li>`;
             }
             body += `</ul></li>`;
+            body += `<li><span class="caret">Rust</span>
+					<ul class="nested">`;
+            for (var i = 0; i < categories_rust.length; i++) {
+                body += `<li><span class="caret">${categories_rust[i]}</span>
+						<ul class="nested">`;
+                articles_rust.forEach((value, key) => {
+                    if (key.indexOf(categories_rust[i] + '/') === 0) {
+                        try {
+                            if (names_rust.has(key)) {
+                                var articleName = names_rust.get(key);
+                                body += `<li class="liitem" key="${key}" lang="cpp">${articleName}</li>`;
+                            }
+                            else {
+                                body += `<li class="liitem" key="${key}">Unnamed Article</li>`;
+                            }
+                        }
+                        catch (e) { }
+                    }
+                });
+                body += `</ul></li>`;
+            }
+            body += `</ul></li>`;
             body += ` </ul>
 				</li>      					
 				<li><span class="caret">Documentation (SDK Version ${this._currentDocsVersion})</span>
@@ -384,6 +431,21 @@ class ExamplesViewProvider {
                 body += `</ul></li>`;
             }
             body += `</ul></li>`;
+            body += `<li><span class="caret">Rust</span>
+				<ul class="nested">`;
+            for (var i = 0; i < this.docs_rust.length; i++) {
+                var topic = this.docs_rust[i][0];
+                body += `<li><span class="caret">${topic.substring(topic.indexOf('.') + 1)}</span>
+						<ul class="nested">`;
+                for (var j = 0; j < this.docs_rust[i][1].length; j++) {
+                    var item = this.docs_rust[i][1][j];
+                    item = item.substring(0, item.length - 3);
+                    item = item.substring(item.indexOf('.') + 1);
+                    body += `<li class="liitem" file="${this.docs_rust[i][1][j]}" folder="${topic}" doc="1" lang="cpp">${item}</li>`;
+                }
+                body += `</ul></li>`;
+            }
+            body += `</ul></li>`;
             body += `<li class="liitem" file="${Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/changelog.md'}" folder="SDK Version Changelog" doc="1" lang="none">SDK Version Changelog</li>`;
             body += `</ul></li>`;
             body += `<li><span class="caret">SDK Files</span>
@@ -399,6 +461,14 @@ class ExamplesViewProvider {
 					<ul class="nested">`;
             for (var i = 0; i < files_cpp.length; i++) {
                 body += `<li class="liitem" path="${files_cpp[i][1]}">${files_cpp[i][0]}</li>`;
+            }
+            body += `</ul></li>`;
+            body += `<li><span class="caret">Rust</span>
+					<ul class="nested">`;
+            for (var i = 0; i < files_rust.length; i++) {
+                if (files_rust[i][0] === 'Cargo.lock' || files_rust[i][0] === 'Cargo.toml')
+                    continue;
+                body += `<li class="liitem" path="${files_rust[i][1]}">${files_rust[i][0]}</li>`;
             }
             body += `</ul></li>`;
             body += `</ul></li>`;

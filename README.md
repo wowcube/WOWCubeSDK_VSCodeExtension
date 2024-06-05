@@ -46,6 +46,9 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ## Release Notes
 
+### 2.3.0
+* Experimental support for Rust language
+
 ### 2.2.5
 * Fix for incorrect logging mode selection
 
