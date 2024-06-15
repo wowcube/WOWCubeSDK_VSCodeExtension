@@ -4,7 +4,7 @@ This extension is designed for WOWCube cubeapp application developers. It simpli
 
 ## Pre-requisites
 
- WOWCube Development Kit version 0.9.6 or later must be installed on the computer and can be downloaded from https://wowcube.com/devkit
+ WOWCube Development Kit version 1.0.8 or later must be installed on the computer and can be downloaded from https://wowcube.com/devkit
 
 ## Features
 
@@ -46,8 +46,11 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ## Release Notes
 
+### 2.3.1
+* Experimental support for Rust language (Windows and Mac)
+
 ### 2.3.0
-* Experimental support for Rust language
+* Experimental support for Rust language (Windows only)
 
 ### 2.2.5
 * Fix for incorrect logging mode selection

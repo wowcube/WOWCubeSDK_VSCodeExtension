@@ -1,5 +1,8 @@
+### 2.3.1
+* Experimental support for Rust language (Windows and Mac)
+
 ### 2.3.0
-* Experimental support for Rust language
+* Experimental support for Rust language (Windows only)
 
 ### 2.2.5
 * Fix for incorrect logging mode selection
