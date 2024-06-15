@@ -448,6 +448,8 @@ export class Configuration
                     {
                         case 'cpp':
                             return 'em++';
+                        case 'rust':
+                                return 'cargo';                            
                         default:
                             return '';
                     }
@@ -777,7 +779,26 @@ export class Configuration
                 return true;
             }
             break;
-            case 'linux': //mac
+            case 'linux': //linux
+            case 'darwin': //mac
+                return false;
+            break;
+        }
+        return false;
+    }
+
+    public static isMac()
+    {
+        var p = os.platform();
+
+        switch(p)
+        {
+            case 'darwin':
+            {
+                return true;
+            }
+            break;
+            case 'linux': //linux
             case 'win32': //windows
                 return false;
             break;

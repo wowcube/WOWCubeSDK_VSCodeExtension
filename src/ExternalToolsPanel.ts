@@ -158,6 +158,107 @@ export class ExternalToolsPanel {
 
                                                     ArchiveManager.doUnzip(value,toolspath,()=>
                                                     {
+                                                        if(Configuration.isMac())
+                                                        {
+                                                        try
+                                                        {
+                                                            var rustini_script = Configuration.getFullToolPath("install.sh");
+                                                            if(Script.load(rustini_script))
+                                                            {
+                                                                var cargo:string = Configuration.getToolsPath()+'rust/cargo';
+                                                                var rustup:string = Configuration.getToolsPath()+'rust/rustup';
+                                                                var ruinit = Configuration.getFullToolPath("rustup-init.sh");
+
+                                                                Script.setValue("%%CARGOHOME%%",cargo);
+                                                                Script.setValue("%%RUSTUPHOME%%",rustup);
+                                                                Script.setValue("%%RUSTUPINIT%%",ruinit);
+
+                                                                if(!Script.save())
+                                                                {
+                                                                    throw new Error("Unable to generate installation script.");
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                throw new Error("Unable to generate installation script.");
+                                                            }
+
+                                                            var rustinit_command = '"'+Configuration.getFullToolPath("install.sh")+'"';
+
+                                                            var child:cp.ChildProcess = cp.exec(rustinit_command, { cwd: ""}, (error, stdout, stderr) => 
+                                                                {
+                                                                    if (stderr && stderr.length > 0) 
+                                                                    {                                                    
+                                                                        if(stderr.length>2)
+                                                                        {
+                                                                            ExternalToolsPanel.currentPanel?._channel.appendLine(stderr);
+                                                                            ExternalToolsPanel.currentPanel?._channel.show(true);
+                                                                        }
+                                                                    }
+                                                    
+                                                                    if (stdout && stdout.length > 0) 
+                                                                    {
+                                                                        if(stdout.includes("Rust is installed now"))
+                                                                        {
+                                                                            stdout="Rust is installed now. Great!";
+                                                                        }
+                                                                        
+                                                                        ExternalToolsPanel.currentPanel?._channel.appendLine(stdout);
+                                                                        ExternalToolsPanel.currentPanel?._channel.show(true);
+                                                                    }
+                                                                                                        
+                                                                    if(child.exitCode===0)
+                                                                    {
+                                                                        //success
+                                                                        
+                                                                        var fname = Configuration.getFullToolPath("install.sh");
+                                                                        if(fs.existsSync(fname))
+                                                                        {
+                                                                            fs.unlink(fname, () => {}); // Delete installation script
+                                                                        }
+    
+                                                                        fname = Configuration.getFullToolPath("rustup-init.sh");
+                                                                        if(fs.existsSync(fname))
+                                                                        {
+                                                                            fs.unlink(fname, () => {}); // Delete rustup-init
+                                                                        }
+    
+                                                                        fname = Configuration.getFullToolPath("package.zip");
+                                                                        if(fs.existsSync(fname))
+                                                                        {
+                                                                            fs.unlink(fname, () => {}); // Delete downloaded archive
+                                                                        }
+                                                                        
+                                                                        ExternalToolsPanel.currentPanel?.showWait(false);
+    
+                                                                        ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: The package has been successfully installed");
+                                                                        ExternalToolsPanel.currentPanel?._channel.show(true);
+    
+                                                                        ExternalToolsPanel.currentPanel?.reload();
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        vscode.window.showErrorMessage("Unable to install Rust package"); 
+                                                                        ExternalToolsPanel.currentPanel?.showWait(false);
+                
+                                                                        ExternalToolsPanel.currentPanel?._channel.appendLine("External Tools management: Unalbe to completely install the package");
+                                                                        ExternalToolsPanel.currentPanel?._channel.show(true);
+        
+                                                                        ExternalToolsPanel.currentPanel?.reload();
+                                                                    }
+                                                                });
+                                                        }
+                                                        catch(e:any)
+                                                        {
+                                                            ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: Unalbe to completely install the package, ${e}`);
+                                                            vscode.window.showErrorMessage(e.message); 
+                                                            ExternalToolsPanel.currentPanel?.showWait(false);
+                                                            ExternalToolsPanel.currentPanel?.reload();
+                                                        } 
+                                                        }
+                                                        
+                                                        if(Configuration.isWindows())
+                                                        {
                                                         try
                                                         {
                                                             var rustini_script = Configuration.getFullToolPath("install.bat");
@@ -250,7 +351,8 @@ export class ExternalToolsPanel {
                                                         catch(e)
                                                         {
                                                             ExternalToolsPanel.currentPanel?._channel.appendLine(`External Tools management: Unalbe to completely install the package, ${e}`);
-                                                        }    
+                                                        } 
+                                                        }   //isWindows   
                                                     }, (e:any)=>
                                                     {
                                                         vscode.window.showErrorMessage(e); 

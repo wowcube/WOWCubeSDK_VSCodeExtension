@@ -319,6 +319,8 @@ class Configuration {
                     switch (language) {
                         case 'cpp':
                             return 'em++';
+                        case 'rust':
+                            return 'cargo';
                         default:
                             return '';
                     }
@@ -577,7 +579,22 @@ class Configuration {
                     return true;
                 }
                 break;
-            case 'linux': //mac
+            case 'linux': //linux
+            case 'darwin': //mac
+                return false;
+                break;
+        }
+        return false;
+    }
+    static isMac() {
+        var p = os.platform();
+        switch (p) {
+            case 'darwin':
+                {
+                    return true;
+                }
+                break;
+            case 'linux': //linux
             case 'win32': //windows
                 return false;
                 break;

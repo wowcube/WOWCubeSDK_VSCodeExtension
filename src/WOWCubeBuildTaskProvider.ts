@@ -179,39 +179,44 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			
 			if(typeof(build_json.sdkVersion)!=='undefined')
 			{
-				this._channel.appendLine("NOTE: Target SDK version of the application ("+build_json.sdkVersion+") differs from current SDK version ("+Configuration.getCurrentVersion()+")");
+				this._channel.appendLine('Target SDK version: '+build_json.sdkVersion+'\r\n');
+
+				if(build_json.sdkVersion!==Configuration.getCurrentVersion())
+				{
+					this._channel.appendLine("NOTE: Target SDK version of the application ("+build_json.sdkVersion+") differs from current SDK version ("+Configuration.getCurrentVersion()+")");
 					
-				var versions  = Configuration.getVersions();
-				var detected:boolean = false;
+					var versions  = Configuration.getVersions();
+					var detected:boolean = false;
 
-				for(var i=0;i<versions.length;i++)
-				{
-					if(versions[i]===build_json.sdkVersion)
-					{
-						detected = true;
-						break;
-					}
-				}      
-
-				if(detected===false)
-				{
-					this._channel.appendLine("NOTE: SDK version "+build_json.sdkVersion+" is not installed. Please install required version of SDK or change application Target SDK version to one of the following:\r\n");
 					for(var i=0;i<versions.length;i++)
 					{
-						this._channel.appendLine("\tVersion "+versions[i]);
-					}    
-					
-					this._channel.appendLine('\r\nFailed to compile.\r\n');
+						if(versions[i]===build_json.sdkVersion)
+						{
+							detected = true;
+							break;
+						}
+					}      
 
-					this.closeEmitter.fire(0);
-					resolve();
-					return;
+					if(detected===false)
+					{
+						this._channel.appendLine("NOTE: SDK version "+build_json.sdkVersion+" is not installed. Please install required version of SDK or change application Target SDK version to one of the following:\r\n");
+						for(var i=0;i<versions.length;i++)
+						{
+							this._channel.appendLine("\tVersion "+versions[i]);
+						}    
+						
+						this._channel.appendLine('\r\nFailed to compile.\r\n');
+
+						this.closeEmitter.fire(0);
+						resolve();
+						return;
+					}
+					else
+					{
+						this._channel.appendLine("\r\nNOTE: Building with SDK version "+build_json.sdkVersion+"\r\n");
+						Configuration.setCurrentVersion(build_json.sdkVersion);
+					}
 				}
-				else
-				{
-					this._channel.appendLine("\r\nNOTE: Building with SDK version "+build_json.sdkVersion+"\r\n");
-					Configuration.setCurrentVersion(build_json.sdkVersion);
-				}	
 			}
 			else
 			{
@@ -266,12 +271,23 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 				var sdkpath:string = Configuration.getWOWSDKPath();
 
+				if(Configuration.isWindows())
+				{
 				//WINDOWS ONLY
-				sdkpath+='sdk\\'+Configuration.getCurrentVersion()+'\\rust\\';
+					sdkpath+='sdk\\'+Configuration.getCurrentVersion()+'\\rust\\';
+				}
+				else
+				{
+				// MAC
+					sdkpath+='sdk/'+Configuration.getCurrentVersion()+'/rust/';
+				}
 
 				var pathstring:string = '{ path = "'+sdkpath+'" }';
 
-				pathstring = pathstring.replace(/\\/g, "\\\\");	//path string should have '\\'
+				if(Configuration.isWindows())
+				{
+					pathstring = pathstring.replace(/\\/g, "\\\\");	//path string should have '\\'
+				}
 
 				Script.setTOMLValue("wowcube_sdk",pathstring,false);
 
@@ -297,7 +313,18 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 			//get directories
 			var sourcefile:string = this.workspace+'/'+build_json.sourceFile;
-			var scriptfile:string = this.workspace+'/build.bat';
+			var scriptfile:string = "";
+			
+			if(Configuration.isWindows())
+				{
+					scriptfile = this.workspace+'/build.bat';
+				}
+
+			if(Configuration.isMac())
+				{
+					scriptfile = this.workspace+'/build.sh';
+				}
+
 			var cargo:string = Configuration.getToolsPath()+'rust/cargo';
 			var rustup:string = Configuration.getToolsPath()+'rust/rustup';
 
@@ -331,37 +358,79 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			this.makeDirSync(builddir);
 
 			//generate temp script 
-			var script:string = '@echo off\nsetlocal\n\n';
-			script+='set CARGO_HOME='+cargo+'\n';
-			script+='set RUSTUP_HOME='+rustup+'\n';
-			script+='set RUSTFLAGS='+Project.Options.rust.flags+'\n';
-			script+='"'+compilerpath+'" build --manifest-path="'+tomlfile+'" --release --target wasm32-unknown-unknown\n\n'
+			var script:string = "";
 
-			//THIS IS WINDOWS ONLY, ON MAC THE SLASHES SHOULD BE DIFFERENT
-			var srcwasm:string = this.workspace+'\\target\\wasm32-unknown-unknown\\release\\';
-			srcwasm+=wasmFilenameNoExt+'.wasm';
-			var destwasm:string = this.workspace+'\\binary\\';
-			destwasm+=wasmFilenameNoExt+'.wasm';
-			
-			script+='move "'+srcwasm+'" "'+destwasm+'"\n';
-
-			var wasmgc:string = Configuration.getToolsPath()+'rust/wasm-gc.exe';
-
-			script+='"'+wasmgc+'" "'+destwasm+'"\n';
-
-			try
+			if(Configuration.isWindows())
 			{
-				fs.writeFileSync(scriptfile,script);
-			}
-			catch(e)
-			{
-				this._channel.appendLine('Unable to create temporary build script: '+e);
-				this._channel.appendLine('Failed to compile.\r\n');
+				script = '@echo off\nsetlocal\n\n';
+				script+='set CARGO_HOME='+cargo+'\n';
+				script+='set RUSTUP_HOME='+rustup+'\n';
+				script+='set RUSTFLAGS='+Project.Options.rust.flags+'\n';
+				script+='"'+compilerpath+'" build --manifest-path="'+tomlfile+'" --release --target wasm32-unknown-unknown\n\n'
 
-				this.closeEmitter.fire(0);
-				resolve();
-				return;
+				//THIS IS WINDOWS ONLY, ON MAC THE SLASHES SHOULD BE DIFFERENT
+				var srcwasm:string = this.workspace+'\\target\\wasm32-unknown-unknown\\release\\';
+				srcwasm+=wasmFilenameNoExt+'.wasm';
+				var destwasm:string = this.workspace+'\\binary\\';
+				destwasm+=wasmFilenameNoExt+'.wasm';
+				
+				script+='move "'+srcwasm+'" "'+destwasm+'"\n';
+
+				var wasmgc:string = Configuration.getToolsPath()+'rust/wasm-gc.exe';
+
+				script+='"'+wasmgc+'" "'+destwasm+'"\n';
+
+				try
+				{
+					fs.writeFileSync(scriptfile,script);
+				}
+				catch(e)
+				{
+					this._channel.appendLine('Unable to create temporary build script: '+e);
+					this._channel.appendLine('Failed to compile.\r\n');
+
+					this.closeEmitter.fire(0);
+					resolve();
+					return;
+				}
 			}
+
+			if(Configuration.isMac())
+				{
+					script = '#!/bin/sh\n\n(\n';
+					script+='export CARGO_HOME="'+cargo+'"\n';
+					script+='export RUSTUP_HOME="'+rustup+'"\n';
+					script+='export RUSTFLAGS="'+Project.Options.rust.flags+'"\n';
+					script+='"'+compilerpath+'" build --manifest-path="'+tomlfile+'" --release --target wasm32-unknown-unknown\n\n'
+	
+					var srcwasm:string = this.workspace+'/target/wasm32-unknown-unknown/release/';
+					srcwasm+=wasmFilenameNoExt+'.wasm';
+					var destwasm:string = this.workspace+'/binary/';
+					destwasm+=wasmFilenameNoExt+'.wasm';
+					
+					script+='mv -f "'+srcwasm+'" "'+destwasm+'"\n';
+										
+					var wasmgc:string = Configuration.getToolsPath()+'rust/wasm-gc';
+					script+='"'+wasmgc+'" "'+destwasm+'"\n';
+				
+					script+=')';
+
+					try
+					{
+						fs.writeFileSync(scriptfile,script);
+
+						fs.chmodSync(scriptfile,0o775);
+					}
+					catch(e)
+					{
+						this._channel.appendLine('Unable to create temporary build script: '+e);
+						this._channel.appendLine('Failed to compile.\r\n');
+	
+						this.closeEmitter.fire(0);
+						resolve();
+						return;
+					}
+				}
 
 			var errorHappened:boolean = false;
 
