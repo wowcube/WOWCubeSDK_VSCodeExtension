@@ -486,6 +486,18 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 			var files_cpp = this.getSDKFiles('cpp');
 			var files_rust = this.getSDKFiles('rust');
 
+			//check if rust support is enabled
+			var privateSettings = Configuration.getWDKPrivate();
+            var enableRust:boolean = false;
+
+            if(privateSettings!==null)
+            {
+                if(privateSettings.enableRustSupport == 'true')
+                {
+                    enableRust = true;
+                }
+            }
+
 			//setup web page
 			const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examplesview.js'));
 
@@ -580,37 +592,40 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 					}
 					body+=`</ul></li>`;
 
-					body+=`<li><span class="caret">Rust</span>
-					<ul class="nested">`;
-
-					for(var i=0;i<categories_rust.length;i++)
+					if(enableRust)
 					{
-						body+=`<li><span class="caret">${categories_rust[i]}</span>
+						body+=`<li><span class="caret">Rust</span>
 						<ul class="nested">`;
-						
-						articles_rust.forEach((value: Array<string>, key: string) => 
-						{
-								if(key.indexOf(categories_rust[i]+'/')===0)
-								{
-									try
-									{
-										if(names_rust.has(key))
-										{
-											var articleName = names_rust.get(key);
-											body+=`<li class="liitem" key="${key}" lang="cpp">${articleName}</li>`;
-										}
-										else
-										{
-											body+=`<li class="liitem" key="${key}">Unnamed Article</li>`;
-										}
-									}
-									catch(e){}
-								}
-							});
 
+						for(var i=0;i<categories_rust.length;i++)
+						{
+							body+=`<li><span class="caret">${categories_rust[i]}</span>
+							<ul class="nested">`;
+							
+							articles_rust.forEach((value: Array<string>, key: string) => 
+							{
+									if(key.indexOf(categories_rust[i]+'/')===0)
+									{
+										try
+										{
+											if(names_rust.has(key))
+											{
+												var articleName = names_rust.get(key);
+												body+=`<li class="liitem" key="${key}" lang="cpp">${articleName}</li>`;
+											}
+											else
+											{
+												body+=`<li class="liitem" key="${key}">Unnamed Article</li>`;
+											}
+										}
+										catch(e){}
+									}
+								});
+
+							body+=`</ul></li>`;
+						}
 						body+=`</ul></li>`;
 					}
-					body+=`</ul></li>`;
 
 				body+=` </ul>
 				</li>      					
@@ -658,26 +673,29 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 				}
 				body+=`</ul></li>`;
 
-				body+=`<li><span class="caret">Rust</span>
-				<ul class="nested">`;
-
-				for(var i=0;i<this.docs_rust.length;i++)
+				if(enableRust)
 				{
-					var topic = this.docs_rust[i][0];
-					body+=`<li><span class="caret">${topic.substring(topic.indexOf('.')+1)}</span>
-						<ul class="nested">`;
+					body+=`<li><span class="caret">Rust</span>
+					<ul class="nested">`;
 
-					for(var j=0;j<this.docs_rust[i][1].length;j++)
+					for(var i=0;i<this.docs_rust.length;i++)
 					{
-						var item = this.docs_rust[i][1][j];
-						item = item.substring(0,item.length-3);
-						item = item.substring(item.indexOf('.')+1);
-						body+=`<li class="liitem" file="${this.docs_rust[i][1][j]}" folder="${topic}" doc="1" lang="cpp">${item}</li>`;
-					}
+						var topic = this.docs_rust[i][0];
+						body+=`<li><span class="caret">${topic.substring(topic.indexOf('.')+1)}</span>
+							<ul class="nested">`;
 
+						for(var j=0;j<this.docs_rust[i][1].length;j++)
+						{
+							var item = this.docs_rust[i][1][j];
+							item = item.substring(0,item.length-3);
+							item = item.substring(item.indexOf('.')+1);
+							body+=`<li class="liitem" file="${this.docs_rust[i][1][j]}" folder="${topic}" doc="1" lang="cpp">${item}</li>`;
+						}
+
+						body+=`</ul></li>`;
+					}
 					body+=`</ul></li>`;
 				}
-				body+=`</ul></li>`;
 
 				body+=`<li class="liitem" file="${Configuration.getWOWSDKPath()+'sdk/docs/changelog.md'}" folder="SDK Version Changelog" doc="1" lang="none">SDK Version Changelog</li>`;
 
@@ -703,14 +721,17 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 					}
 					body+=`</ul></li>`;
 
-					body+=`<li><span class="caret">Rust</span>
-					<ul class="nested">`;
-					for(var i=0;i<files_rust.length;i++)
+					if(enableRust)
 					{
-					    if(files_rust[i][0]==='Cargo.lock' || files_rust[i][0]==='Cargo.toml') continue;
-						body+=`<li class="liitem" path="${files_rust[i][1]}">${files_rust[i][0]}</li>`;
+						body+=`<li><span class="caret">Rust</span>
+						<ul class="nested">`;
+						for(var i=0;i<files_rust.length;i++)
+						{
+							if(files_rust[i][0]==='Cargo.lock' || files_rust[i][0]==='Cargo.toml') continue;
+							body+=`<li class="liitem" path="${files_rust[i][1]}">${files_rust[i][0]}</li>`;
+						}
+						body+=`</ul></li>`;
 					}
-					body+=`</ul></li>`;
 
 				body+=`</ul></li>`;
 

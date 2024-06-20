@@ -421,6 +421,13 @@ class ExternalToolsPanel {
         const baseUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media')).toString().replace('%22', '');
         var emInstall = this.validateToolInstallation('emscripten');
         var rustInstall = this.validateToolInstallation('rust');
+        var privateSettings = Configuration_1.Configuration.getWDKPrivate();
+        var enableRust = false;
+        if (privateSettings !== null) {
+            if (privateSettings.enableRustSupport == 'true') {
+                enableRust = true;
+            }
+        }
         var ret = `      
                 <!DOCTYPE html>
                 <html lang="en">
@@ -458,21 +465,33 @@ class ExternalToolsPanel {
             ret += `   <button class="install_button" style="display:inline-block;width:120px;" pack="cpp" packname="C++ Compiler support">Install</button>
                                              <div class="itemstatus itemdesc neutral" style="margin-top:10px" pack="cpp">NOT INSTALLED</div>`;
         }
-        ret += `</div>
+        if (enableRust) {
+            ret += `</div>
 
-                                <div id="i2" class="item">
-                                    <div style="margin:5px;"><strong>RUST Compiler support package for WOWCube SDK - <span><i class="negative">EXPERIMENTAL</i></span></strong></div>
-                                    
-                                    <div style="display:inline-block; width: calc(100% - 145px);">
-                                        <div class="itemdesc">The package provides an experimental set of development tools required for writing cubeapps with Rust programming language.</div>
-                                        </div>`;
-        if (rustInstall == true) {
-            ret += `<button class="remove_button" style="display:inline-block;width:120px;" pack="rust" packname="RUST Compiler support">Remove</button>
-                                          <div class="itemstatus itemdesc positive" style="margin-top:10px" pack="rust">INSTALLED</div>`;
+                                    <div id="i2" class="item">
+                                        <div style="margin:5px;"><strong>RUST Compiler support package for WOWCube SDK - <span><i class="negative">EXPERIMENTAL</i></span></strong></div>
+                                        
+                                        <div style="display:inline-block; width: calc(100% - 145px);">
+                                            <div class="itemdesc">The package provides an experimental set of development tools required for writing cubeapps with Rust programming language.</div>
+                                            </div>`;
+            if (rustInstall == true) {
+                ret += `<button class="remove_button" style="display:inline-block;width:120px;" pack="rust" packname="RUST Compiler support">Remove</button>
+                                            <div class="itemstatus itemdesc positive" style="margin-top:10px" pack="rust">INSTALLED</div>`;
+            }
+            else {
+                ret += `<button class="install_button" style="display:inline-block;width:120px;" pack="rust" packname="RUST Compiler support">Install</button>
+                                            <div class="itemstatus itemdesc neutral" style="margin-top:10px" pack="rust">NOT INSTALLED</div>`;
+            }
         }
         else {
-            ret += `<button class="install_button" style="display:inline-block;width:120px;" pack="rust" packname="RUST Compiler support">Install</button>
-                                          <div class="itemstatus itemdesc neutral" style="margin-top:10px" pack="rust">NOT INSTALLED</div>`;
+            ret += `</div>
+
+                                    <div id="i2" class="item">
+                                        <div style="margin:5px;"><strong>RUST Compiler support package for WOWCube SDK - <span><i class="neutral">COMING SOON</i></span></strong></div>
+                                        
+                                        <div style="display:inline-block; width: calc(100% - 145px);">
+                                            <div class="itemdesc">The package provides an experimental set of development tools required for writing cubeapps with Rust programming language.</div>
+                                            </div>`;
         }
         ret += `</div>
                             </div>

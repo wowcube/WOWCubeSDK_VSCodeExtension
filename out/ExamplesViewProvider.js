@@ -358,6 +358,14 @@ class ExamplesViewProvider {
             var files_pawn = this.getSDKFiles('pawn');
             var files_cpp = this.getSDKFiles('cpp');
             var files_rust = this.getSDKFiles('rust');
+            //check if rust support is enabled
+            var privateSettings = Configuration_1.Configuration.getWDKPrivate();
+            var enableRust = false;
+            if (privateSettings !== null) {
+                if (privateSettings.enableRustSupport == 'true') {
+                    enableRust = true;
+                }
+            }
             //setup web page
             const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media', 'examplesview.js'));
             // Do the same for the stylesheet.
@@ -429,28 +437,30 @@ class ExamplesViewProvider {
                 body += `</ul></li>`;
             }
             body += `</ul></li>`;
-            body += `<li><span class="caret">Rust</span>
-					<ul class="nested">`;
-            for (var i = 0; i < categories_rust.length; i++) {
-                body += `<li><span class="caret">${categories_rust[i]}</span>
+            if (enableRust) {
+                body += `<li><span class="caret">Rust</span>
 						<ul class="nested">`;
-                articles_rust.forEach((value, key) => {
-                    if (key.indexOf(categories_rust[i] + '/') === 0) {
-                        try {
-                            if (names_rust.has(key)) {
-                                var articleName = names_rust.get(key);
-                                body += `<li class="liitem" key="${key}" lang="cpp">${articleName}</li>`;
+                for (var i = 0; i < categories_rust.length; i++) {
+                    body += `<li><span class="caret">${categories_rust[i]}</span>
+							<ul class="nested">`;
+                    articles_rust.forEach((value, key) => {
+                        if (key.indexOf(categories_rust[i] + '/') === 0) {
+                            try {
+                                if (names_rust.has(key)) {
+                                    var articleName = names_rust.get(key);
+                                    body += `<li class="liitem" key="${key}" lang="cpp">${articleName}</li>`;
+                                }
+                                else {
+                                    body += `<li class="liitem" key="${key}">Unnamed Article</li>`;
+                                }
                             }
-                            else {
-                                body += `<li class="liitem" key="${key}">Unnamed Article</li>`;
-                            }
+                            catch (e) { }
                         }
-                        catch (e) { }
-                    }
-                });
+                    });
+                    body += `</ul></li>`;
+                }
                 body += `</ul></li>`;
             }
-            body += `</ul></li>`;
             body += ` </ul>
 				</li>      					
 				<li><span class="caret">Documentation (SDK Version ${this._currentDocsVersion})</span>
@@ -485,21 +495,23 @@ class ExamplesViewProvider {
                 body += `</ul></li>`;
             }
             body += `</ul></li>`;
-            body += `<li><span class="caret">Rust</span>
-				<ul class="nested">`;
-            for (var i = 0; i < this.docs_rust.length; i++) {
-                var topic = this.docs_rust[i][0];
-                body += `<li><span class="caret">${topic.substring(topic.indexOf('.') + 1)}</span>
-						<ul class="nested">`;
-                for (var j = 0; j < this.docs_rust[i][1].length; j++) {
-                    var item = this.docs_rust[i][1][j];
-                    item = item.substring(0, item.length - 3);
-                    item = item.substring(item.indexOf('.') + 1);
-                    body += `<li class="liitem" file="${this.docs_rust[i][1][j]}" folder="${topic}" doc="1" lang="cpp">${item}</li>`;
+            if (enableRust) {
+                body += `<li><span class="caret">Rust</span>
+					<ul class="nested">`;
+                for (var i = 0; i < this.docs_rust.length; i++) {
+                    var topic = this.docs_rust[i][0];
+                    body += `<li><span class="caret">${topic.substring(topic.indexOf('.') + 1)}</span>
+							<ul class="nested">`;
+                    for (var j = 0; j < this.docs_rust[i][1].length; j++) {
+                        var item = this.docs_rust[i][1][j];
+                        item = item.substring(0, item.length - 3);
+                        item = item.substring(item.indexOf('.') + 1);
+                        body += `<li class="liitem" file="${this.docs_rust[i][1][j]}" folder="${topic}" doc="1" lang="cpp">${item}</li>`;
+                    }
+                    body += `</ul></li>`;
                 }
                 body += `</ul></li>`;
             }
-            body += `</ul></li>`;
             body += `<li class="liitem" file="${Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/changelog.md'}" folder="SDK Version Changelog" doc="1" lang="none">SDK Version Changelog</li>`;
             body += `</ul></li>`;
             body += `<li><span class="caret">SDK Files</span>
@@ -517,14 +529,16 @@ class ExamplesViewProvider {
                 body += `<li class="liitem" path="${files_cpp[i][1]}">${files_cpp[i][0]}</li>`;
             }
             body += `</ul></li>`;
-            body += `<li><span class="caret">Rust</span>
-					<ul class="nested">`;
-            for (var i = 0; i < files_rust.length; i++) {
-                if (files_rust[i][0] === 'Cargo.lock' || files_rust[i][0] === 'Cargo.toml')
-                    continue;
-                body += `<li class="liitem" path="${files_rust[i][1]}">${files_rust[i][0]}</li>`;
+            if (enableRust) {
+                body += `<li><span class="caret">Rust</span>
+						<ul class="nested">`;
+                for (var i = 0; i < files_rust.length; i++) {
+                    if (files_rust[i][0] === 'Cargo.lock' || files_rust[i][0] === 'Cargo.toml')
+                        continue;
+                    body += `<li class="liitem" path="${files_rust[i][1]}">${files_rust[i][0]}</li>`;
+                }
+                body += `</ul></li>`;
             }
-            body += `</ul></li>`;
             body += `</ul></li>`;
             body += `<li><span class="caret">WOWConnect Library</span>
 				<ul class="nested">`;
