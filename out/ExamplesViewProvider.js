@@ -296,6 +296,60 @@ class ExamplesViewProvider {
             this.docs_pawn = this.getDocumentation('pawn');
             this.docs_cpp = this.getDocumentation('cpp');
             this.docs_rust = this.getDocumentation('rust');
+            //DEBUG
+            /*
+            let toolspath = Configuration.getFullToolPath("SearchIndex.json");
+            if(fs.existsSync(toolspath))
+            {
+                var idx = lunr.Index.load(JSON.parse(fs.readFileSync(toolspath, 'utf-8')));
+
+                var search_result = idx.search("WOWCube").map(result => result.ref);
+                var t;
+                t=0;
+            }
+            else
+            {
+            var docs_path = Configuration.getWOWSDKPath();
+            docs_path+='sdk/docs/'+Configuration.getCurrentVersion()+'/pawn/'+this.docs_pawn[0][0]+'/';
+
+            var documents: { id: number; title: string; content: string; }[] = [];
+            let idx = lunr(function ()
+            {
+                this.ref('id');
+                this.field('title');
+                this.field('content');
+                this.metadataWhitelist = ['position'];
+
+                fs.readdirSync(docs_path).forEach((file, index) =>
+                {
+                    const filePath = path.join(docs_path, file);
+
+                    if (path.extname(file) === '.md')
+                    {
+                        const content = fs.readFileSync(filePath, 'utf8');
+                        const title = path.basename(file, '.md');
+                        const doc = { id: index, title: title, content: content };
+                        documents.push(doc);
+                        this.add(doc);
+                    }
+                });
+            });
+
+            var serializedIdx = JSON.stringify(idx);
+            fs.writeFileSync(toolspath,serializedIdx);
+
+            var search_result2 = idx.search("GFX_PARTICLE");
+            var search_result = idx.search("GFX_PARTICLE").map(result => result.ref);
+            
+            search_result.forEach(ref => {
+                var i:number = parseInt(ref,10);
+                const doc = documents[i];
+                console.log(`Keyword "GFX_PARTICLE" found in file: ${doc.title}`);
+            });
+
+            }
+            */
+            //DEBUG
             //get online resources
             var sites = this.getOnlineResources();
             //get wowconnect resources

@@ -9,6 +9,7 @@ import { Project } from './Project';
 import {Providers} from './Providers';
 import {Output} from './Output';
 import { Script } from "./Script";
+import { NameBeautifier } from "./NameBeautifier";
 
 interface WOWCubeBuildTaskDefinition extends vscode.TaskDefinition 
 {

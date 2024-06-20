@@ -7,6 +7,7 @@ import { Uri } from "vscode";
 import {Configuration} from './Configuration';
 import { Project } from "./Project";
 import {Output} from './Output';
+import { NameBeautifier } from "./NameBeautifier";
 
 import * as crypto from 'crypto';
 
@@ -229,7 +230,7 @@ export class WizardPanel {
                 const iconFilename:string = templatespath+"icon.png";             
                 fs.copyFileSync(iconFilename,fullpath+'/assets/icon.png');
 
-                var br = this.beautifyClassName(name);
+                var br = NameBeautifier.rustClassName(name);
 
                 //application UUID
 	            var arr:Uint8Array = crypto.pseudoRandomBytes(10);
@@ -402,7 +403,7 @@ export class WizardPanel {
                 const iconFilename:string = templatespath+"icon.png";             
                 fs.copyFileSync(iconFilename,fullpath+'/assets/icon.png');
 
-                var br = this.beautifyClassName(name);
+                var br = NameBeautifier.cppClassName(name);
 
                 //application UUID
 	            var arr:Uint8Array = crypto.pseudoRandomBytes(10);
@@ -880,6 +881,7 @@ export class WizardPanel {
             return ret;
         }
 
+        /*
         private beautifyClassName(name:string):any
         { 
             var str:string = name;
@@ -1072,6 +1074,7 @@ export class WizardPanel {
 
             return {str:str,err:0,desc:desc};
         }
+        */
 }
 
 function getWebviewOptions(extensionUri: vscode.Uri): 
