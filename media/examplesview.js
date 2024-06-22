@@ -5,6 +5,9 @@
  
     var toggler = document.getElementsByClassName("caret");
     var items = document.getElementsByClassName("liitem");
+    var search = document.getElementById("searchtext");
+    var searchbutton = document.getElementById("searchbutton");
+
     var i;
 
     for (i = 0; i < toggler.length; i++) 
@@ -51,6 +54,22 @@
             }
         );
     }
+
+    searchbutton.addEventListener('click',function()
+    {
+        vscode.postMessage({ type: 'search', value: {text:search.value} });
+        search.value = "";
+    });
+
+    search.addEventListener('keypress',function(e)
+    {
+        if(e.keyCode==13)
+        {
+            e.preventDefault(); 
+            vscode.postMessage({ type: 'search', value: {text:search.value} });
+            search.value = "";
+        }
+    });
 
     // Handle messages sent from the extension to the webview
     window.addEventListener('message', event =>  

@@ -8,6 +8,7 @@ import {Configuration} from './Configuration';
 import {Output} from "./Output";
 import { ExamplePanel } from './ExamplePanel';
 import { DocumentPanel } from './DocumentPanel';
+import { SearchResultPanel } from './SearchResultPanel';
 import { throws } from 'assert';
 import * as lunr from 'lunr';
 
@@ -93,7 +94,16 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 						vscode.window.showTextDocument(doc);
 						});
 					}	
-					break;									
+					break;
+				case 'search':
+					{
+						var textToSearch = data.value.text;
+						if(textToSearch.length>0)
+						{
+							SearchResultPanel.createOrShowDoc(Configuration.context.extensionUri, textToSearch);
+						}
+					}		
+					break;							
 			}
 		});
 	}
@@ -525,6 +535,14 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 			</head>
 			<body>
 			<div>
+			<div id="searchlabel">Search</div>
+			<div>
+			<input  class='sdk-path' id='searchtext' value=''></input>
+			<button class='sdk-path-button' id="searchbutton"><p>Go</p></button>
+			</div>
+			<div class="separator"></div>
+			</br>
+
 			<ul id="myUL">
 				<li><span class="caret">Built-in Examples</span>
 					<ul class="nested">

@@ -8,6 +8,7 @@ const Configuration_1 = require("./Configuration");
 const Output_1 = require("./Output");
 const ExamplePanel_1 = require("./ExamplePanel");
 const DocumentPanel_1 = require("./DocumentPanel");
+const SearchResultPanel_1 = require("./SearchResultPanel");
 class ExamplesViewProvider {
     constructor(_extensionUri) {
         this._extensionUri = _extensionUri;
@@ -64,6 +65,14 @@ class ExamplesViewProvider {
                         vscode.workspace.openTextDocument(openPath).then(doc => {
                             vscode.window.showTextDocument(doc);
                         });
+                    }
+                    break;
+                case 'search':
+                    {
+                        var textToSearch = data.value.text;
+                        if (textToSearch.length > 0) {
+                            SearchResultPanel_1.SearchResultPanel.createOrShowDoc(Configuration_1.Configuration.context.extensionUri, textToSearch);
+                        }
                     }
                     break;
             }
@@ -390,6 +399,14 @@ class ExamplesViewProvider {
 			</head>
 			<body>
 			<div>
+			<div id="searchlabel">Search</div>
+			<div>
+			<input  class='sdk-path' id='searchtext' value=''></input>
+			<button class='sdk-path-button' id="searchbutton"><p>Go</p></button>
+			</div>
+			<div class="separator"></div>
+			</br>
+
 			<ul id="myUL">
 				<li><span class="caret">Built-in Examples</span>
 					<ul class="nested">

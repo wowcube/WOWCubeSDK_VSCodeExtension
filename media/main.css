@@ -164,6 +164,17 @@ body {
 	display:inline-block;
 }
 
+#searchtext
+{
+	width:calc(100% - 70px);
+	display:inline-block;
+}
+
+#searchlabel
+{
+	margin-bottom: 4px;
+}
+
 .sdk-path-button
 {
 	width:35px;
@@ -281,4 +292,12 @@ body {
 .inactive
 {
 	background-color: var(--vscode-titleBar-inactiveBackground);
+}
+
+.separator
+{
+	width: 100%;
+	height: 1px;
+	color:var(--vscode-terminal-ansiBrightWhite);
+	margin-top: 15px;
 }
