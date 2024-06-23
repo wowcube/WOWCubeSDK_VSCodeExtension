@@ -3,7 +3,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.SearchResultPanel = void 0;
 const vscode = require("vscode");
 const getNonce_1 = require("./getNonce");
+const fs = require("fs");
+const path = require("path");
 const Configuration_1 = require("./Configuration");
+const lunr = require("lunr");
 class SearchResultPanel {
     constructor(panel, extensionUri, search) {
         this._disposables = [];
@@ -67,7 +70,225 @@ class SearchResultPanel {
         if (this._viewLoaded === false)
             this._panel.webview.html = this._getHtmlForWebview(webview);
     }
+    getDocumentation(lang) {
+        var topics = new Array();
+        let currentDocsVersion = Configuration_1.Configuration.getCurrentVersion();
+        var sourceDocsRoot = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/';
+        var sourceDocs = '';
+        var sourceDocsRoot = '';
+        switch (lang) {
+            default:
+            case 'pawn':
+                {
+                    sourceDocs = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/' + currentDocsVersion + '/pawn/';
+                }
+                break;
+            case 'cpp':
+                {
+                    sourceDocs = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/' + currentDocsVersion + '/cpp/';
+                }
+                break;
+            case 'rust':
+                {
+                    sourceDocs = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/' + currentDocsVersion + '/rust/';
+                }
+                break;
+        }
+        //check if we have documentation of needed version
+        if (fs.existsSync(sourceDocsRoot) === true) {
+            if (fs.existsSync(sourceDocs) === false) {
+                //current version doesn't have its own docs. Let's look for a "base" version
+                var v1r = /(?<maj>\d{1,2})\.(?<min>\d{1,2})(\-(?<build>\d{1,4}))?/.exec(currentDocsVersion);
+                var majs = v1r?.groups?.maj;
+                var mins = v1r?.groups?.min;
+                currentDocsVersion = majs + '.' + mins;
+                //this must MUST be present. If there is no path of a such, it means that DevKit folder structure is incomplete! 
+                //sourceDocs = Configuration.getWOWSDKPath()+'sdk/docs/'+this._currentDocsVersion+'/';
+                switch (lang) {
+                    default:
+                    case 'pawn':
+                        {
+                            sourceDocs = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/' + currentDocsVersion + '/pawn/';
+                        }
+                        break;
+                    case 'cpp':
+                        {
+                            sourceDocs = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/' + currentDocsVersion + '/cpp/';
+                        }
+                        break;
+                    case 'rust':
+                        {
+                            sourceDocs = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/docs/' + currentDocsVersion + '/rust/';
+                        }
+                        break;
+                }
+            }
+        }
+        //fetch docs folder for topics
+        if (fs.existsSync(sourceDocs) === true) {
+            fs.readdirSync(sourceDocs).forEach(folder => {
+                topics.push([folder, new Array()]);
+            });
+            for (var i = 0; i < topics.length; i++) {
+                var path = sourceDocs + topics[i][0];
+                if (fs.existsSync(path) === true) {
+                    fs.readdirSync(path).forEach(file => {
+                        var ext = file.substring(file.lastIndexOf('.'));
+                        if (ext === '.md') {
+                            topics[i][1].push(file);
+                        }
+                    });
+                }
+            }
+        }
+        return topics;
+    }
+    buildIndex() {
+        var docs_pawn = [];
+        var docs_cpp = [];
+        var docs_rust = [];
+        //get docs
+        docs_pawn = this.getDocumentation('pawn');
+        docs_cpp = this.getDocumentation('cpp');
+        docs_rust = this.getDocumentation('rust');
+        //var documents: { id: number; title: string; content: string; type:string; lang: string; }[] = [];
+        SearchResultPanel.searchIndex = lunr(function () {
+            this.ref('id');
+            this.field('path');
+            this.field('title');
+            this.field('content');
+            this.field('type');
+            this.field('lang');
+            this.metadataWhitelist = ['position'];
+            var root_path = Configuration_1.Configuration.getWOWSDKPath();
+            var docs_path = "";
+            var ind = 0;
+            //pawn
+            for (var i = 0; i < docs_pawn.length; i++) {
+                docs_path = root_path + 'sdk/docs/' + Configuration_1.Configuration.getCurrentVersion() + '/pawn/' + docs_pawn[i][0] + '/';
+                fs.readdirSync(docs_path).forEach((file, index) => {
+                    const filePath = path.join(docs_path, file);
+                    if (path.extname(file) === '.md') {
+                        const content = fs.readFileSync(filePath, 'utf8');
+                        const title = path.basename(file, '.md');
+                        const doc = { id: ind, path: filePath, title: title, content: content, type: 'doc', lang: 'pawn' };
+                        SearchResultPanel.searchTOC.push(doc);
+                        this.add(doc);
+                        ind++;
+                    }
+                });
+            }
+            //cpp
+            for (var i = 0; i < docs_cpp.length; i++) {
+                docs_path = root_path + 'sdk/docs/' + Configuration_1.Configuration.getCurrentVersion() + '/cpp/' + docs_cpp[i][0] + '/';
+                fs.readdirSync(docs_path).forEach((file, index) => {
+                    const filePath = path.join(docs_path, file);
+                    if (path.extname(file) === '.md') {
+                        const content = fs.readFileSync(filePath, 'utf8');
+                        const title = path.basename(file, '.md');
+                        const doc = { id: ind, path: filePath, title: title, content: content, type: 'doc', lang: 'cpp' };
+                        SearchResultPanel.searchTOC.push(doc);
+                        this.add(doc);
+                        ind++;
+                    }
+                });
+            }
+            //rust
+            for (var i = 0; i < docs_rust.length; i++) {
+                docs_path = root_path + 'sdk/docs/' + Configuration_1.Configuration.getCurrentVersion() + '/rust/' + docs_rust[i][0] + '/';
+                fs.readdirSync(docs_path).forEach((file, index) => {
+                    const filePath = path.join(docs_path, file);
+                    if (path.extname(file) === '.md') {
+                        const content = fs.readFileSync(filePath, 'utf8');
+                        const title = path.basename(file, '.md');
+                        const doc = { id: ind, path: filePath, title: title, content: content, type: 'doc', lang: 'rust' };
+                        SearchResultPanel.searchTOC.push(doc);
+                        this.add(doc);
+                        ind++;
+                    }
+                });
+            }
+            //wowconnect
+            for (var i = 0; i < docs_rust.length; i++) {
+                docs_path = root_path + 'sdk/docs/wowconnect/';
+                fs.readdirSync(docs_path).forEach((file, index) => {
+                    const filePath = path.join(docs_path, file);
+                    if (path.extname(file) === '.md') {
+                        const content = fs.readFileSync(filePath, 'utf8');
+                        const title = path.basename(file, '.md');
+                        const doc = { id: ind, path: filePath, title: title, content: content, type: 'doc', lang: 'wowconnect' };
+                        SearchResultPanel.searchTOC.push(doc);
+                        this.add(doc);
+                        ind++;
+                    }
+                });
+            }
+        });
+        for (var i = 0; i < SearchResultPanel.searchTOC.length; i++) {
+            SearchResultPanel.searchTOC[i].content = "";
+        }
+    }
+    doIndexing() {
+        try {
+            let indexpath = Configuration_1.Configuration.getFullToolPath("SearchIndex.json");
+            let tocpath = Configuration_1.Configuration.getFullToolPath("SearchTOC.json");
+            let indexversionpath = Configuration_1.Configuration.getFullToolPath("SearchIndexVersion.json");
+            let version = Configuration_1.Configuration.getCurrentVersion();
+            if (!fs.existsSync(indexpath) || !fs.existsSync(tocpath)) {
+                //index doesnt exist and needs to be built. 
+                //DO INDEXING
+                this.buildIndex();
+                fs.writeFileSync(indexpath, JSON.stringify(SearchResultPanel.searchIndex));
+                fs.writeFileSync(tocpath, JSON.stringify(SearchResultPanel.searchTOC));
+                //save version
+                let json = '{"version":"' + version + '"}';
+                fs.writeFileSync(indexversionpath, json);
+                return;
+            }
+            if (!fs.existsSync(indexversionpath)) {
+                //index version doesn't exist, do indexig and save current version 
+                let json = '{"version":"' + version + '"}';
+                //DO INDEXING 
+                this.buildIndex();
+                fs.writeFileSync(indexpath, JSON.stringify(SearchResultPanel.searchIndex));
+                fs.writeFileSync(tocpath, JSON.stringify(SearchResultPanel.searchTOC));
+                //save version
+                fs.writeFileSync(indexversionpath, json);
+            }
+            else {
+                var ver = fs.readFileSync(indexversionpath, 'utf-8');
+                var json = JSON.parse(ver);
+                if (json.version !== version) {
+                    //the index is built for different version, has to be rebuilt
+                    //DO INDEXING
+                    this.buildIndex();
+                    fs.writeFileSync(indexpath, JSON.stringify(SearchResultPanel.searchIndex));
+                    fs.writeFileSync(tocpath, JSON.stringify(SearchResultPanel.searchTOC));
+                    //save new version
+                    let json = '{"version":"' + version + '"}';
+                    fs.writeFileSync(indexversionpath, json);
+                }
+                else {
+                    //the index should be fine
+                    if (SearchResultPanel.searchIndex == null) {
+                        SearchResultPanel.searchIndex = lunr.Index.load(JSON.parse(fs.readFileSync(indexpath, 'utf-8')));
+                        SearchResultPanel.searchTOC = JSON.parse(fs.readFileSync(tocpath, 'utf-8'));
+                    }
+                }
+            }
+        }
+        catch (e) {
+        }
+    }
     _getHtmlForWebview(webview) {
+        this.doIndexing();
+        var search_result = SearchResultPanel.searchIndex.search(this._searchtext); //.map(result => result.ref);
+        for (var i = 0; i < search_result.length; i++) {
+            var el = search_result[i];
+            var j = parseInt(el.ref, 10);
+            const doc = SearchResultPanel.searchTOC[j];
+            console.log(`Keyword found in file: ${doc.title}`);
+        }
         var title = this._searchtext;
         if (title.length > 40) {
             title = title.substring(0, 37);
@@ -116,6 +337,8 @@ class SearchResultPanel {
 exports.SearchResultPanel = SearchResultPanel;
 SearchResultPanel.panels = new Map();
 SearchResultPanel.viewType = "WOWCubeSDK.searchResultPanel";
+SearchResultPanel.searchIndex = null;
+SearchResultPanel.searchTOC = [];
 function getWebviewOptions(extensionUri) {
     return {
         // Enable javascript in the webview
