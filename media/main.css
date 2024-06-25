@@ -301,3 +301,25 @@ body {
 	color:var(--vscode-terminal-ansiBrightWhite);
 	margin-top: 15px;
 }
+
+.searchresultitem
+{
+	width: 100%;
+    background: aliceblue;
+    visibility: visible;
+    padding: 10px;
+    border-color: #d7d7d7;
+    border-style: solid;
+    border-width: 1px;
+}
+
+.searchresultitemtag
+{
+	display: inline;
+	background: var(--vscode-button-hoverBackground);
+    border-radius: 4px;
+    color:var(--vscode-button-foreground);
+    padding: 3px;
+    padding-left: 7px;
+    padding-right: 7px;
+}

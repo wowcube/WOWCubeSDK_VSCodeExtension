@@ -487,7 +487,104 @@ export class SearchResultPanel
                         
                         ret+= `<div> SEARCH RESULT FOR: <p class="neutral">`+this._searchtext+`</p></div>`;
 
-                        ret+=`</div>`;
+                        for(var i:number = 0; i<search_result.length;i++)
+                        {
+                            var el = search_result[i];
+            
+                            var j:number = parseInt(el.ref,10);
+                            const doc = SearchResultPanel.searchTOC[j];
+                            //console.log(`Keyword found in file: ${doc.title}`);   
+
+                            var content:string = fs.readFileSync(doc.path, 'utf8');
+                            if(content.length>0)
+                            {
+                                const keys = Object.keys(el.matchData.metadata);
+                                if(keys.length>0)
+                                {
+                                    var pos = el.matchData.metadata[keys[0]].content.position;
+
+                                    if(pos.length>0)
+                                    {
+                                     content = content.substring(pos[0][0],pos[0][0]+200);
+                                    }
+                                    else
+                                    {
+                                        content = "No search result preview available... ";
+                                    }
+                                }
+                                else
+                                {
+                                    content = "No search result preview available... ";
+                                }
+                            }
+                            else
+                            {
+                                content = "No search result preview available... "; 
+                            }
+
+                            var title:string = doc.title;
+                            if(title.length>2)
+                            {
+                                if(title[1]=='.')
+                                {
+                                    title = title.substring(2);
+                                }
+                            }
+                            ret+=`
+                            <div class='item' style="padding:5px;">
+                            <p><strong>`+title+`<strong></p>
+                            <p>`+content+`</p>
+                            <div>`;
+                            
+                            switch(doc.type)
+                            {
+                                case 'doc':
+                                    ret+=`<p class='searchresultitemtag'>Documenation</p> `;
+                                    break;
+                                default:
+                                    break;
+                            }
+
+                            switch(doc.lang)
+                            {
+                                case 'pawn':
+                                    ret+=`<p class='searchresultitemtag'>Pawn</p> `;
+                                    break;
+                                case 'cpp':
+                                    ret+=`<p class='searchresultitemtag'>C++</p> `;
+                                    break;
+                                case 'rust':
+                                    ret+=`<p class='searchresultitemtag'>Rust</p> `;
+                                    break;
+                                case 'wowconnect':
+                                        ret+=`<p class='searchresultitemtag'>WOW Connect</p> `;
+                                        break;                                    
+                                default:
+                                    break;
+                            }
+                            ret+=`</div> </div>`;
+                            
+                        }
+
+                        /*
+                        ret+=`
+                        <div class='item' style="padding:5px;">
+                        <p>Here goes some text snippet</p>
+                        <div><p class='searchresultitemtag'>Documenation</p> <p class='searchresultitemtag'>Pawn</p> </div> 
+                        </div>
+
+                        <div class='item' style="padding:5px;">
+                        <p>Here goes some text snippet</p>
+                        <div><p class='searchresultitemtag'>Documenation</p> <p class='searchresultitemtag'>Pawn</p> </div> 
+                        </div>
+
+                        <div class='item' style="padding:5px;">
+                        <p>Here goes some text snippet</p>
+                        <div><p class='searchresultitemtag'>Documenation</p> <p class='searchresultitemtag'>Pawn</p> </div> 
+                        </div>
+
+                        </div>`;
+                        */
 
                         ret+=`
                          </div>
