@@ -6,6 +6,7 @@ const getNonce_1 = require("./getNonce");
 const fs = require("fs");
 const path = require("path");
 const Configuration_1 = require("./Configuration");
+const DocumentPanel_1 = require("./DocumentPanel");
 const lunr = require("lunr");
 class SearchResultPanel {
     constructor(panel, extensionUri, search) {
@@ -36,6 +37,22 @@ class SearchResultPanel {
                     break;
                 case 'warn':
                     vscode.window.showWarningMessage(message.value);
+                    break;
+                case 'selected':
+                    {
+                        switch (message.value.doc) {
+                            case 'doc':
+                                {
+                                    if (message.value.lang == 'wowconnect') {
+                                        DocumentPanel_1.DocumentPanel.createOrShowDoc(Configuration_1.Configuration.context.extensionUri, message.value.path, message.value.fullpath, Configuration_1.Configuration.getCurrentVersion(), 'none');
+                                    }
+                                    else {
+                                        DocumentPanel_1.DocumentPanel.createOrShowDoc(Configuration_1.Configuration.context.extensionUri, message.value.path, message.value.fname + ".md", Configuration_1.Configuration.getCurrentVersion(), message.value.lang);
+                                    }
+                                }
+                                break;
+                        }
+                    }
                     break;
             }
         }, null, this._disposables);
@@ -162,16 +179,18 @@ class SearchResultPanel {
             this.metadataWhitelist = ['position'];
             var root_path = Configuration_1.Configuration.getWOWSDKPath();
             var docs_path = "";
+            var docs_title = "";
             var ind = 0;
             //pawn
             for (var i = 0; i < docs_pawn.length; i++) {
                 docs_path = root_path + 'sdk/docs/' + Configuration_1.Configuration.getCurrentVersion() + '/pawn/' + docs_pawn[i][0] + '/';
+                docs_title = docs_pawn[i][0];
                 fs.readdirSync(docs_path).forEach((file, index) => {
                     const filePath = path.join(docs_path, file);
                     if (path.extname(file) === '.md') {
                         const content = fs.readFileSync(filePath, 'utf8');
                         const title = path.basename(file, '.md');
-                        const doc = { id: ind, path: filePath, title: title, content: content, type: 'doc', lang: 'pawn' };
+                        const doc = { id: ind, path: filePath, folder: docs_title, title: title, content: content, type: 'doc', lang: 'pawn' };
                         SearchResultPanel.searchTOC.push(doc);
                         this.add(doc);
                         ind++;
@@ -181,12 +200,13 @@ class SearchResultPanel {
             //cpp
             for (var i = 0; i < docs_cpp.length; i++) {
                 docs_path = root_path + 'sdk/docs/' + Configuration_1.Configuration.getCurrentVersion() + '/cpp/' + docs_cpp[i][0] + '/';
+                docs_title = docs_cpp[i][0];
                 fs.readdirSync(docs_path).forEach((file, index) => {
                     const filePath = path.join(docs_path, file);
                     if (path.extname(file) === '.md') {
                         const content = fs.readFileSync(filePath, 'utf8');
                         const title = path.basename(file, '.md');
-                        const doc = { id: ind, path: filePath, title: title, content: content, type: 'doc', lang: 'cpp' };
+                        const doc = { id: ind, path: filePath, folder: docs_title, title: title, content: content, type: 'doc', lang: 'cpp' };
                         SearchResultPanel.searchTOC.push(doc);
                         this.add(doc);
                         ind++;
@@ -196,12 +216,13 @@ class SearchResultPanel {
             //rust
             for (var i = 0; i < docs_rust.length; i++) {
                 docs_path = root_path + 'sdk/docs/' + Configuration_1.Configuration.getCurrentVersion() + '/rust/' + docs_rust[i][0] + '/';
+                docs_title = docs_rust[i][0];
                 fs.readdirSync(docs_path).forEach((file, index) => {
                     const filePath = path.join(docs_path, file);
                     if (path.extname(file) === '.md') {
                         const content = fs.readFileSync(filePath, 'utf8');
                         const title = path.basename(file, '.md');
-                        const doc = { id: ind, path: filePath, title: title, content: content, type: 'doc', lang: 'rust' };
+                        const doc = { id: ind, path: filePath, folder: docs_title, title: title, content: content, type: 'doc', lang: 'rust' };
                         SearchResultPanel.searchTOC.push(doc);
                         this.add(doc);
                         ind++;
@@ -216,7 +237,7 @@ class SearchResultPanel {
                     if (path.extname(file) === '.md') {
                         const content = fs.readFileSync(filePath, 'utf8');
                         const title = path.basename(file, '.md');
-                        const doc = { id: ind, path: filePath, title: title, content: content, type: 'doc', lang: 'wowconnect' };
+                        const doc = { id: ind, path: filePath, folder: "WOW Connect Library", title: title, content: content, type: 'doc', lang: 'wowconnect' };
                         SearchResultPanel.searchTOC.push(doc);
                         this.add(doc);
                         ind++;
@@ -283,12 +304,6 @@ class SearchResultPanel {
     _getHtmlForWebview(webview) {
         this.doIndexing();
         var search_result = SearchResultPanel.searchIndex.search(this._searchtext); //.map(result => result.ref);
-        for (var i = 0; i < search_result.length; i++) {
-            var el = search_result[i];
-            var j = parseInt(el.ref, 10);
-            const doc = SearchResultPanel.searchTOC[j];
-            console.log(`Keyword found in file: ${doc.title}`);
-        }
         var title = this._searchtext;
         if (title.length > 40) {
             title = title.substring(0, 37);
@@ -299,7 +314,7 @@ class SearchResultPanel {
         const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
         const styleMainCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "main.css"));
         const styleMDUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "markdown.css"));
-        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "document.js"));
+        const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "searchresult.js"));
         const nonce = (0, getNonce_1.getNonce)();
         const baseUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, 'media')).toString().replace('%22', '');
         var lastPath = Configuration_1.Configuration.getLastPath();
@@ -323,19 +338,25 @@ class SearchResultPanel {
                     <div style="padding:0px;max-height: 77px;overflow: hidden;">
 
                         <div id="viewdiv" class="view" style="padding:26px;margin-top: 10px; margin-bottom: 10px; top:0px;">`;
-        ret += `<div> SEARCH RESULT FOR: <p class="neutral">` + this._searchtext + `</p></div>`;
-        for (var i = 0; i < search_result.length; i++) {
-            var el = search_result[i];
-            var j = parseInt(el.ref, 10);
-            const doc = SearchResultPanel.searchTOC[j];
-            //console.log(`Keyword found in file: ${doc.title}`);   
-            var content = fs.readFileSync(doc.path, 'utf8');
-            if (content.length > 0) {
-                const keys = Object.keys(el.matchData.metadata);
-                if (keys.length > 0) {
-                    var pos = el.matchData.metadata[keys[0]].content.position;
-                    if (pos.length > 0) {
-                        content = content.substring(pos[0][0], pos[0][0] + 200);
+        ret += `<h3> SEARCH RESULT FOR: <h1>` + this._searchtext + `</h1></h3>`;
+        if (search_result.length > 0) {
+            for (var i = 0; i < search_result.length; i++) {
+                var el = search_result[i];
+                var j = parseInt(el.ref, 10);
+                const doc = SearchResultPanel.searchTOC[j];
+                var content = fs.readFileSync(doc.path, 'utf8');
+                var content_pos = 0;
+                if (content.length > 0) {
+                    const keys = Object.keys(el.matchData.metadata);
+                    if (keys.length > 0) {
+                        var pos = el.matchData.metadata[keys[0]].content.position;
+                        if (pos.length > 0) {
+                            content = content.substring(pos[0][0], pos[0][0] + 200);
+                            content_pos = pos[0][0];
+                        }
+                        else {
+                            content = "No search result preview available... ";
+                        }
                     }
                     else {
                         content = "No search result preview available... ";
@@ -344,65 +365,51 @@ class SearchResultPanel {
                 else {
                     content = "No search result preview available... ";
                 }
-            }
-            else {
-                content = "No search result preview available... ";
-            }
-            var title = doc.title;
-            if (title.length > 2) {
-                if (title[1] == '.') {
-                    title = title.substring(2);
+                var title = doc.title;
+                if (title.length > 2) {
+                    if (title[1] == '.') {
+                        title = title.substring(2);
+                    }
                 }
+                else if (title.length > 3) {
+                    if (title[2] == '.') {
+                        title = title.substring(3);
+                    }
+                }
+                ret += `
+                                <div class='item' style="padding:5px;" doc="` + doc.type + `" lang="` + doc.lang + `" folder="` + doc.folder + `" fname="` + doc.title + `" path="` + doc.path + `" pos="` + content_pos + `">
+                                <p><strong>` + title + `<strong></p>
+                                <p>` + content + `</p>
+                                <div>`;
+                switch (doc.type) {
+                    case 'doc':
+                        ret += `<p class='searchresultitemtag'>Documenation</p> `;
+                        break;
+                    default:
+                        break;
+                }
+                switch (doc.lang) {
+                    case 'pawn':
+                        ret += `<p class='searchresultitemtag'>Pawn</p> `;
+                        break;
+                    case 'cpp':
+                        ret += `<p class='searchresultitemtag'>C++</p> `;
+                        break;
+                    case 'rust':
+                        ret += `<p class='searchresultitemtag'>Rust</p> `;
+                        break;
+                    case 'wowconnect':
+                        ret += `<p class='searchresultitemtag'>WOW Connect</p> `;
+                        break;
+                    default:
+                        break;
+                }
+                ret += `</div> </div>`;
             }
-            ret += `
-                            <div class='item' style="padding:5px;">
-                            <p><strong>` + title + `<strong></p>
-                            <p>` + content + `</p>
-                            <div>`;
-            switch (doc.type) {
-                case 'doc':
-                    ret += `<p class='searchresultitemtag'>Documenation</p> `;
-                    break;
-                default:
-                    break;
-            }
-            switch (doc.lang) {
-                case 'pawn':
-                    ret += `<p class='searchresultitemtag'>Pawn</p> `;
-                    break;
-                case 'cpp':
-                    ret += `<p class='searchresultitemtag'>C++</p> `;
-                    break;
-                case 'rust':
-                    ret += `<p class='searchresultitemtag'>Rust</p> `;
-                    break;
-                case 'wowconnect':
-                    ret += `<p class='searchresultitemtag'>WOW Connect</p> `;
-                    break;
-                default:
-                    break;
-            }
-            ret += `</div> </div>`;
         }
-        /*
-        ret+=`
-        <div class='item' style="padding:5px;">
-        <p>Here goes some text snippet</p>
-        <div><p class='searchresultitemtag'>Documenation</p> <p class='searchresultitemtag'>Pawn</p> </div>
-        </div>
-
-        <div class='item' style="padding:5px;">
-        <p>Here goes some text snippet</p>
-        <div><p class='searchresultitemtag'>Documenation</p> <p class='searchresultitemtag'>Pawn</p> </div>
-        </div>
-
-        <div class='item' style="padding:5px;">
-        <p>Here goes some text snippet</p>
-        <div><p class='searchresultitemtag'>Documenation</p> <p class='searchresultitemtag'>Pawn</p> </div>
-        </div>
-
-        </div>`;
-        */
+        else {
+            ret += `<h4>No results</h4>`;
+        }
         ret += `
                          </div>
                 </body>

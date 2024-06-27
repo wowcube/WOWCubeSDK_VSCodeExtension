@@ -3,6 +3,7 @@ import { getNonce } from "./getNonce";
 import * as fs from 'fs';
 import * as path from 'path';
 import {Configuration} from './Configuration';
+import { DocumentPanel } from './DocumentPanel';
 import { Version } from "./Version";
 import { Providers } from "./Providers";
 import * as lunr from 'lunr';
@@ -13,7 +14,7 @@ export class SearchResultPanel
     public static readonly viewType = "WOWCubeSDK.searchResultPanel";
 
     public static searchIndex:any = null; 
-    public static searchTOC: { id: number; path:string, title: string; content: string; type:string; lang: string; }[] = [];
+    public static searchTOC: { id: number; path:string, folder: string, title: string; content: string; type:string; lang: string; }[] = [];
 
     private readonly _panel: vscode.WebviewPanel;  
     private readonly _extensionUri: vscode.Uri;  
@@ -88,6 +89,25 @@ export class SearchResultPanel
                         break;
                         case 'warn':
                             vscode.window.showWarningMessage(message.value); 
+                        break;
+                        case 'selected':
+                            {
+                                switch(message.value.doc)
+                                {
+                                    case 'doc':
+                                        {
+                                            if(message.value.lang=='wowconnect') 
+                                            {
+                                                 DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,message.value.path, message.value.fullpath,Configuration.getCurrentVersion(),'none');
+                                            }
+                                            else
+                                            {
+                                                DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,message.value.path, message.value.fname+".md",Configuration.getCurrentVersion(),message.value.lang);
+                                            }
+                                        }
+                                    break;
+                                }
+                            }
                         break;
                     }
                 },
@@ -247,6 +267,7 @@ export class SearchResultPanel
 
                 var root_path = Configuration.getWOWSDKPath();
                 var docs_path = "";
+                var docs_title = "";
 
                 var ind:number = 0;
 
@@ -254,6 +275,7 @@ export class SearchResultPanel
                 for(var i=0;i<docs_pawn.length; i++)
                 {
                     docs_path = root_path+'sdk/docs/'+Configuration.getCurrentVersion()+'/pawn/'+docs_pawn[i][0]+'/';
+                    docs_title = docs_pawn[i][0];
 
                     fs.readdirSync(docs_path).forEach((file, index) => 
                     {
@@ -263,7 +285,7 @@ export class SearchResultPanel
                         {
                             const content = fs.readFileSync(filePath, 'utf8');
                             const title = path.basename(file, '.md');
-                            const doc = { id: ind, path:filePath, title: title, content: content, type:'doc', lang:'pawn'};
+                            const doc = { id: ind, path:filePath, folder:docs_title, title: title, content: content, type:'doc', lang:'pawn'};
                             SearchResultPanel.searchTOC.push(doc);
                             this.add(doc);
                             ind++;
@@ -275,6 +297,7 @@ export class SearchResultPanel
                 for(var i=0;i<docs_cpp.length; i++)
                 {
                     docs_path = root_path+'sdk/docs/'+Configuration.getCurrentVersion()+'/cpp/'+docs_cpp[i][0]+'/';
+                    docs_title = docs_cpp[i][0];
 
                     fs.readdirSync(docs_path).forEach((file, index) => 
                     {
@@ -284,7 +307,7 @@ export class SearchResultPanel
                         {
                             const content = fs.readFileSync(filePath, 'utf8');
                             const title = path.basename(file, '.md');
-                            const doc = { id: ind, path:filePath, title: title, content: content, type:'doc', lang:'cpp'};
+                            const doc = { id: ind, path:filePath, folder:docs_title, title: title, content: content, type:'doc', lang:'cpp'};
                             SearchResultPanel.searchTOC.push(doc);
                             this.add(doc);
                             ind++;
@@ -296,6 +319,7 @@ export class SearchResultPanel
                 for(var i=0;i<docs_rust.length; i++)
                 {
                     docs_path = root_path+'sdk/docs/'+Configuration.getCurrentVersion()+'/rust/'+docs_rust[i][0]+'/';
+                    docs_title = docs_rust[i][0];
 
                     fs.readdirSync(docs_path).forEach((file, index) => 
                     {
@@ -305,7 +329,7 @@ export class SearchResultPanel
                         {
                             const content = fs.readFileSync(filePath, 'utf8');
                             const title = path.basename(file, '.md');
-                            const doc = { id: ind, path:filePath, title: title, content: content, type:'doc', lang:'rust'};
+                            const doc = { id: ind, path:filePath, folder:docs_title, title: title, content: content, type:'doc', lang:'rust'};
                             SearchResultPanel.searchTOC.push(doc);
                             this.add(doc);
                             ind++;
@@ -326,7 +350,7 @@ export class SearchResultPanel
                         {
                             const content = fs.readFileSync(filePath, 'utf8');
                             const title = path.basename(file, '.md');
-                            const doc = { id: ind, path:filePath, title: title, content: content, type:'doc', lang:'wowconnect'};
+                            const doc = { id: ind, path:filePath, folder:"WOW Connect Library", title: title, content: content, type:'doc', lang:'wowconnect'};
                             SearchResultPanel.searchTOC.push(doc);
                             this.add(doc);
                             ind++;
@@ -420,15 +444,6 @@ export class SearchResultPanel
 
             var search_result = SearchResultPanel.searchIndex.search(this._searchtext);//.map(result => result.ref);
 			
-            for(var i:number = 0; i<search_result.length;i++)
-            {
-                var el = search_result[i];
-
-                var j:number = parseInt(el.ref,10);
-                const doc = SearchResultPanel.searchTOC[j];
-                console.log(`Keyword found in file: ${doc.title}`);   
-            }
-
             var title:string = this._searchtext;
          
             if(title.length>40)
@@ -455,7 +470,7 @@ export class SearchResultPanel
             );
 
             const scriptUri = webview.asWebviewUri( 
-                vscode.Uri.joinPath(this._extensionUri, "media", "document.js")
+                vscode.Uri.joinPath(this._extensionUri, "media", "searchresult.js")
             );
             
             const nonce = getNonce();  
@@ -485,27 +500,36 @@ export class SearchResultPanel
 
                         <div id="viewdiv" class="view" style="padding:26px;margin-top: 10px; margin-bottom: 10px; top:0px;">`;
                         
-                        ret+= `<div> SEARCH RESULT FOR: <p class="neutral">`+this._searchtext+`</p></div>`;
+                        ret+= `<h3> SEARCH RESULT FOR: <h1>`+this._searchtext+`</h1></h3>`;
 
-                        for(var i:number = 0; i<search_result.length;i++)
+                        if(search_result.length>0)
                         {
-                            var el = search_result[i];
-            
-                            var j:number = parseInt(el.ref,10);
-                            const doc = SearchResultPanel.searchTOC[j];
-                            //console.log(`Keyword found in file: ${doc.title}`);   
-
-                            var content:string = fs.readFileSync(doc.path, 'utf8');
-                            if(content.length>0)
+                            for(var i:number = 0; i<search_result.length;i++)
                             {
-                                const keys = Object.keys(el.matchData.metadata);
-                                if(keys.length>0)
-                                {
-                                    var pos = el.matchData.metadata[keys[0]].content.position;
+                                var el = search_result[i];
+                
+                                var j:number = parseInt(el.ref,10);
+                                const doc = SearchResultPanel.searchTOC[j];
 
-                                    if(pos.length>0)
+                                var content:string = fs.readFileSync(doc.path, 'utf8');
+                                var content_pos = 0;
+
+                                if(content.length>0)
+                                {
+                                    const keys = Object.keys(el.matchData.metadata);
+                                    if(keys.length>0)
                                     {
-                                     content = content.substring(pos[0][0],pos[0][0]+200);
+                                        var pos = el.matchData.metadata[keys[0]].content.position;
+
+                                        if(pos.length>0)
+                                        {
+                                            content = content.substring(pos[0][0],pos[0][0]+200);
+                                            content_pos = pos[0][0];
+                                        }
+                                        else
+                                        {
+                                            content = "No search result preview available... ";
+                                        }
                                     }
                                     else
                                     {
@@ -514,78 +538,66 @@ export class SearchResultPanel
                                 }
                                 else
                                 {
-                                    content = "No search result preview available... ";
+                                    content = "No search result preview available... "; 
                                 }
-                            }
-                            else
-                            {
-                                content = "No search result preview available... "; 
-                            }
 
-                            var title:string = doc.title;
-                            if(title.length>2)
-                            {
-                                if(title[1]=='.')
+                                var title:string = doc.title;
+                                if(title.length>2)
                                 {
-                                    title = title.substring(2);
+                                    if(title[1]=='.')
+                                    {
+                                        title = title.substring(2);
+                                    }
                                 }
-                            }
-                            ret+=`
-                            <div class='item' style="padding:5px;">
-                            <p><strong>`+title+`<strong></p>
-                            <p>`+content+`</p>
-                            <div>`;
-                            
-                            switch(doc.type)
-                            {
-                                case 'doc':
-                                    ret+=`<p class='searchresultitemtag'>Documenation</p> `;
-                                    break;
-                                default:
-                                    break;
-                            }
+                                else
+                                if(title.length>3)
+                                {
+                                    if(title[2]=='.')
+                                    {
+                                        title = title.substring(3);
+                                    }
+                                }
 
-                            switch(doc.lang)
-                            {
-                                case 'pawn':
-                                    ret+=`<p class='searchresultitemtag'>Pawn</p> `;
-                                    break;
-                                case 'cpp':
-                                    ret+=`<p class='searchresultitemtag'>C++</p> `;
-                                    break;
-                                case 'rust':
-                                    ret+=`<p class='searchresultitemtag'>Rust</p> `;
-                                    break;
-                                case 'wowconnect':
-                                        ret+=`<p class='searchresultitemtag'>WOW Connect</p> `;
-                                        break;                                    
-                                default:
-                                    break;
+                                ret+=`
+                                <div class='item' style="padding:5px;" doc="`+doc.type+`" lang="`+doc.lang+`" folder="`+doc.folder+`" fname="`+doc.title+`" path="`+doc.path+`" pos="`+content_pos+`">
+                                <p><strong>`+title+`<strong></p>
+                                <p>`+content+`</p>
+                                <div>`;
+                                
+                                switch(doc.type)
+                                {
+                                    case 'doc':
+                                        ret+=`<p class='searchresultitemtag'>Documenation</p> `;
+                                        break;
+                                    default:
+                                        break;
+                                }
+
+                                switch(doc.lang)
+                                {
+                                    case 'pawn':
+                                        ret+=`<p class='searchresultitemtag'>Pawn</p> `;
+                                        break;
+                                    case 'cpp':
+                                        ret+=`<p class='searchresultitemtag'>C++</p> `;
+                                        break;
+                                    case 'rust':
+                                        ret+=`<p class='searchresultitemtag'>Rust</p> `;
+                                        break;
+                                    case 'wowconnect':
+                                            ret+=`<p class='searchresultitemtag'>WOW Connect</p> `;
+                                            break;                                    
+                                    default:
+                                        break;
+                                }
+                                ret+=`</div> </div>`;
+                                
                             }
-                            ret+=`</div> </div>`;
-                            
                         }
-
-                        /*
-                        ret+=`
-                        <div class='item' style="padding:5px;">
-                        <p>Here goes some text snippet</p>
-                        <div><p class='searchresultitemtag'>Documenation</p> <p class='searchresultitemtag'>Pawn</p> </div> 
-                        </div>
-
-                        <div class='item' style="padding:5px;">
-                        <p>Here goes some text snippet</p>
-                        <div><p class='searchresultitemtag'>Documenation</p> <p class='searchresultitemtag'>Pawn</p> </div> 
-                        </div>
-
-                        <div class='item' style="padding:5px;">
-                        <p>Here goes some text snippet</p>
-                        <div><p class='searchresultitemtag'>Documenation</p> <p class='searchresultitemtag'>Pawn</p> </div> 
-                        </div>
-
-                        </div>`;
-                        */
-
+                        else
+                        {
+                            ret+=`<h4>No results</h4>`;
+                        }
                         ret+=`
                          </div>
                 </body>
