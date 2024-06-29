@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require("path");
 const Configuration_1 = require("./Configuration");
 const DocumentPanel_1 = require("./DocumentPanel");
+const ExamplePanel_1 = require("./ExamplePanel");
 const lunr = require("lunr");
 class SearchResultPanel {
     constructor(panel, extensionUri, search) {
@@ -51,6 +52,10 @@ class SearchResultPanel {
                                     }
                                 }
                                 break;
+                            case 'example':
+                                {
+                                    ExamplePanel_1.ExamplePanel.createOrShow(Configuration_1.Configuration.context.extensionUri, message.value.path, message.value.lang);
+                                }
                         }
                     }
                     break;
@@ -86,6 +91,65 @@ class SearchResultPanel {
         //webview.postMessage({ type: 'scrollTo',value: this._scrollPos} );
         if (this._viewLoaded === false)
             this._panel.webview.html = this._getHtmlForWebview(webview);
+    }
+    getExamples(lang) {
+        var categories = new Array();
+        //Get existing categories of examples
+        var catInfoPath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/categories_' + lang + '.json';
+        const cat = require(catInfoPath);
+        for (var i = 0; i < cat.categories.length; i++) {
+            categories.push(cat.categories[i]);
+        }
+        //enumerate versions
+        catInfoPath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/';
+        var versions = new Array();
+        if (fs.existsSync(catInfoPath) === true) {
+            fs.readdirSync(catInfoPath).forEach(folder => {
+                versions.push(folder);
+            });
+        }
+        //iterate through versions to collect all examples
+        var examples = new Map();
+        var names = new Map();
+        for (var i = 0; i < versions.length; i++) {
+            for (var j = 0; j < categories.length; j++) {
+                var path = '';
+                switch (lang) {
+                    case 'pawn':
+                        path = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/' + versions[i] + '/pawn/' + categories[j] + '/';
+                        break;
+                    case 'cpp':
+                        path = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/' + versions[i] + '/cpp/' + categories[j] + '/';
+                        break;
+                    case 'rust':
+                        path = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/' + versions[i] + '/rust/' + categories[j] + '/';
+                        break;
+                }
+                Configuration_1.Configuration.getWOWSDKPath() + 'sdk/examples/' + versions[i] + '/' + categories[j] + '/';
+                if (fs.existsSync(path)) {
+                    fs.readdirSync(path).forEach(exampleFolder => {
+                        if (exampleFolder === '.DS_Store')
+                            return;
+                        var key = categories[j] + '/' + exampleFolder;
+                        if (examples.has(key) === false) {
+                            examples.set(key, new Array());
+                            examples.get(key)?.push(versions[i]);
+                            try {
+                                const info = require(path + '/' + exampleFolder + '/info.json');
+                                names.set(key, info.name);
+                            }
+                            catch (e) {
+                                names.set(key, "Unnamed Example " + exampleFolder);
+                            }
+                        }
+                        else {
+                            examples.get(key)?.push(versions[i]);
+                        }
+                    });
+                }
+            }
+        }
+        return { c: categories, e: examples, n: names };
     }
     getDocumentation(lang) {
         var topics = new Array();
@@ -161,6 +225,18 @@ class SearchResultPanel {
         return topics;
     }
     buildIndex() {
+        var examples_pawn = this.getExamples('pawn');
+        var examples_cpp = this.getExamples('cpp');
+        var examples_rust = this.getExamples('rust');
+        var categories_pawn = examples_pawn.c;
+        var articles_pawn = examples_pawn.e;
+        var names_pawn = examples_pawn.n;
+        var categories_cpp = examples_cpp.c;
+        var articles_cpp = examples_cpp.e;
+        var names_cpp = examples_cpp.n;
+        var categories_rust = examples_rust.c;
+        var articles_rust = examples_rust.e;
+        var names_rust = examples_rust.n;
         var docs_pawn = [];
         var docs_cpp = [];
         var docs_rust = [];
@@ -168,7 +244,6 @@ class SearchResultPanel {
         docs_pawn = this.getDocumentation('pawn');
         docs_cpp = this.getDocumentation('cpp');
         docs_rust = this.getDocumentation('rust');
-        //var documents: { id: number; title: string; content: string; type:string; lang: string; }[] = [];
         SearchResultPanel.searchIndex = lunr(function () {
             this.ref('id');
             this.field('path');
@@ -181,6 +256,78 @@ class SearchResultPanel {
             var docs_path = "";
             var docs_title = "";
             var ind = 0;
+            for (var i = 0; i < categories_pawn.length; i++) {
+                articles_pawn.forEach((value, key) => {
+                    if (key.indexOf(categories_pawn[i] + '/') === 0) {
+                        try {
+                            var articleName;
+                            if (names_pawn.has(key)) {
+                                articleName = names_pawn.get(key);
+                            }
+                            else {
+                                articleName = "Unnamed Article";
+                            }
+                            docs_path = root_path + 'sdk/examples/' + Configuration_1.Configuration.getCurrentVersion() + '/pawn/' + key + '/info.md';
+                            docs_title = articleName;
+                            const content = fs.readFileSync(docs_path, 'utf8');
+                            const title = articleName;
+                            const doc = { id: ind, path: docs_path, folder: key, title: title, content: content, type: 'example', lang: 'pawn' };
+                            SearchResultPanel.searchTOC.push(doc);
+                            this.add(doc);
+                            ind++;
+                        }
+                        catch (e) { }
+                    }
+                });
+            }
+            for (var i = 0; i < categories_cpp.length; i++) {
+                articles_cpp.forEach((value, key) => {
+                    if (key.indexOf(categories_cpp[i] + '/') === 0) {
+                        try {
+                            var articleName;
+                            if (names_cpp.has(key)) {
+                                articleName = names_cpp.get(key);
+                            }
+                            else {
+                                articleName = "Unnamed Article";
+                            }
+                            docs_path = root_path + 'sdk/examples/' + Configuration_1.Configuration.getCurrentVersion() + '/cpp/' + key + '/info.md';
+                            docs_title = articleName;
+                            const content = fs.readFileSync(docs_path, 'utf8');
+                            const title = articleName;
+                            const doc = { id: ind, path: docs_path, folder: key, title: title, content: content, type: 'example', lang: 'cpp' };
+                            SearchResultPanel.searchTOC.push(doc);
+                            this.add(doc);
+                            ind++;
+                        }
+                        catch (e) { }
+                    }
+                });
+            }
+            for (var i = 0; i < categories_rust.length; i++) {
+                articles_rust.forEach((value, key) => {
+                    if (key.indexOf(categories_rust[i] + '/') === 0) {
+                        try {
+                            var articleName;
+                            if (names_rust.has(key)) {
+                                articleName = names_rust.get(key);
+                            }
+                            else {
+                                articleName = "Unnamed Article";
+                            }
+                            docs_path = root_path + 'sdk/examples/' + Configuration_1.Configuration.getCurrentVersion() + '/rust/' + key + '/info.md';
+                            docs_title = articleName;
+                            const content = fs.readFileSync(docs_path, 'utf8');
+                            const title = articleName;
+                            const doc = { id: ind, path: docs_path, folder: key, title: title, content: content, type: 'example', lang: 'rust' };
+                            SearchResultPanel.searchTOC.push(doc);
+                            this.add(doc);
+                            ind++;
+                        }
+                        catch (e) { }
+                    }
+                });
+            }
             //pawn
             for (var i = 0; i < docs_pawn.length; i++) {
                 docs_path = root_path + 'sdk/docs/' + Configuration_1.Configuration.getCurrentVersion() + '/pawn/' + docs_pawn[i][0] + '/';
@@ -299,6 +446,8 @@ class SearchResultPanel {
             }
         }
         catch (e) {
+            var t;
+            t = 0;
         }
     }
     _getHtmlForWebview(webview) {
@@ -384,6 +533,9 @@ class SearchResultPanel {
                 switch (doc.type) {
                     case 'doc':
                         ret += `<p class='searchresultitemtag'>Documenation</p> `;
+                        break;
+                    case 'example':
+                        ret += `<p class='searchresultitemtag'>Examples</p> `;
                         break;
                     default:
                         break;
