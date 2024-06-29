@@ -26,6 +26,8 @@ export class DocumentPanel {
     private _viewLoaded:Boolean = false;
     private _scrollPos = 0;
 
+    public static textToSearch:string="";
+
     public static createOrShowDoc(extensionUri: vscode.Uri,folder:string,file:string, sdkVersion:string, language:string) 
     { 
         const column = vscode.window.activeTextEditor
@@ -440,8 +442,31 @@ export class DocumentPanel {
                 }
             }
                     
-            //replace all img src in generated content
+            //highlight search keywords if any
+            if(DocumentPanel.textToSearch.length>0)
+            {
+                var tokens:string[] = DocumentPanel.textToSearch.split(' ');
 
+                if(tokens.length>0)
+                {
+                    for(var t=0; t<tokens.length;t++)
+                    {
+                        //token is too short to highlight
+                        if(tokens[t].length<3) continue;
+
+                        //remove punctuation from token
+                        tokens[t] = tokens[t].replace(/[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/g, '');
+
+                        var pos = content.indexOf(tokens[t]);
+
+                        if(pos!=-1)
+                        {
+                            content= content.replace(new RegExp(tokens[t], 'g'), '<span class="highlighted">'+tokens[t]+'</span>');
+                        }
+                    }
+                }
+                DocumentPanel.textToSearch = "";
+            }
 
             const styleResetUri = webview.asWebviewUri(      
                 vscode.Uri.joinPath(this._extensionUri, "media", "reset.css")   
@@ -470,7 +495,7 @@ export class DocumentPanel {
 
             var lastPath = Configuration.getLastPath();
             if(typeof(lastPath)==='undefined') lastPath='';
-
+ 
             var ret =  `      
                 <!DOCTYPE html>
                 <html lang="en">

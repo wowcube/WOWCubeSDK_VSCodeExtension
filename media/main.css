@@ -294,6 +294,12 @@ body {
 	background-color: var(--vscode-titleBar-inactiveBackground);
 }
 
+.highlighted
+{
+	background:var(--vscode-terminal-ansiBrightRed);
+	color:white;
+}
+
 .separator
 {
 	width: 100%;

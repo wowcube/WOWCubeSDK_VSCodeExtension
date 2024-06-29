@@ -97,6 +97,8 @@ export class SearchResultPanel
                                 {
                                     case 'doc':
                                         {
+                                            DocumentPanel.textToSearch = this._searchtext;
+
                                             if(message.value.lang=='wowconnect') 
                                             {
                                                  DocumentPanel.createOrShowDoc(Configuration.context.extensionUri,message.value.path, message.value.fullpath,Configuration.getCurrentVersion(),'none');
@@ -109,6 +111,8 @@ export class SearchResultPanel
                                     break;
                                     case 'example':
                                         {
+                                            ExamplePanel.textToSearch = this._searchtext;
+
                                             ExamplePanel.createOrShow(Configuration.context.extensionUri,message.value.path,message.value.lang);	
                                         }
                                 }

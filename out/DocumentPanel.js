@@ -290,7 +290,24 @@ class DocumentPanel {
                 }
             }
         }
-        //replace all img src in generated content
+        //highlight search keywords if any
+        if (DocumentPanel.textToSearch.length > 0) {
+            var tokens = DocumentPanel.textToSearch.split(' ');
+            if (tokens.length > 0) {
+                for (var t = 0; t < tokens.length; t++) {
+                    //token is too short to highlight
+                    if (tokens[t].length < 3)
+                        continue;
+                    //remove punctuation from token
+                    tokens[t] = tokens[t].replace(/[!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~]/g, '');
+                    var pos = content.indexOf(tokens[t]);
+                    if (pos != -1) {
+                        content = content.replace(new RegExp(tokens[t], 'g'), '<span class="highlighted">' + tokens[t] + '</span>');
+                    }
+                }
+            }
+            DocumentPanel.textToSearch = "";
+        }
         const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
         const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
         const styleMainCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "main.css"));
@@ -345,6 +362,7 @@ class DocumentPanel {
 exports.DocumentPanel = DocumentPanel;
 DocumentPanel.panels = new Map();
 DocumentPanel.viewType = "WOWCubeSDK.documentPanel";
+DocumentPanel.textToSearch = "";
 function getWebviewOptions(extensionUri) {
     return {
         // Enable javascript in the webview

@@ -44,6 +44,7 @@ class SearchResultPanel {
                         switch (message.value.doc) {
                             case 'doc':
                                 {
+                                    DocumentPanel_1.DocumentPanel.textToSearch = this._searchtext;
                                     if (message.value.lang == 'wowconnect') {
                                         DocumentPanel_1.DocumentPanel.createOrShowDoc(Configuration_1.Configuration.context.extensionUri, message.value.path, message.value.fullpath, Configuration_1.Configuration.getCurrentVersion(), 'none');
                                     }
@@ -54,6 +55,7 @@ class SearchResultPanel {
                                 break;
                             case 'example':
                                 {
+                                    ExamplePanel_1.ExamplePanel.textToSearch = this._searchtext;
                                     ExamplePanel_1.ExamplePanel.createOrShow(Configuration_1.Configuration.context.extensionUri, message.value.path, message.value.lang);
                                 }
                         }

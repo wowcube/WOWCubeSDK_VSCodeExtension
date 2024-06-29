@@ -6,7 +6,7 @@ export class Version
     //-1 - v1<v2
     //1 - v1>v2
     //2 - error
-    public static compareWDK(v1:string, v2:string):Number
+    public static compareWDK(v1:string, v2:string):number
     {
         try
         {
@@ -86,7 +86,7 @@ export class Version
     //-1 - v1<v2
     //1 - v1>v2
     //2 - error
-    public static compare(v1:string, v2:string):Number
+    public static compare(v1:string, v2:string):number
     {
         try
         {

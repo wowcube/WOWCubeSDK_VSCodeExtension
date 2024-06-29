@@ -1,3 +1,7 @@
+### 2.4.0
+* Search over documentation and examples
+* Some UI improvements
+
 ### 2.3.1
 * Experimental support for Rust language (Windows and Mac)
 
