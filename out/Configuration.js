@@ -317,6 +317,8 @@ class Configuration {
             case 'linux':
                 {
                     switch (language) {
+                        case 'cpp_clang':
+                            return 'clang++';
                         case 'cpp':
                             return 'em++';
                         case 'rust':
@@ -328,6 +330,8 @@ class Configuration {
             case 'win32': //windows
                 {
                     switch (language) {
+                        case 'cpp_clang':
+                            return 'clang++.exe';
                         case 'cpp':
                             return 'em++.bat';
                         case 'rust':

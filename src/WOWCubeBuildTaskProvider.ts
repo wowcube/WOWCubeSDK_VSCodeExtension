@@ -136,7 +136,8 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				break;
 			case 'cpp':
 				{
-					this.doCompileCpp(this.action);
+					//this.doCompileCpp(this.action);
+					this.doCompileCppCLang(this.action);
 				}
 				break;
 			case 'rust':
@@ -504,6 +505,331 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			});
 		});
 	}
+
+	private doCompileCppCLang(action:string): Promise<void>
+	{
+		return new Promise<void>((resolve,reject) =>
+		{
+			this._channel.clear();
+			this._channel.show(true);
+
+			this._channel.appendLine('Compiling cub file...');
+			this._channel.appendLine('Please be patient as compilation of C++ project may take time, especially for the first time. \r\n');
+			const initialVersion = Configuration.getCurrentVersion();
+
+			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));
+
+			this._channel.appendLine('Project name: '+build_json.name);
+			this._channel.appendLine('Project version: '+build_json.version);
+
+			if(typeof(build_json.sdkVersion)!=='undefined')
+			{
+				this._channel.appendLine('Target SDK version: '+build_json.sdkVersion+'\r\n');
+
+				if(build_json.sdkVersion!==Configuration.getCurrentVersion())
+				{
+					this._channel.appendLine("NOTE: Target SDK version of the application ("+build_json.sdkVersion+") differs from current SDK version ("+Configuration.getCurrentVersion()+")");
+					
+					var versions  = Configuration.getVersions();
+					var detected:boolean = false;
+
+					for(var i=0;i<versions.length;i++)
+					{
+						if(versions[i]===build_json.sdkVersion)
+						{
+							detected = true;
+							break;
+						}
+					}      
+
+					if(detected===false)
+					{
+						this._channel.appendLine("NOTE: SDK version "+build_json.sdkVersion+" is not installed. Please install required version of SDK or change application Target SDK version to one of the following:\r\n");
+						for(var i=0;i<versions.length;i++)
+						{
+							this._channel.appendLine("\tVersion "+versions[i]);
+						}    
+						
+						this._channel.appendLine('\r\nFailed to compile.\r\n');
+
+						this.closeEmitter.fire(0);
+						resolve();
+						return;
+					}
+					else
+					{
+						this._channel.appendLine("\r\nNOTE: Building with SDK version "+build_json.sdkVersion+"\r\n");
+						Configuration.setCurrentVersion(build_json.sdkVersion);
+					}
+				}
+			}
+			else
+			{
+				this._channel.appendLine("\r\nNOTE: SDK version is missing from the build file");
+				if(Project.setSDKVersion(this.workspace,Configuration.getCurrentVersion()))
+				{
+					this._channel.appendLine("Target SDK version is set to '"+Configuration.getCurrentVersion()+"'\r\n");
+				}
+				else
+				{
+					this._channel.appendLine("Failed to modify the build file, please make sure the file exists and can be written!\r\n");
+				}
+			}
+				
+			var compilerpath = Configuration.getCompilerPath("cpp");
+
+			if(compilerpath.length===0)
+			{
+				vscode.window.showErrorMessage(
+					"C++ Compiler support package for WOWCube Development Kit is not detected.\nPlease make sure WOWCube Development Kit is installed, it is up to date and C++ support package for WOWCube Development Kit is installed",
+					...["Manage Packages"]
+				).then((answer)=>
+				{
+					if(answer==="Manage Packages")
+					{
+						vscode.commands.executeCommand('WOWCubeSDK.openExternalTools');
+					}
+				});
+
+				//vscode.window.showErrorMessage("C++ Compiler support package for WOWCube SDK is not detected.\nPlease make sure WOWCube SDK is installed, it is up to date and C++ support package for WOWCube SDK is installed"); 
+				this._channel.appendLine('C++ Compiler support package for WOWCube Development Kit is not detected!');
+				this._channel.appendLine('Please use Manage External Tools panel to install the package first.\r\n\r\n');
+
+				this.closeEmitter.fire(0);
+				resolve();
+				return;
+			}
+
+			compilerpath+='bin/';
+			
+			var command = '"'+compilerpath+ Configuration.getCC("cpp_clang")+'"';
+			var sourcefile = this.workspace+'/'+build_json.sourceFile;
+			var currDir = this.workspace+Configuration.getSlash()+'src';
+
+			var srcdir:string = build_json.sourceFile;
+			var pos = srcdir.indexOf('/');
+			if(pos!==-1)
+			{
+				if(srcdir.substring(0,pos)!=='src')
+				{
+					this._channel.appendLine('NOTE: Non-standard source files folder name is used. Please consider using `src` as a name of the folder.\r\n');
+				}
+				currDir = this.workspace+Configuration.getSlash()+srcdir.substring(0,pos);
+			}
+
+			var builddir:string = this.workspace+"/binary";
+			pos = build_json.scriptFile.indexOf('/');
+			if(pos!==-1)
+			{
+				if(build_json.scriptFile.substring(0,pos)!=='binary')
+				{
+					this._channel.appendLine('NOTE: Non-standard intermediary binary files folder name is used. Please consider using `binary` as a name of the folder.\r\n');
+				}
+
+				builddir = this.workspace+"/"+build_json.scriptFile.substring(0,pos);
+			}
+
+			var destfile = this.workspace+'/'+build_json.scriptFile;
+
+			this.makeDirSync(builddir);
+
+			var includepath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/cpp/';
+
+			var vers = Configuration.getCurrentVersion().split('.');
+
+			var maj = '0';
+			var min = '1';
+
+			var maj_i:number = 0;
+			var min_i:number = 1;
+
+			if(vers.length===2)
+			{
+				maj = vers[0];
+				min = vers[1];
+
+				maj_i = +maj;
+				min_i = +min;
+			}
+
+
+			/*
+			if(this.target==='emulator')
+			{
+				command+=' -std=c++11';
+				command+=' -g0';
+				command+=' -O3';
+			}
+			else
+			{
+				//command+=" -v";
+				command+=' -std=c++11';
+				command+=' -g0';
+				command+=' -O3';
+			}
+			*/
+
+			//compiler flags
+
+			//commented out so far, but MUST BE UNCOMMENTED IN THE FUTURE
+			//command+=' '+Project.Options.cpp.flags;
+			
+			command+=' '+'-std=c++11 -g0 -Os -flto -fno-exceptions -mexec-model=reactor -Wl",--no-entry,--export=run,--export=on_init,--strip-all,--lto-O3"';
+
+			//additional compiler settings
+			/*
+			var csett = Project.Options.cpp.compilerSettings.split(";");
+			for(var i=0;i<csett.length;i++)
+			{
+				if(csett[i].length>0) command+=' -s '+csett[i];
+			}
+			*/
+
+			//custom defines 
+			var cdefs = Project.Options.cpp.defines.split(";");
+			
+			for(var i=0;i<cdefs.length;i++)
+			{
+				if(cdefs[i].length>0) command+=' -D'+cdefs[i];
+			}
+
+			//ABI version defines
+			command+=' -DABI_VERSION_MAJOR='+maj;
+			command+=' -DABI_VERSION_MINOR='+min;
+
+			//add SDK include path
+			var sdkpath:string = Configuration.getWOWSDKPath();
+			sdkpath+='sdk/'+Configuration.getCurrentVersion()+'/cpp/';
+
+			command+=' -I"'+sdkpath+'"';//D:/WOW/WasmLibs/cpp';
+
+			//add additional include paths
+			for(var i=0;i<5;i++)
+			{
+				if(Project.Options.cpp.includeFolders[i].length>0)
+				{
+					command+=' -I"'+Project.Options.cpp.includeFolders[i]+'"';
+				}
+			}
+
+			//add destination file
+			//command+=' --no-entry';
+			command+=' -o "'+destfile+'"';
+
+			//add mandatory SDK files depending on SDK version
+			if(maj_i>=5)	//5.x
+			{
+				command+=' "'+sdkpath+'AppManager.cpp"';
+				command+=' "'+sdkpath+'native.cpp"';
+				command+=' "'+sdkpath+'Screen.cpp"';
+				command+=' "'+sdkpath+'Scene.cpp"';
+				command+=' "'+sdkpath+'NetworkMessage.cpp"';
+				command+=' "'+sdkpath+'Sound.cpp"';
+
+				//gfx
+				command+=' "'+sdkpath+'Gfx/Background.cpp"';
+				command+=' "'+sdkpath+'Gfx/OffscreenRenderTarget.cpp"';
+				command+=' "'+sdkpath+'Gfx/Sprite.cpp"';
+				command+=' "'+sdkpath+'Gfx/Text.cpp"';
+				command+=' "'+sdkpath+'Gfx/AnimatedSprite.cpp"';
+			}
+
+			if(maj_i>=6)	//6.x
+			{
+				command+=' "'+sdkpath+'SaveMessage.cpp"';
+				command+=' "'+sdkpath+'Scramble.cpp"';
+
+				//gfx
+				command+=' "'+sdkpath+'Gfx/QRCode.cpp"';
+			}
+
+			//fetch sources and add them to command line
+			if(fs.existsSync(currDir)===true)
+			{                    
+				fs.readdirSync(currDir).forEach(file => 
+					{
+						if(file.indexOf('.cpp')!==-1 || file.indexOf('.cxx')!==-1 || file.indexOf('.c++')!==-1 || file.indexOf('.cc')!==-1 || file.indexOf('.c')!==-1 || file.indexOf('.C')!==-1 || file.indexOf('.cppm')!==-1 )
+						{
+							var fullpath = currDir+'/'+file;
+							command+=' "'+fullpath+'"';
+						}
+					});
+			}
+			else
+			{
+				this._channel.appendLine('WARNING: Folder `'+currDir+'` doesnt exist or can not be opened. Cubeapp may work incorrectly.\r\n');
+				this._channel.show(true);
+			}
+
+			//return version value in case it was changed
+			Configuration.setCurrentVersion(initialVersion);
+
+			var child:cp.ChildProcess = cp.exec(command, { cwd: compilerpath}, (error, stdout, stderr) => 
+			{
+				if (stderr && stderr.length > 0) 
+				{
+					var functionNames = ['sendMessage','recvMessage','sendPacket','recvPacket','sendBleData','recvBleData','getTime','getUserName','toggleDebugInfo','saveState','loadState','random','LOG','getTap','getAppVersion',
+										 'TOPOLOGY_getAdjacentFacelet','TOPOLOGY_getFacelet','TOPOLOGY_getPlace','TOPOLOGY_getOppositeFacelet','TOPOLOGY_getAngle','TOPOLOGY_getFace',
+										 'TOPOLOGY_getFaceletOrientation','TOPOLOGY_getPlaceOrientation','TOPOLOGY_isAssembled','TOPOLOGY_getTwist','TopologyDebugGetFace',
+										 'TopologyDebugGetPosition','TopologyDebugGetHorizontal','LB_getInfo','LB_getScore','MS_getFaceAccelX',
+										 'MS_getFaceAccelY','MS_getFaceAccelZ','MS_getFaceGyroX','MS_getFaceGyroY','MS_getFaceGyroZ',
+										 'GFX_getAssetId','GFX_clear','GFX_drawText','GFX_drawPoint','GFX_drawCircle',
+										 'GFX_drawSolidCircle','GFX_drawArc','GFX_drawSector','GFX_drawLine','GFX_drawRectangle','GFX_bakeImage',
+										 'GFX_setRenderTarget','GFX_drawImage','GFX_drawBakedImage','GFX_drawParticles','GFX_render',
+										 'GFX_clearCache','GFX_removeBakedImage','GFX_cacheImages','GFX_setFpsWindow','GFX_getAssetsCount','GFX_drawQrCode','GFX_setFillShader','GFX_setLinearGradientShader','GFX_setRadialGradientShader','GFX_removeShader',
+										 'SND_getAssetId','SND_play','SND_cacheSounds','SND_isPlaying','SND_stop','SND_getAssetsCount','EVENT_getList'
+										  ];
+					
+					//remove warning for Cubios exports
+					for(var i=0;i<functionNames.length;i++)
+					{
+						stderr = stderr.replace('warning: undefined symbol: '+functionNames[i]+' (referenced by top-level compiled C/C++ code)\n','')
+					}
+
+					//remove other warnings
+					//stderr = stderr.replace('em++: warning: warnings in JS library compilation [-Wjs-compiler]','');
+
+					if(stderr.length>2)
+					{
+					this._channel.appendLine(stderr);
+					this._channel.show(true);
+					}
+				}
+
+				if (stdout && stdout.length > 0) 
+				{
+					this._channel.appendLine(stdout);
+					this._channel.show(true);
+				}
+
+				const date = new Date();
+				this.setSharedState(date.toTimeString() + ' ' + date.toDateString());
+
+				if(child.exitCode===0)
+				{
+					this._channel.appendLine('File compiled successfully.\r\n');
+
+					if(action==='compile')
+					{
+						this.closeEmitter.fire(0);
+						resolve();
+					}
+					else
+					{
+						this.doBuild(this.target);
+					}
+				}
+				else
+				{
+					this._channel.appendLine('Failed to compile.\r\n');
+
+					this.closeEmitter.fire(0);
+					resolve();
+				}
+			});	
+		});
+	}
+
 	private doCompileCpp(action:string): Promise<void> 
     {
 		return new Promise<void>((resolve,reject) => 

@@ -446,6 +446,8 @@ export class Configuration
                 {
                     switch(language)
                     {
+                        case 'cpp_clang':
+                            return 'clang++';                        
                         case 'cpp':
                             return 'em++';
                         case 'rust':
@@ -458,6 +460,9 @@ export class Configuration
                 {
                     switch(language)
                     {
+                        case 'cpp_clang':
+                            return 'clang++.exe';
+
                         case 'cpp':
                             return 'em++.bat';
                         case 'rust':
@@ -471,7 +476,7 @@ export class Configuration
             return '';
         }
     }
-
+  
     public static getPawnCC()
     {
         var p = os.platform();
