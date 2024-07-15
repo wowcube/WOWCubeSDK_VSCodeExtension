@@ -515,7 +515,7 @@ export class Configuration
                             {
                             if(this.isClang())
                                 {
-                                    return 'clang++';     
+                                    return 'wasm32-wasip1-clang++';     
                                 }
                                 else
                                 {
@@ -536,7 +536,7 @@ export class Configuration
                             {
                                 if(this.isClang())
                                 {
-                                    return 'clang++.exe';
+                                    return 'wasm32-wasip1-clang++.exe';
                                 }
                                 else
                                 {

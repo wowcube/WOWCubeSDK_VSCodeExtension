@@ -366,7 +366,7 @@ class Configuration {
                         case 'cpp':
                             {
                                 if (this.isClang()) {
-                                    return 'clang++';
+                                    return 'wasm32-wasip1-clang++';
                                 }
                                 else {
                                     return 'em++';
@@ -384,7 +384,7 @@ class Configuration {
                         case 'cpp':
                             {
                                 if (this.isClang()) {
-                                    return 'clang++.exe';
+                                    return 'wasm32-wasip1-clang++.exe';
                                 }
                                 else {
                                     return 'em++.bat';
