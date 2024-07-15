@@ -641,6 +641,7 @@ export class ExternalToolsPanel {
                 ).toString().replace('%22', '');
 
             var emInstall = this.validateToolInstallation('emscripten');
+            var clangInstall = this.validateToolInstallation('clang');
             var rustInstall = this.validateToolInstallation('rust');
 
             var privateSettings = Configuration.getWDKPrivate();
@@ -677,10 +678,18 @@ export class ExternalToolsPanel {
                         <div class="view" style="min-width:430px;">
 
                             <div class="items">
-                                <div id="i1" class="item">
-                                    <div style="margin:5px;"><strong>C++ Compiler support package for WOWCube SDK</strong></div>
+                                <div id="i1" class="item">`;
 
-                                    <div style="display:inline-block; width: calc(100% - 145px);">
+                                    if(!Configuration.isClang())
+                                    {
+                                        ret+=`<div style="margin:5px;"><strong>C++ Compiler support package for WOWCube SDK (Emscripten)</strong></div>`;
+                                    }
+                                    else
+                                    {
+                                        ret+=`<div style="margin:5px;"><strong>C++ Compiler support package for WOWCube SDK (WASI)</strong></div>`;
+                                    }
+
+                                    ret+=`<div style="display:inline-block; width: calc(100% - 145px);">
                                         <div class="itemdesc">The package provides the toolset for compiling and building cubeapps with C++ programming language.</div>
                                         </div>`;
                                      
@@ -691,8 +700,16 @@ export class ExternalToolsPanel {
                                 }
                                 else
                                 {
+                                    if(clangInstall==true)
+                                    {
+                                        ret+=`  <button class="remove_button" style="display:inline-block;width:120px;" pack="cpp" packname="C++ Compiler support">Remove</button>
+                                        <div class="itemstatus itemdesc positive" style="margin-top:10px" pack="cpp">INSTALLED</div>`;
+                                    }
+                                    else
+                                    {
                                     ret+=`   <button class="install_button" style="display:inline-block;width:120px;" pack="cpp" packname="C++ Compiler support">Install</button>
                                              <div class="itemstatus itemdesc neutral" style="margin-top:10px" pack="cpp">NOT INSTALLED</div>`;
+                                    }
                                 }
 
 
@@ -760,6 +777,8 @@ export class ExternalToolsPanel {
                     case 'rust':
                         {
                             var compilerpath = Configuration.getCompilerPath("rust");
+                            if(compilerpath.length==0) return false;
+
                             compilerpath+='cargo/';
 
                             if(fs.existsSync(compilerpath)===false)
@@ -785,6 +804,8 @@ export class ExternalToolsPanel {
                     case 'emscripten':
                         {
                             var compilerpath = Configuration.getCompilerPath("cpp");
+                            if(compilerpath.length==0) return false;
+
                             compilerpath+='em/upstream/emscripten/';
 
                             if(fs.existsSync(compilerpath)===false)
@@ -805,6 +826,32 @@ export class ExternalToolsPanel {
                                 return false;
                             }
                         }
+                    case 'clang':
+                        {
+                            var compilerpath = Configuration.getCompilerPath("cpp");
+                            if(compilerpath.length==0) return false;
+
+                            compilerpath+='bin/';
+
+                            if(fs.existsSync(compilerpath)===false)
+                            {
+                                this._channel.appendLine("External Tools management: Path \""+compilerpath+"\" is invalid, Clang C++ Compiler support package for WOWCube Development Kit is not installed");
+                                this._channel.show(true);
+                
+                                return false;
+                            }
+
+                            var command = '"'+compilerpath+ Configuration.getCC("cpp")+'"';
+
+                            if(fs.existsSync(compilerpath)===false)
+                            {
+                                this._channel.appendLine("External Tools management: File \""+command+"\" does not exist, Clang C++ Compiler support package for WWOWCube Development Kit is not installed or corrupted");
+                                this._channel.show(true);
+                
+                                return false;
+                            }
+                        }
+                        break;
                     break;
                     default:
                         return false;

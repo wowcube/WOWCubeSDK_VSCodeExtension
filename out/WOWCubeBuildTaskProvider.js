@@ -91,8 +91,12 @@ class WOWCubeBuildTaskTerminal {
                 break;
             case 'cpp':
                 {
-                    //this.doCompileCpp(this.action);
-                    this.doCompileCppCLang(this.action);
+                    if (Configuration_1.Configuration.isClang()) {
+                        this.doCompileCppCLang(this.action);
+                    }
+                    else {
+                        this.doCompileCpp(this.action);
+                    }
                 }
                 break;
             case 'rust':
@@ -405,7 +409,7 @@ class WOWCubeBuildTaskTerminal {
                 return;
             }
             compilerpath += 'bin/';
-            var command = '"' + compilerpath + Configuration_1.Configuration.getCC("cpp_clang") + '"';
+            var command = '"' + compilerpath + Configuration_1.Configuration.getCC("cpp") + '"';
             var sourcefile = this.workspace + '/' + build_json.sourceFile;
             var currDir = this.workspace + Configuration_1.Configuration.getSlash() + 'src';
             var srcdir = build_json.sourceFile;
@@ -456,7 +460,48 @@ class WOWCubeBuildTaskTerminal {
             //compiler flags
             //commented out so far, but MUST BE UNCOMMENTED IN THE FUTURE
             //command+=' '+Project.Options.cpp.flags;
-            command += ' ' + '-std=c++11 -g0 -Os -flto -fno-exceptions -mexec-model=reactor -Wl",--no-entry,--export=run,--export=on_init,--strip-all,--lto-O3"';
+            var cppFlags = Configuration_1.Configuration.getClangValue('options');
+            if (cppFlags == null) {
+                this._channel.appendLine('CLang flags are not specified!');
+                this._channel.appendLine('Stopping the compilation.\r\n\r\n');
+                this.closeEmitter.fire(0);
+                resolve();
+                return;
+            }
+            else {
+                if (cppFlags.length == 0) {
+                    this._channel.appendLine('CLang flags are not specified!');
+                    this._channel.appendLine('Stopping the compilation.\r\n\r\n');
+                    this.closeEmitter.fire(0);
+                    resolve();
+                    return;
+                }
+                else {
+                    this._channel.appendLine('CLang flags: ' + cppFlags);
+                }
+            }
+            var wasmFlags = Configuration_1.Configuration.getClangValue('wasmOptions');
+            if (wasmFlags == null) {
+                this._channel.appendLine('WASM flags are not specified!');
+                this._channel.appendLine('Stopping the compilation.\r\n\r\n');
+                this.closeEmitter.fire(0);
+                resolve();
+                return;
+            }
+            else {
+                if (wasmFlags.length == 0) {
+                    this._channel.appendLine('WASM flags are not specified!');
+                    this._channel.appendLine('Stopping the compilation.\r\n\r\n');
+                    this.closeEmitter.fire(0);
+                    resolve();
+                    return;
+                }
+                else {
+                    this._channel.appendLine('WASM flags: ' + wasmFlags);
+                }
+            }
+            command += ' ' + cppFlags + ' -Wl"' + wasmFlags + '"';
+            //command+=' '+'-std=c++11 -g0 -Os -flto -fno-exceptions -mexec-model=reactor -Wl",--no-entry,--export=run,--export=on_init,--strip-all,--lto-O3"';
             //additional compiler settings
             /*
             var csett = Project.Options.cpp.compilerSettings.split(";");

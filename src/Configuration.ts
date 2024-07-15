@@ -205,6 +205,71 @@ export class Configuration
         return json;
     }
 
+    public static isClang():boolean
+    {
+        var ret:boolean = false;
+        try
+        {
+            var pr = this.getWDKPrivate();
+
+            if(pr!==null)
+            {
+                if(typeof pr.enableClang!=='undefined')
+                {
+                    ret = pr.enableClang;
+                }
+
+            }
+        }
+        catch(e){}
+
+        return ret;     
+    }
+
+    public static getClangValue(param:string)
+    {
+        var ret = null;
+        try
+        {
+            var pr = this.getWDKPrivate();
+
+            if(pr!==null)
+            {
+                switch(param)
+                {
+                    case 'enable':
+                        {
+                            if(typeof pr.enableClang!=='undefined')
+                            {
+                                ret = pr.enableClang;
+                            }
+                        }
+                    break;
+                    case 'options':
+                        {
+                            if(typeof pr.clangOptions!=='undefined')
+                            {
+                                ret = pr.clangOptions;
+                            }     
+                        }
+                    break;
+                    case 'wasmOptions':
+                            if(typeof pr.clangWASMOptions!=='undefined')
+                            {
+                                ret = pr.clangWASMOptions;
+                            } 
+                    break;
+                    default:
+                        break;
+                }
+            }
+
+        }
+        catch(e){}
+
+        return ret;
+    }
+
     public static getWOWSDKContainingFolder()
     {
         var p = os.platform();
@@ -445,11 +510,18 @@ export class Configuration
             case 'linux':
                 {
                     switch(language)
-                    {
-                        case 'cpp_clang':
-                            return 'clang++';                        
+                    {                 
                         case 'cpp':
-                            return 'em++';
+                            {
+                            if(this.isClang())
+                                {
+                                    return 'clang++';     
+                                }
+                                else
+                                {
+                                    return 'em++';
+                                }
+                            }
                         case 'rust':
                                 return 'cargo';                            
                         default:
@@ -460,11 +532,17 @@ export class Configuration
                 {
                     switch(language)
                     {
-                        case 'cpp_clang':
-                            return 'clang++.exe';
-
                         case 'cpp':
-                            return 'em++.bat';
+                            {
+                                if(this.isClang())
+                                {
+                                    return 'clang++.exe';
+                                }
+                                else
+                                {
+                                    return 'em++.bat';
+                                }
+                            }
                         case 'rust':
                             return 'cargo.exe';
                         default:
@@ -579,6 +657,11 @@ export class Configuration
     {
         var p = os.platform();
         var url = "https://updates.wowcube.com/packages/";
+
+        if(this.isClang())
+        {
+            pack+="_clang";
+        }
 
         switch(p)
         {
