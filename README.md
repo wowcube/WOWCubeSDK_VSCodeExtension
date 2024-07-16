@@ -46,6 +46,9 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ## Release Notes
 
+### 2.4.1
+* Epxerimental support for building C++ project with WASI 
+
 ### 2.4.0
 * Search over documentation and examples
 * Some UI improvements
