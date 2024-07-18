@@ -1,0 +1,578 @@
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+<style type="text/css">
+        html, body {
+	font-family: var(--markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", system-ui, "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+body {
+	padding-top: 1em;
+}
+
+/* Reset margin top for elements */
+h1, h2, h3, h4, h5, h6,
+p, ol, ul, pre {
+	margin-top: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-weight: 600;
+	margin-top: 24px;
+	margin-bottom: 16px;
+	line-height: 1.25;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection :not(tr,ul,ol).code-active-line:before,
+body.showEditorSelection :not(tr,ul,ol).code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+.vscode-high-contrast.showEditorSelection  :not(tr,ul,ol).code-line .code-line:hover:before {
+	border-left: none;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+/* Prevent `sub` and `sup` elements from affecting line height */
+sub,
+sup {
+	line-height: 0;
+}
+
+ul ul,
+ul ol,
+ol ul,
+ol ol {
+	margin-bottom: 0;
+}
+
+img, video {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+p {
+	margin-bottom: 16px;
+}
+
+ul,
+ol {
+	margin-bottom: 0.7em;
+}
+
+hr {
+	border: 0;
+	height: 1px;
+	border-bottom: 1px solid;
+}
+
+h1 {
+	font-size: 2em;
+	margin-top: 0;
+	padding-bottom: 0.3em;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h2 {
+	font-size: 1.5em;
+	padding-bottom: 0.3em;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h3 {
+	font-size: 1.25em;
+}
+
+h4 {
+	font-size: 1em;
+}
+
+h5 {
+	font-size: 0.875em;
+}
+
+h6 {
+	font-size: 0.85em;
+}
+
+table {
+	border-collapse: collapse;
+	margin-bottom: 0.7em;
+}
+
+th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+th,
+td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: var(--vscode-editor-font-family, "SF Mono", Monaco, Menlo, Consolas, "Ubuntu Mono", "Liberation Mono", "DejaVu Sans Mono", "Courier New", monospace);
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+pre {
+	background-color: var(--vscode-textCodeBlock-background);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light h2,
+.vscode-light hr,
+.vscode-light td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark h2,
+.vscode-dark hr,
+.vscode-dark td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+    </style>
+</head>
+    
+<body>
+<div style="background-color:rgb(248, 247, 246); padding: 20px;border-radius: 20px;">
+<div>
+<img style="display: inline-block;width: 40px; vertical-align: middle;" src="https://wowcube.com/images/sdk/sdk-doc.webp">
+<h2 style="display: inline-block; width: calc(100% - 60px);margin-top:0; margin-bottom: 0; vertical-align: middle; margin-left: 10px; border-bottom-style: none;" >WOWCube Development Kit extension for Visual Studio Code changelog</h1>
+</div>
+
+<div style="width: 100%; height: 1px; background-color: #cccccc; margin-top: 10px;"></div>
+
+<h3 id="2-4-1">2.4.1</h3>
+<ul>
+<li>Epxerimental support for building C++ project with WASI </li>
+</ul>
+<h3 id="2-4-0">2.4.0</h3>
+<ul>
+<li>Search over documentation and examples</li>
+<li>Some UI improvements</li>
+</ul>
+<h3 id="2-3-1">2.3.1</h3>
+<ul>
+<li>Experimental support for Rust language (Windows and Mac)</li>
+</ul>
+<h3 id="2-3-0">2.3.0</h3>
+<ul>
+<li>Experimental support for Rust language (Windows only)</li>
+</ul>
+<h3 id="2-2-5">2.2.5</h3>
+<ul>
+<li>Fix for incorrect logging mode selection</li>
+</ul>
+<h3 id="2-2-4">2.2.4</h3>
+<ul>
+<li>Minor UI tweaks</li>
+</ul>
+<h3 id="2-2-3">2.2.3</h3>
+<ul>
+<li>Fix for incorrect installing of C++ Compiler support package on certain verions of Windows</li>
+</ul>
+<h3 id="2-2-1">2.2.1</h3>
+<ul>
+<li>Improved compilation errors handling for Pawn</li>
+</ul>
+<h3 id="2-2-0">2.2.0</h3>
+<ul>
+<li>SDK Version 6.0 support</li>
+<li>Minor bug fixes and improvements </li>
+</ul>
+<h3 id="2-1-11">2.1.11</h3>
+<ul>
+<li>Improved console output</li>
+</ul>
+<h3 id="2-1-10">2.1.10</h3>
+<ul>
+<li>Improved handling of initial configuration of the extension</li>
+<li>Fix for incorrect rendering of additional C++ project include directories</li>
+</ul>
+<h3 id="2-1-9">2.1.9</h3>
+<ul>
+<li>Fix for extension startup issues</li>
+</ul>
+<h3 id="2-1-8">2.1.8</h3>
+<ul>
+<li>Option for toggling automatic checks for available updates</li>
+</ul>
+<h3 id="2-1-7">2.1.7</h3>
+<ul>
+<li>Improved validation of cubeapp version value</li>
+</ul>
+<h3 id="2-1-6">2.1.6</h3>
+<ul>
+<li>Fixed CPP documentation navigation bug</li>
+<li>Support for long cubapp names </li>
+</ul>
+<h3 id="2-1-5">2.1.5</h3>
+<ul>
+<li>Minor changes in order to support SDK Version 5.1</li>
+</ul>
+<h3 id="2-1-4">2.1.4</h3>
+<ul>
+<li>Removed debug information from pawn cublets built for WOWCube emulator</li>
+<li>Ad-hoc descriptions are now saved to project file</li>
+</ul>
+<h3 id="2-1-3">2.1.3</h3>
+<ul>
+<li>Ability to receive logs from all modules</li>
+</ul>
+<h3 id="2-1-2">2.1.2</h3>
+<ul>
+<li>GFX + splash screen project template is added</li>
+</ul>
+<h3 id="2-1-1">2.1.1</h3>
+<ul>
+<li>WOWCube store domain name tweak </li>
+</ul>
+<h3 id="2-1-0">2.1.0</h3>
+<ul>
+<li>Ability to receive real-time application logs from cubeapps running on WOWCube device via bluetooth </li>
+</ul>
+<h3 id="2-0-7">2.0.7</h3>
+<h3 id="2-0-6">2.0.6</h3>
+<ul>
+<li>Minor UI tweaks</li>
+</ul>
+<h3 id="2-0-5">2.0.5</h3>
+<ul>
+<li>Minor bugfix</li>
+</ul>
+<h3 id="2-0-4">2.0.4</h3>
+<ul>
+<li>GFX Engine sample projects</li>
+<li>Minor tweaks</li>
+</ul>
+<h3 id="2-0-3">2.0.3</h3>
+<ul>
+<li>GFX Engine</li>
+</ul>
+<h3 id="2-0-2">2.0.2</h3>
+<ul>
+<li>Improved terminal output</li>
+</ul>
+<h3 id="2-0-1">2.0.1</h3>
+<ul>
+<li>OSX bugfix</li>
+</ul>
+<h3 id="2-0-0">2.0.0</h3>
+<ul>
+<li>C++ compiler support for building cubeapp applications</li>
+<li>External tools management</li>
+<li>Minor bugfix</li>
+</ul>
+<h3 id="1-20-2">1.20.2</h3>
+<ul>
+<li>Regression bugfix</li>
+</ul>
+<h3 id="1-20-1">1.20.1</h3>
+<ul>
+<li>Minor bugfix for correct badge assignment</li>
+</ul>
+<h3 id="1-20-0">1.20.0</h3>
+<ul>
+<li>Minor UI tweaks</li>
+</ul>
+<h3 id="1-19-0">1.19.0</h3>
+<ul>
+<li>Ability to clear cubeapp local data</li>
+<li>Support for embedded images in example projects documentation</li>
+<li>Imporved handling of sound assets</li>
+<li>Minor bugfixes</li>
+</ul>
+<h3 id="1-18-2">1.18.2</h3>
+<ul>
+<li>Minor bugfix</li>
+</ul>
+<h3 id="1-18-1">1.18.1</h3>
+<ul>
+<li>Minor change in updater output</li>
+</ul>
+<h3 id="1-18-0">1.18.0</h3>
+<ul>
+<li>Support for icon background image file setting</li>
+<li>Support for Cubeapp application badge setting</li>
+<li>Improved compatibility with earlier formats of project file</li>
+<li>Improved handling of Cubeapp project file settings</li>
+</ul>
+<h3 id="1-17-2">1.17.2</h3>
+<ul>
+<li>Improved handling of Cubeapp project file settings</li>
+</ul>
+<h3 id="1-17-1">1.17.1</h3>
+<ul>
+<li>Windows compatibility fix</li>
+</ul>
+<h3 id="1-17-0">1.17.0</h3>
+<ul>
+<li>Improved handling of Cubeapp project file settings</li>
+</ul>
+<h3 id="1-16-0">1.16.0</h3>
+<ul>
+<li>Improved support for WOWCube Development Kit updates checker</li>
+</ul>
+<h3 id="1-15-0">1.15.0</h3>
+<ul>
+<li>Improved support for WOWCube Development Kit updates checker</li>
+<li>The size of a cubeapp is not limited anymore</li>
+<li>Compilation of cubeapps for running on emulator is now done with full debug information and dynamic checking</li>
+</ul>
+<h3 id="1-14-0">1.14.0</h3>
+<ul>
+<li>Added user interface for project assets management</li>
+<li>Added support for WOWCube Development Kit updates checker</li>
+</ul>
+<h3 id="1-13-0">1.13.0</h3>
+<ul>
+<li>Added &#39;SDK Files&#39; section to Documentation &amp; Code Examples</li>
+<li>Pawn project folder names are changed</li>
+</ul>
+<h3 id="1-12-0">1.12.0</h3>
+<ul>
+<li>Bugfix </li>
+</ul>
+<h3 id="1-11-0">1.11.0</h3>
+<ul>
+<li>Improved new project templates support for different versions of WOWCubeSDK </li>
+</ul>
+<h3 id="1-10-0">1.10.0</h3>
+<ul>
+<li>Added visual editor for cubeapp project file </li>
+</ul>
+<h3 id="1-9-0">1.9.0</h3>
+<ul>
+<li>Improved management and handling of versions of WOWCubeSD</li>
+</ul>
+<h3 id="1-8-0">1.8.0</h3>
+<ul>
+<li>Improved fetching for device general information </li>
+</ul>
+<h3 id="1-7-0">1.7.0</h3>
+<ul>
+<li>Added Ad-Hoc cubeapp file sharing </li>
+</ul>
+<h3 id="1-6-0">1.6.0</h3>
+<ul>
+<li>New WOWCube Development Kit bluetooth bridging app support</li>
+</ul>
+<h3 id="1-5-3">1.5.3</h3>
+<ul>
+<li>Bugfixes</li>
+</ul>
+<h3 id="1-5-2">1.5.2</h3>
+<ul>
+<li>Improved document scrolling</li>
+</ul>
+<h3 id="1-5-0">1.5.0</h3>
+<ul>
+<li>WOWCube Development Kit support</li>
+<li>Minor bugfixes and improvements</li>
+</ul>
+<h3 id="1-4-0">1.4.0</h3>
+<ul>
+<li>Added support for versioned examples and documentation </li>
+<li>Added support for new SDK folders structure</li>
+<li>Minor bugfixes and improvements</li>
+</ul>
+<h3 id="1-3-0">1.3.0</h3>
+<ul>
+<li>Added WOWCube SDK version selection support</li>
+<li>Improved support for custom pathes defined in wowcube-build file</li>
+</ul>
+<h3 id="1-2-2">1.2.2</h3>
+<ul>
+<li>Fix for &#39;No task to run on cube&#39; issue</li>
+<li>Bluetooth loader response parsing is slightly improved</li>
+</ul>
+<h3 id="1-2-0">1.2.0</h3>
+<ul>
+<li>Introduced new &quot;Run Cubeapp&quot; feature</li>
+</ul>
+<h3 id="1-1-0">1.1.0</h3>
+<ul>
+<li>Introduced new &quot;Upload CUB File to Device&quot; feature</li>
+<li>Added WOWCube SDK path validation</li>
+<li>Minor UI tweaks and fixes</li>
+</ul>
+<h3 id="1-0-0">1.0.0</h3>
+<ul>
+<li>Production build</li>
+</ul>
+<h3 id="0-9-9">0.9.9</h3>
+<ul>
+<li>Fixed for inclusion of local .inc files on Windows</li>
+</ul>
+<h3 id="0-9-8">0.9.8</h3>
+<ul>
+<li>Fixed for WOWCube emulator executable path on Linux</li>
+</ul>
+<h3 id="0-9-7">0.9.7</h3>
+<ul>
+<li>Changes to support WOWCube SDK 2.3.4-alpha5</li>
+<li>Fixed filenames inconsistency for case-sensitive file systems</li>
+<li>Fixed backslash character support in path names</li>
+<li>Improved handling of new project creation failure</li>
+<li>Minor UI improvements and bugfixes</li>
+<li>Minor changes for better compatibility with Linux</li>
+</ul>
+<h3 id="0-9-5">0.9.5</h3>
+<ul>
+<li>Added output and log colorization</li>
+<li>Fixed virtual terminal - related bug</li>
+</ul>
+<h3 id="0-9-4">0.9.4</h3>
+<h3 id="0-9-3">0.9.3</h3>
+<h3 id="0-9-2">0.9.2</h3>
+<ul>
+<li>Minor UI changed</li>
+</ul>
+<h3 id="0-9-1">0.9.1</h3>
+<ul>
+<li>Second release candidate for internal testing</li>
+<li>Improved syncronization of views</li>
+<li>Minor UI changed</li>
+</ul>
+<h3 id="0-9-0">0.9.0</h3>
+<ul>
+<li>Release candidate for internal testing</li>
+</ul>
+</div>
+
+<h5 style="text-align: center; width: 100%; color: #888888;">
+    © CUBIOS, INC 2017, 2024 ALL RIGHTS RESERVED
+    4152 INDEPENDENCE CT, UNIT C-4, SARASOTA, FL 34234    
+</h5>
+</body>
+</html>
