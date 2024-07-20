@@ -466,6 +466,14 @@ class WizardPanel {
         this._panel.webview.html = this._getHtmlForWebview(webview);
     }
     _getHtmlForWebview(webview) {
+        //check if rust support is enabled
+        var privateSettings = Configuration_1.Configuration.getWDKPrivate();
+        var enableRust = false;
+        if (privateSettings !== null) {
+            if (privateSettings.enableRustSupport == 'true') {
+                enableRust = true;
+            }
+        }
         const styleResetUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "reset.css"));
         const styleVSCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "vscode.css"));
         const styleMainCodeUri = webview.asWebviewUri(vscode.Uri.joinPath(this._extensionUri, "media", "main.css"));
@@ -531,11 +539,13 @@ class WizardPanel {
         else {
             ret += ` <option value="cpp">C++</option>`;
         }
-        if (lastLanguage === 'rust') {
-            ret += ` <option value="rust" selected>Rust</option>`;
-        }
-        else {
-            ret += ` <option value="rust">Rust</option>`;
+        if (enableRust) {
+            if (lastLanguage === 'rust') {
+                ret += ` <option value="rust" selected>Rust</option>`;
+            }
+            else {
+                ret += ` <option value="rust">Rust</option>`;
+            }
         }
         ret += `
                             </select>

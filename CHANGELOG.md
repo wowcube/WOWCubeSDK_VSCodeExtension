@@ -1,5 +1,9 @@
+### 2.4.2
+* Minor UI tweaks
+* Experimental support for building C++ project with WASI
+
 ### 2.4.1
-* Epxerimental support for building C++ project with WASI 
+* Experimental support for building C++ project with WASI 
 
 ### 2.4.0
 * Search over documentation and examples
