@@ -567,6 +567,7 @@ class ExternalToolsPanel {
                             return false;
                         }
                     }
+                    break;
                 case 'clang':
                     {
                         var compilerpath = Configuration_1.Configuration.getCompilerPath("cpp");

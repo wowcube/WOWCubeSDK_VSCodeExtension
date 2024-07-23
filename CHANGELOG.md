@@ -1,3 +1,6 @@
+### 2.4.3
+* Bugfix
+
 ### 2.4.2
 * Minor UI tweaks
 * Experimental support for building C++ project with WASI

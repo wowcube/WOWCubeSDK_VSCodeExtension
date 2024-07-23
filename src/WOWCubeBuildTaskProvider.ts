@@ -790,20 +790,24 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				command+=' "'+sdkpath+'Sound.cpp"';
 
 				//gfx
+				
 				command+=' "'+sdkpath+'Gfx/Background.cpp"';
 				command+=' "'+sdkpath+'Gfx/OffscreenRenderTarget.cpp"';
 				command+=' "'+sdkpath+'Gfx/Sprite.cpp"';
 				command+=' "'+sdkpath+'Gfx/Text.cpp"';
 				command+=' "'+sdkpath+'Gfx/AnimatedSprite.cpp"';
+				
 			}
 
 			if(maj_i>=6)	//6.x
 			{
+				
 				command+=' "'+sdkpath+'SaveMessage.cpp"';
 				command+=' "'+sdkpath+'Scramble.cpp"';
 
 				//gfx
 				command+=' "'+sdkpath+'Gfx/QRCode.cpp"';
+				
 			}
 
 			//fetch sources and add them to command line
