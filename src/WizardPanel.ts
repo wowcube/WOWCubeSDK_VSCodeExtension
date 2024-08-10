@@ -271,11 +271,11 @@ export class WizardPanel {
                                                   }
                         
                     }
-                    else if((currentTemplate.files[i]==='_lib.rs'))
+                    else if((currentTemplate.files[i]==='_main.rs'))
                     {
                         
                         if(!this.replaceInFileAndSave(templatespath+currentTemplate.id+"/"+currentTemplate.files[i],
-                                                     fullpath+'/src/lib.rs',
+                                                     fullpath+'/src/main.rs',
                                                      '##CNAME##',
                                                      br.str))
                                                      {
@@ -789,7 +789,7 @@ export class WizardPanel {
                             {
                                 if(lastLanguage==='rust') { ret += ` <option value="rust" selected>Rust</option>`;} else { ret += ` <option value="rust">Rust</option>`;}
                             }
-                            
+
                             ret+=`
                             </select>
                             </div>

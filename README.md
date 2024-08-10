@@ -46,15 +46,18 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ## Release Notes
 
+### 2.4.4
+* Experimental support for building Rust projects with WASI
+
 ### 2.4.3
 * Bugfix
 
 ### 2.4.2
 * Minor UI tweaks
-* Epxerimental support for building C++ project with WASI 
+* Experimental support for building C++ project with WASI 
 
 ### 2.4.1
-* Epxerimental support for building C++ project with WASI 
+* Experimental support for building C++ project with WASI 
 
 ### 2.4.0
 * Search over documentation and examples

@@ -1,12 +1,15 @@
+### 2.4.4
+* Experimental support for building Rust projects with WASI
+
 ### 2.4.3
 * Bugfix
 
 ### 2.4.2
 * Minor UI tweaks
-* Experimental support for building C++ project with WASI
+* Experimental support for building C++ projects with WASI
 
 ### 2.4.1
-* Experimental support for building C++ project with WASI 
+* Experimental support for building C++ projects with WASI 
 
 ### 2.4.0
 * Search over documentation and examples

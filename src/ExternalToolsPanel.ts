@@ -261,12 +261,12 @@ export class ExternalToolsPanel {
                                                         {
                                                         try
                                                         {
-                                                            var rustini_script = Configuration.getFullToolPath("install.bat");
+                                                            var rustini_script = Configuration.getFullToolPath("rust/install.bat");
                                                             if(Script.load(rustini_script))
                                                             {
                                                                 var cargo:string = Configuration.getToolsPath()+'rust/cargo';
                                                                 var rustup:string = Configuration.getToolsPath()+'rust/rustup';
-                                                                var ruinit = Configuration.getFullToolPath("rustup-init.exe");
+                                                                var ruinit = Configuration.getFullToolPath("rust/rustup-init.exe");
 
                                                                 Script.setValue("%%CARGOHOME%%",cargo);
                                                                 Script.setValue("%%RUSTUPHOME%%",rustup);
@@ -283,7 +283,7 @@ export class ExternalToolsPanel {
                                                             }
 
 
-                                                            var rustinit_command = '"'+Configuration.getFullToolPath("install.bat")+'"';
+                                                            var rustinit_command = '"'+Configuration.getFullToolPath("rust/install.bat")+'"';
 
                                                             var child:cp.ChildProcess = cp.exec(rustinit_command, { cwd: ""}, (error, stdout, stderr) => 
                                                             {
@@ -311,13 +311,13 @@ export class ExternalToolsPanel {
                                                                 {
                                                                     //success
 
-                                                                    var fname = Configuration.getFullToolPath("install.bat");
+                                                                    var fname = Configuration.getFullToolPath("rust/install.bat");
                                                                     if(fs.existsSync(fname))
                                                                     {
                                                                         fs.unlink(fname, () => {}); // Delete installation script
                                                                     }
 
-                                                                    fname = Configuration.getFullToolPath("rustup-init.exe");
+                                                                    fname = Configuration.getFullToolPath("rust/rustup-init.exe");
                                                                     if(fs.existsSync(fname))
                                                                     {
                                                                         fs.unlink(fname, () => {}); // Delete rustup-init
@@ -718,7 +718,7 @@ export class ExternalToolsPanel {
                                     ret+=`</div>
 
                                     <div id="i2" class="item">
-                                        <div style="margin:5px;"><strong>RUST Compiler support package for WOWCube SDK - <span><i class="negative">EXPERIMENTAL</i></span></strong></div>
+                                        <div style="margin:5px;"><strong>RUST Compiler support package for WOWCube SDK (WASI) - <span><i class="negative">EXPERIMENTAL</i></span></strong></div>
                                         
                                         <div style="display:inline-block; width: calc(100% - 145px);">
                                             <div class="itemdesc">The package provides an experimental set of development tools required for writing cubeapps with Rust programming language.</div>
@@ -803,6 +803,7 @@ export class ExternalToolsPanel {
                     break;
                     case 'emscripten':
                         {
+                            /*
                             var compilerpath = Configuration.getCompilerPath("cpp");
                             if(compilerpath.length==0) return false;
 
@@ -825,6 +826,8 @@ export class ExternalToolsPanel {
                 
                                 return false;
                             }
+                            */
+                           return false;
                         }
                     break;
                     case 'clang':

@@ -181,8 +181,8 @@ class WizardPanel {
                         throw new Error("Unable to generate main source file");
                     }
                 }
-                else if ((currentTemplate.files[i] === '_lib.rs')) {
-                    if (!this.replaceInFileAndSave(templatespath + currentTemplate.id + "/" + currentTemplate.files[i], fullpath + '/src/lib.rs', '##CNAME##', br.str)) {
+                else if ((currentTemplate.files[i] === '_main.rs')) {
+                    if (!this.replaceInFileAndSave(templatespath + currentTemplate.id + "/" + currentTemplate.files[i], fullpath + '/src/main.rs', '##CNAME##', br.str)) {
                         throw new Error("Unable to generate main header file");
                     }
                     /*

@@ -374,19 +374,21 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				script+='set CARGO_HOME='+cargo+'\n';
 				script+='set RUSTUP_HOME='+rustup+'\n';
 				script+='set RUSTFLAGS='+Project.Options.rust.flags+'\n';
-				script+='"'+compilerpath+'" build --manifest-path="'+tomlfile+'" --release --target wasm32-unknown-unknown\n\n'
+				script+='"'+compilerpath+'" build --manifest-path="'+tomlfile+'" --release --target wasm32-wasip1\n\n'
+				//script+='"'+compilerpath+'" build --manifest-path="'+tomlfile+'" --release --target wasm32-unknown-unknown\n\n'
 
 				//THIS IS WINDOWS ONLY, ON MAC THE SLASHES SHOULD BE DIFFERENT
-				var srcwasm:string = this.workspace+'\\target\\wasm32-unknown-unknown\\release\\';
+				//var srcwasm:string = this.workspace+'\\target\\wasm32-unknown-unknown\\release\\';
+				var srcwasm:string = this.workspace+'\\target\\wasm32-wasip1\\release\\';
 				srcwasm+=wasmFilenameNoExt+'.wasm';
 				var destwasm:string = this.workspace+'\\binary\\';
 				destwasm+=wasmFilenameNoExt+'.wasm';
 				
 				script+='move "'+srcwasm+'" "'+destwasm+'"\n';
 
-				var wasmgc:string = Configuration.getToolsPath()+'rust/wasm-gc.exe';
+				//var wasmgc:string = Configuration.getToolsPath()+'rust/wasm-gc.exe';
 
-				script+='"'+wasmgc+'" "'+destwasm+'"\n';
+				//script+='"'+wasmgc+'" "'+destwasm+'"\n';
 
 				try
 				{
@@ -409,17 +411,19 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 					script+='export CARGO_HOME="'+cargo+'"\n';
 					script+='export RUSTUP_HOME="'+rustup+'"\n';
 					script+='export RUSTFLAGS="'+Project.Options.rust.flags+'"\n';
-					script+='"'+compilerpath+'" build --manifest-path="'+tomlfile+'" --release --target wasm32-unknown-unknown\n\n'
+					script+='"'+compilerpath+'" build --manifest-path="'+tomlfile+'" --release --target wasm32-wasip1\n\n'
+					//script+='"'+compilerpath+'" build --manifest-path="'+tomlfile+'" --release --target wasm32-unknown-unknown\n\n'
 	
-					var srcwasm:string = this.workspace+'/target/wasm32-unknown-unknown/release/';
+					//var srcwasm:string = this.workspace+'/target/wasm32-unknown-unknown/release/';
+					var srcwasm:string = this.workspace+'/target/wasm32-wasip1/release/';
 					srcwasm+=wasmFilenameNoExt+'.wasm';
 					var destwasm:string = this.workspace+'/binary/';
 					destwasm+=wasmFilenameNoExt+'.wasm';
 					
 					script+='mv -f "'+srcwasm+'" "'+destwasm+'"\n';
 										
-					var wasmgc:string = Configuration.getToolsPath()+'rust/wasm-gc';
-					script+='"'+wasmgc+'" "'+destwasm+'"\n';
+					//var wasmgc:string = Configuration.getToolsPath()+'rust/wasm-gc';
+					//script+='"'+wasmgc+'" "'+destwasm+'"\n';
 				
 					script+=')';
 

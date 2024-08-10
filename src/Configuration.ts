@@ -207,6 +207,8 @@ export class Configuration
 
     public static isClang():boolean
     {
+        return true;
+        /*
         var ret:boolean = false;
         try
         {
@@ -223,7 +225,8 @@ export class Configuration
         }
         catch(e){}
 
-        return ret;     
+        return ret;    
+        */ 
     }
 
     public static getClangValue(param:string)

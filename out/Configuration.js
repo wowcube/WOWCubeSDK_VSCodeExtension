@@ -145,17 +145,26 @@ class Configuration {
         return json;
     }
     static isClang() {
-        var ret = false;
-        try {
+        return true;
+        /*
+        var ret:boolean = false;
+        try
+        {
             var pr = this.getWDKPrivate();
-            if (pr !== null) {
-                if (typeof pr.enableClang !== 'undefined') {
+
+            if(pr!==null)
+            {
+                if(typeof pr.enableClang!=='undefined')
+                {
                     ret = pr.enableClang;
                 }
+
             }
         }
-        catch (e) { }
+        catch(e){}
+
         return ret;
+        */
     }
     static getClangValue(param) {
         var ret = null;

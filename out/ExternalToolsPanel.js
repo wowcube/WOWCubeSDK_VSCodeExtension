@@ -145,11 +145,11 @@ class ExternalToolsPanel {
                                         }
                                         if (Configuration_1.Configuration.isWindows()) {
                                             try {
-                                                var rustini_script = Configuration_1.Configuration.getFullToolPath("install.bat");
+                                                var rustini_script = Configuration_1.Configuration.getFullToolPath("rust/install.bat");
                                                 if (Script_1.Script.load(rustini_script)) {
                                                     var cargo = Configuration_1.Configuration.getToolsPath() + 'rust/cargo';
                                                     var rustup = Configuration_1.Configuration.getToolsPath() + 'rust/rustup';
-                                                    var ruinit = Configuration_1.Configuration.getFullToolPath("rustup-init.exe");
+                                                    var ruinit = Configuration_1.Configuration.getFullToolPath("rust/rustup-init.exe");
                                                     Script_1.Script.setValue("%%CARGOHOME%%", cargo);
                                                     Script_1.Script.setValue("%%RUSTUPHOME%%", rustup);
                                                     Script_1.Script.setValue("%%RUSTUPINIT", ruinit);
@@ -160,7 +160,7 @@ class ExternalToolsPanel {
                                                 else {
                                                     throw new Error("Unable to generate installation script.");
                                                 }
-                                                var rustinit_command = '"' + Configuration_1.Configuration.getFullToolPath("install.bat") + '"';
+                                                var rustinit_command = '"' + Configuration_1.Configuration.getFullToolPath("rust/install.bat") + '"';
                                                 var child = cp.exec(rustinit_command, { cwd: "" }, (error, stdout, stderr) => {
                                                     if (stderr && stderr.length > 0) {
                                                         if (stderr.length > 2) {
@@ -177,11 +177,11 @@ class ExternalToolsPanel {
                                                     }
                                                     if (child.exitCode === 0) {
                                                         //success
-                                                        var fname = Configuration_1.Configuration.getFullToolPath("install.bat");
+                                                        var fname = Configuration_1.Configuration.getFullToolPath("rust/install.bat");
                                                         if (fs.existsSync(fname)) {
                                                             fs.unlink(fname, () => { }); // Delete installation script
                                                         }
-                                                        fname = Configuration_1.Configuration.getFullToolPath("rustup-init.exe");
+                                                        fname = Configuration_1.Configuration.getFullToolPath("rust/rustup-init.exe");
                                                         if (fs.existsSync(fname)) {
                                                             fs.unlink(fname, () => { }); // Delete rustup-init
                                                         }
@@ -480,7 +480,7 @@ class ExternalToolsPanel {
             ret += `</div>
 
                                     <div id="i2" class="item">
-                                        <div style="margin:5px;"><strong>RUST Compiler support package for WOWCube SDK - <span><i class="negative">EXPERIMENTAL</i></span></strong></div>
+                                        <div style="margin:5px;"><strong>RUST Compiler support package for WOWCube SDK (WASI) - <span><i class="negative">EXPERIMENTAL</i></span></strong></div>
                                         
                                         <div style="display:inline-block; width: calc(100% - 145px);">
                                             <div class="itemdesc">The package provides an experimental set of development tools required for writing cubeapps with Rust programming language.</div>
@@ -551,21 +551,31 @@ class ExternalToolsPanel {
                     break;
                 case 'emscripten':
                     {
-                        var compilerpath = Configuration_1.Configuration.getCompilerPath("cpp");
-                        if (compilerpath.length == 0)
-                            return false;
-                        compilerpath += 'em/upstream/emscripten/';
-                        if (fs.existsSync(compilerpath) === false) {
-                            this._channel.appendLine("External Tools management: Path \"" + compilerpath + "\" is invalid, C++ Compiler support package for WOWCube Development Kit is not installed");
+                        /*
+                        var compilerpath = Configuration.getCompilerPath("cpp");
+                        if(compilerpath.length==0) return false;
+
+                        compilerpath+='em/upstream/emscripten/';
+
+                        if(fs.existsSync(compilerpath)===false)
+                        {
+                            this._channel.appendLine("External Tools management: Path \""+compilerpath+"\" is invalid, C++ Compiler support package for WOWCube Development Kit is not installed");
                             this._channel.show(true);
+            
                             return false;
                         }
-                        var command = '"' + compilerpath + Configuration_1.Configuration.getCC("cpp") + '"';
-                        if (fs.existsSync(compilerpath) === false) {
-                            this._channel.appendLine("External Tools management: File \"" + command + "\" does not exist, C++ Compiler support package for WWOWCube Development Kit is not installed or corrupted");
+
+                        var command = '"'+compilerpath+ Configuration.getCC("cpp")+'"';
+
+                        if(fs.existsSync(compilerpath)===false)
+                        {
+                            this._channel.appendLine("External Tools management: File \""+command+"\" does not exist, C++ Compiler support package for WWOWCube Development Kit is not installed or corrupted");
                             this._channel.show(true);
+            
                             return false;
                         }
+                        */
+                        return false;
                     }
                     break;
                 case 'clang':
