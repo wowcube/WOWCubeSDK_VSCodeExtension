@@ -290,7 +290,7 @@ class WOWCubeProjectProvider {
 						<input id="compilerflags" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.projectOptions.cpp.flags}"></input>
 						</div>
 
-						<div id="compilersettingst" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">Additional compiler settings</div>
+						<div id="compilersettingst" style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;;min-width:170px;">WASM compiler flags</div>
 						<input id="compilersettings" style="display:inline-block;width:calc(100% - 200px);min-width:100px;" value="${json.projectOptions.cpp.compilerSettings}"></input>
 						</div>
 

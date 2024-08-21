@@ -387,7 +387,6 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				script+='move "'+srcwasm+'" "'+destwasm+'"\n';
 
 				//var wasmgc:string = Configuration.getToolsPath()+'rust/wasm-gc.exe';
-
 				//script+='"'+wasmgc+'" "'+destwasm+'"\n';
 
 				try
@@ -680,11 +679,8 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			*/
 
 			//compiler flags
+			var cppFlags = Project.Options.cpp.flags;
 
-			//commented out so far, but MUST BE UNCOMMENTED IN THE FUTURE
-			//command+=' '+Project.Options.cpp.flags;
-			
-			var cppFlags:string = Configuration.getClangValue('options');
 			if(cppFlags==null)
 			{
 				this._channel.appendLine('CLang flags are not specified!');
@@ -705,13 +701,9 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 					resolve();
 					return;
 				}
-				else
-				{
-					this._channel.appendLine('CLang flags: '+cppFlags);
-				}
 			}
 
-			var wasmFlags: string = Configuration.getClangValue('wasmOptions');
+			var wasmFlags: string = Project.Options.cpp.compilerSettings;
 
 			if(wasmFlags==null)
 			{
@@ -733,24 +725,9 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 					resolve();
 					return;
 				}
-				else
-				{
-					this._channel.appendLine('WASM flags: '+wasmFlags);
-				}
 			}
 
 			command+=' '+cppFlags+' -Wl"'+wasmFlags+'"';
-
-			//command+=' '+'-std=c++11 -g0 -Os -flto -fno-exceptions -mexec-model=reactor -Wl",--no-entry,--export=run,--export=on_init,--strip-all,--lto-O3"';
-
-			//additional compiler settings
-			/*
-			var csett = Project.Options.cpp.compilerSettings.split(";");
-			for(var i=0;i<csett.length;i++)
-			{
-				if(csett[i].length>0) command+=' -s '+csett[i];
-			}
-			*/
 
 			//custom defines 
 			var cdefs = Project.Options.cpp.defines.split(";");
@@ -768,7 +745,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			var sdkpath:string = Configuration.getWOWSDKPath();
 			sdkpath+='sdk/'+Configuration.getCurrentVersion()+'/cpp/';
 
-			command+=' -I"'+sdkpath+'"';//D:/WOW/WasmLibs/cpp';
+			command+=' -I"'+sdkpath+'"';
 
 			//add additional include paths
 			for(var i=0;i<5;i++)
@@ -780,7 +757,6 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			}
 
 			//add destination file
-			//command+=' --no-entry';
 			command+=' -o "'+destfile+'"';
 
 			//add mandatory SDK files depending on SDK version

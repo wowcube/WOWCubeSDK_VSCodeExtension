@@ -339,8 +339,8 @@ export class Project
                 {
                     json.projectOptions.cpp = new Object();
                     json.projectOptions.cpp.defines = "";
-                    json.projectOptions.cpp.flags = "-std=c++11 -g0 -O3";
-                    json.projectOptions.cpp.compilerSettings = "STRICT=1;ERROR_ON_UNDEFINED_SYMBOLS=0";
+                    json.projectOptions.cpp.flags = "-std=c++11 -Oz -flto -fno-exceptions -mexec-model=reactor -z stack-size=10240";
+                    json.projectOptions.cpp.compilerSettings = ",--initial-memory=65536,--export=run,--export=on_init,--strip-all,--lto-O3";
                     json.projectOptions.cpp.includeFolders = new Array();
                     json.projectOptions.cpp.includeFolders.push("");
                     json.projectOptions.cpp.includeFolders.push("");

@@ -47,7 +47,9 @@ Although the extension can be used on Linux, it provides limited functionality a
 ## Release Notes
 
 ### 2.4.4
+* Support for WOWCube SDK 6.1
 * Experimental support for building Rust projects with WASI
+* Minor UI tweaks
 
 ### 2.4.3
 * Bugfix

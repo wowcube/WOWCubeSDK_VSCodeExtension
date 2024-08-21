@@ -462,9 +462,7 @@ class WOWCubeBuildTaskTerminal {
             }
             */
             //compiler flags
-            //commented out so far, but MUST BE UNCOMMENTED IN THE FUTURE
-            //command+=' '+Project.Options.cpp.flags;
-            var cppFlags = Configuration_1.Configuration.getClangValue('options');
+            var cppFlags = Project_1.Project.Options.cpp.flags;
             if (cppFlags == null) {
                 this._channel.appendLine('CLang flags are not specified!');
                 this._channel.appendLine('Stopping the compilation.\r\n\r\n');
@@ -480,11 +478,8 @@ class WOWCubeBuildTaskTerminal {
                     resolve();
                     return;
                 }
-                else {
-                    this._channel.appendLine('CLang flags: ' + cppFlags);
-                }
             }
-            var wasmFlags = Configuration_1.Configuration.getClangValue('wasmOptions');
+            var wasmFlags = Project_1.Project.Options.cpp.compilerSettings;
             if (wasmFlags == null) {
                 this._channel.appendLine('WASM flags are not specified!');
                 this._channel.appendLine('Stopping the compilation.\r\n\r\n');
@@ -500,20 +495,8 @@ class WOWCubeBuildTaskTerminal {
                     resolve();
                     return;
                 }
-                else {
-                    this._channel.appendLine('WASM flags: ' + wasmFlags);
-                }
             }
             command += ' ' + cppFlags + ' -Wl"' + wasmFlags + '"';
-            //command+=' '+'-std=c++11 -g0 -Os -flto -fno-exceptions -mexec-model=reactor -Wl",--no-entry,--export=run,--export=on_init,--strip-all,--lto-O3"';
-            //additional compiler settings
-            /*
-            var csett = Project.Options.cpp.compilerSettings.split(";");
-            for(var i=0;i<csett.length;i++)
-            {
-                if(csett[i].length>0) command+=' -s '+csett[i];
-            }
-            */
             //custom defines 
             var cdefs = Project_1.Project.Options.cpp.defines.split(";");
             for (var i = 0; i < cdefs.length; i++) {
@@ -526,7 +509,7 @@ class WOWCubeBuildTaskTerminal {
             //add SDK include path
             var sdkpath = Configuration_1.Configuration.getWOWSDKPath();
             sdkpath += 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/cpp/';
-            command += ' -I"' + sdkpath + '"'; //D:/WOW/WasmLibs/cpp';
+            command += ' -I"' + sdkpath + '"';
             //add additional include paths
             for (var i = 0; i < 5; i++) {
                 if (Project_1.Project.Options.cpp.includeFolders[i].length > 0) {
@@ -534,7 +517,6 @@ class WOWCubeBuildTaskTerminal {
                 }
             }
             //add destination file
-            //command+=' --no-entry';
             command += ' -o "' + destfile + '"';
             //add mandatory SDK files depending on SDK version
             if (maj_i >= 5) //5.x
