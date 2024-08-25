@@ -3,6 +3,12 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 
+export enum InstallationProblem 
+{
+    None = 0,
+    EmscriptedPresent = -1
+}
+
 export class Configuration 
 {
     private static _currentDevice:any = null;
@@ -910,6 +916,30 @@ export class Configuration
         {
             Configuration.loadVersionFolders(path);
         }
+    }
+
+    public static checkCurrentInstallation()
+    {
+        //check if emscripten is installed
+
+        var compilerpath = Configuration.getCompilerPath("cpp");
+        if(compilerpath.length==0) return false;
+
+        compilerpath+='em/upstream/emscripten/';
+
+        if(fs.existsSync(compilerpath)===true)
+        {
+            return InstallationProblem.EmscriptedPresent;
+        }
+
+        var command = '"'+compilerpath+ Configuration.getCC("cpp")+'"';
+
+        if(fs.existsSync(compilerpath)===true)
+        {
+            return InstallationProblem.EmscriptedPresent;
+        }
+
+        return InstallationProblem.None;
     }
 
     static async sleep(timer:number) 

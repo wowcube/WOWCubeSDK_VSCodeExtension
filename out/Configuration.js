@@ -1,10 +1,15 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Configuration = void 0;
+exports.Configuration = exports.InstallationProblem = void 0;
 const vscode = require("vscode");
 const os = require("os");
 const fs = require("fs");
 const path = require("path");
+var InstallationProblem;
+(function (InstallationProblem) {
+    InstallationProblem[InstallationProblem["None"] = 0] = "None";
+    InstallationProblem[InstallationProblem["EmscriptedPresent"] = -1] = "EmscriptedPresent";
+})(InstallationProblem = exports.InstallationProblem || (exports.InstallationProblem = {}));
 class Configuration {
     static getString(key) {
         var ret = "";
@@ -682,6 +687,21 @@ class Configuration {
         else {
             Configuration.loadVersionFolders(path);
         }
+    }
+    static checkCurrentInstallation() {
+        //check if emscripten is installed
+        var compilerpath = Configuration.getCompilerPath("cpp");
+        if (compilerpath.length == 0)
+            return false;
+        compilerpath += 'em/upstream/emscripten/';
+        if (fs.existsSync(compilerpath) === true) {
+            return InstallationProblem.EmscriptedPresent;
+        }
+        var command = '"' + compilerpath + Configuration.getCC("cpp") + '"';
+        if (fs.existsSync(compilerpath) === true) {
+            return InstallationProblem.EmscriptedPresent;
+        }
+        return InstallationProblem.None;
     }
     static async sleep(timer) {
         return new Promise(resolve => {

@@ -50,6 +50,32 @@ class ExternalToolsPanel {
                             this._channel.show(true);
                             return;
                         }
+                        //check if some cleanup's required
+                        var problem = Configuration_1.Configuration.checkCurrentInstallation();
+                        if (problem != Configuration_1.InstallationProblem.None) {
+                            switch (problem) {
+                                case Configuration_1.InstallationProblem.EmscriptedPresent:
+                                    {
+                                        //remove emscripten
+                                        if (message.value.pack === 'cpp') {
+                                            if (!ExternalToolsPanel.currentPanel?.deleteDir(toolspath + message.value.pack)) {
+                                                vscode.window.showErrorMessage("Failed to remove previous installation of the package");
+                                                this._channel.appendLine("External Tools management: The required cleanup of the previous installation of C++ package has failed!");
+                                                this._channel.appendLine("Please restart VSCode and try again");
+                                                this._channel.show(true);
+                                                return;
+                                            }
+                                            else {
+                                                this._channel.appendLine("External Tools management: Previous version of C++ support package has been successfully deleted, installing new version...");
+                                                this._channel.show(true);
+                                            }
+                                        }
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
                         this._url = Configuration_1.Configuration.getPackageDownloadURL(message.value.pack);
                         ExternalToolsPanel.currentPack = message.value.pack;
                         ExternalToolsPanel._filename = toolspath + "package.zip";

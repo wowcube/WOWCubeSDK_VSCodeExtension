@@ -539,6 +539,25 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				{
 					this._channel.appendLine("NOTE: Target SDK version of the application ("+build_json.sdkVersion+") differs from current SDK version ("+Configuration.getCurrentVersion()+")");
 					
+					var cv:Number = Number(Configuration.getCurrentVersion());
+					var bv:Number = Number(build_json.sdkVersion);
+
+					if(cv.valueOf()>=6.1)
+					{
+						if(bv<cv)
+						{
+							this._channel.appendLine('\r\nSince WOWCube SDK version 6.1, the compiler provided with the C++ support package was changed.');
+							this._channel.appendLine('Please change the target SDK version of your project to 6.1 or higher and set the following values to the compilation flags of your project before proceeding: ');
+							this._channel.appendLine('* Comiler flags: "-std=c++11 -Oz -flto -fno-exceptions -mexec-model=reactor -z stack-size=10240" ');
+							this._channel.appendLine('* WASM compiler flags: ",--initial-memory=65536,--export=run,--export=on_init,--strip-all,--lto-O3" ');
+
+							this._channel.appendLine('\r\nFailed to compile.\r\n');
+
+							this.closeEmitter.fire(0);
+							resolve();
+							return;
+						}
+					}
 					var versions  = Configuration.getVersions();
 					var detected:boolean = false;
 
@@ -724,6 +743,22 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 					this.closeEmitter.fire(0);
 					resolve();
 					return;
+				}
+				else
+				{
+					if(wasmFlags.indexOf('STRICT=1')!=-1)
+					{
+						this._channel.appendLine('\r\nSince WOWCube SDK version 6.1, the compiler provided with the C++ support package was changed.');
+						this._channel.appendLine('Please set the following values to the compilation flags of your project before proceeding: ');
+						this._channel.appendLine('* Comiler flags: "-std=c++11 -Oz -flto -fno-exceptions -mexec-model=reactor -z stack-size=10240" ');
+						this._channel.appendLine('* WASM compiler flags: ",--initial-memory=65536,--export=run,--export=on_init,--strip-all,--lto-O3" ');
+
+						this._channel.appendLine('\r\nFailed to compile.\r\n');
+
+						this.closeEmitter.fire(0);
+						resolve();
+						return;				
+					}
 				}
 			}
 

@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as os from 'os';
 import * as cp from 'child_process';
 import { Uri } from "vscode";
-import {Configuration} from './Configuration';
+import {Configuration, InstallationProblem} from './Configuration';
 import { Project } from "./Project";
 import {Output} from './Output';
 import { DownloadManager } from "./DownloadManager";
@@ -110,6 +110,40 @@ export class ExternalToolsPanel {
                                     this._channel.appendLine("External Tools management: Unable to create a folder for saving the package");
                                     this._channel.show(true);
                                     return;
+                                }
+
+                                //check if some cleanup's required
+                                var problem = Configuration.checkCurrentInstallation();
+                                if(problem!=InstallationProblem.None)
+                                {
+                                    switch(problem)
+                                    {
+                                        case InstallationProblem.EmscriptedPresent:
+                                        {
+                                            //remove emscripten
+                                            if(message.value.pack==='cpp')
+                                            {
+                                                if(!ExternalToolsPanel.currentPanel?.deleteDir(toolspath+message.value.pack))
+                                                {
+                                                    vscode.window.showErrorMessage("Failed to remove previous installation of the package"); 
+
+                                                    this._channel.appendLine("External Tools management: The required cleanup of the previous installation of C++ package has failed!");
+                                                    this._channel.appendLine("Please restart VSCode and try again");
+                                                    
+                                                    this._channel.show(true);
+                                                    return;
+                                                } 
+                                                else
+                                                {
+                                                    this._channel.appendLine("External Tools management: Previous version of C++ support package has been successfully deleted, installing new version...");
+                                                    this._channel.show(true);   
+                                                }
+                                            }
+                                        }
+                                        break;
+                                        default:
+                                            break;
+                                    }
                                 }
 
                                 this._url = Configuration.getPackageDownloadURL(message.value.pack);

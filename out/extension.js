@@ -57,6 +57,23 @@ async function activate(context) {
         DeviceDetailsPanel_1.DeviceDetailsPanel.createOrShow(context.extensionUri);
     }));
     context.subscriptions.push(vscode.window.registerCustomEditorProvider(WOWCubeProjectProvider_1.WOWCubeProjectProvider.viewType, Providers_1.Providers.project));
+    //check the validity of installation
+    var problem = Configuration_1.Configuration.checkCurrentInstallation();
+    if (problem != Configuration_1.InstallationProblem.None) {
+        switch (problem) {
+            case Configuration_1.InstallationProblem.EmscriptedPresent:
+                {
+                    vscode.window.showErrorMessage("Currently installed version of  C++ Compiler support package for WOWCUbe SDK is not supported anymore and must be re-installed.", ...["Manage Packages"]).then((answer) => {
+                        if (answer === "Manage Packages") {
+                            vscode.commands.executeCommand('WOWCubeSDK.openExternalTools');
+                        }
+                    });
+                }
+                break;
+            default:
+                break;
+        }
+    }
     //check for updates when extension starts
     let check = Configuration_1.Configuration.getAutoCheckForUpdates();
     if (check == '1') {

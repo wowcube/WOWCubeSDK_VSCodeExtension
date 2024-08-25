@@ -14,7 +14,7 @@ import { WOWCubeBuildTaskProvider } from './WOWCubeBuildTaskProvider';
 import { WOWCubeProjectProvider } from './WOWCubeProjectProvider';
 import { ExternalToolsPanel } from './ExternalToolsPanel';
 
-import {Configuration} from './Configuration';
+import {Configuration, InstallationProblem} from './Configuration';
 import {Providers} from './Providers';
 
 let buildTask: vscode.Disposable | undefined;
@@ -92,6 +92,31 @@ export async function activate(context: vscode.ExtensionContext)
 
 		context.subscriptions.push(vscode.window.registerCustomEditorProvider(WOWCubeProjectProvider.viewType, Providers.project));
 
+		//check the validity of installation
+		var problem = Configuration.checkCurrentInstallation();
+
+		if(problem!=InstallationProblem.None)
+		{
+			switch(problem)
+			{
+				case InstallationProblem.EmscriptedPresent:
+					{
+						vscode.window.showErrorMessage(
+							"Currently installed version of  C++ Compiler support package for WOWCUbe SDK is not supported anymore and must be re-installed.",
+							...["Manage Packages"]
+						).then((answer)=>
+						{
+							if(answer==="Manage Packages")
+							{
+								vscode.commands.executeCommand('WOWCubeSDK.openExternalTools');
+							}
+						});
+					}
+				break;
+				default:
+					break;
+			}
+		}
 		//check for updates when extension starts
 		let check:string = Configuration.getAutoCheckForUpdates();
 		if(check=='1')
