@@ -548,7 +548,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 						{
 							this._channel.appendLine('\r\nSince WOWCube SDK version 6.1, the compiler provided with the C++ support package was changed.');
 							this._channel.appendLine('Please change the target SDK version of your project to 6.1 or higher and set the following values to the compilation flags of your project before proceeding: ');
-							this._channel.appendLine('* Comiler flags: "-std=c++11 -Oz -flto -fno-exceptions -mexec-model=reactor -z stack-size=10240" ');
+							this._channel.appendLine('* Compiler flags: "-std=c++11 -Oz -flto -fno-exceptions -mexec-model=reactor -z stack-size=10240" ');
 							this._channel.appendLine('* WASM compiler flags: ",--initial-memory=65536,--export=run,--export=on_init,--strip-all,--lto-O3" ');
 
 							this._channel.appendLine('\r\nFailed to compile.\r\n');
@@ -746,11 +746,11 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				}
 				else
 				{
-					if(wasmFlags.indexOf('STRICT=1')!=-1)
+					if(wasmFlags.indexOf('STRICT=1')!=-1)	//see if we have emscripten flags there
 					{
 						this._channel.appendLine('\r\nSince WOWCube SDK version 6.1, the compiler provided with the C++ support package was changed.');
 						this._channel.appendLine('Please set the following values to the compilation flags of your project before proceeding: ');
-						this._channel.appendLine('* Comiler flags: "-std=c++11 -Oz -flto -fno-exceptions -mexec-model=reactor -z stack-size=10240" ');
+						this._channel.appendLine('* Compiler flags: "-std=c++11 -Oz -flto -fno-exceptions -mexec-model=reactor -z stack-size=10240" ');
 						this._channel.appendLine('* WASM compiler flags: ",--initial-memory=65536,--export=run,--export=on_init,--strip-all,--lto-O3" ');
 
 						this._channel.appendLine('\r\nFailed to compile.\r\n');
