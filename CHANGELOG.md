@@ -1,3 +1,6 @@
+### 2.4.5
+* Support for WOWCube SDK 6.2
+
 ### 2.4.4
 * Support for WOWCube SDK 6.1
 * Experimental support for building Rust projects with WASI

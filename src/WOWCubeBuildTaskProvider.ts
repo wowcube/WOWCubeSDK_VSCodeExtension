@@ -544,7 +544,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 					if(cv.valueOf()>=6.1)
 					{
-						if(bv<cv)
+						if(bv<cv && bv.valueOf()<6.1)
 						{
 							this._channel.appendLine('\r\nSince WOWCube SDK version 6.1, the compiler provided with the C++ support package was changed.');
 							this._channel.appendLine('Please change the target SDK version of your project to 6.1 or higher and set the following values to the compilation flags of your project before proceeding: ');
@@ -815,14 +815,17 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			}
 
 			if(maj_i>=6)	//6.x
-			{
-				
+			{	
 				command+=' "'+sdkpath+'SaveMessage.cpp"';
 				command+=' "'+sdkpath+'Scramble.cpp"';
 
 				//gfx
 				command+=' "'+sdkpath+'Gfx/QRCode.cpp"';
 				
+				if(min_i>=2)
+				{
+					command+=' "'+sdkpath+'Splashscreen.cpp"';
+				}
 			}
 
 			//fetch sources and add them to command line
@@ -1151,6 +1154,11 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 				//gfx
 				command+=' "'+sdkpath+'Gfx/QRCode.cpp"';
+
+				if(min_i>=2)
+				{
+					command+=' "'+sdkpath+'Splashscreen.cpp"';
+				}
 			}
 
 			//fetch sources and add them to command line

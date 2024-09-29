@@ -113,11 +113,11 @@ class ExternalToolsPanel {
                                                     Script_1.Script.setValue("%%RUSTUPHOME%%", rustup);
                                                     Script_1.Script.setValue("%%RUSTUPINIT%%", ruinit);
                                                     if (!Script_1.Script.save()) {
-                                                        throw new Error("Unable to generate installation script.");
+                                                        throw new Error("Unable to generate installation script, failed to save " + rustini_script);
                                                     }
                                                 }
                                                 else {
-                                                    throw new Error("Unable to generate installation script.");
+                                                    throw new Error("Unable to generate installation script, failed to load " + rustini_script);
                                                 }
                                                 var rustinit_command = '"' + Configuration_1.Configuration.getFullToolPath("install.sh") + '"';
                                                 var child = cp.exec(rustinit_command, { cwd: "" }, (error, stdout, stderr) => {
@@ -180,11 +180,11 @@ class ExternalToolsPanel {
                                                     Script_1.Script.setValue("%%RUSTUPHOME%%", rustup);
                                                     Script_1.Script.setValue("%%RUSTUPINIT", ruinit);
                                                     if (!Script_1.Script.save()) {
-                                                        throw new Error("Unable to generate installation script.");
+                                                        throw new Error("Unable to generate installation script, failed to save " + rustini_script);
                                                     }
                                                 }
                                                 else {
-                                                    throw new Error("Unable to generate installation script.");
+                                                    throw new Error("Unable to generate installation script, failed to load " + rustini_script);
                                                 }
                                                 var rustinit_command = '"' + Configuration_1.Configuration.getFullToolPath("rust/install.bat") + '"';
                                                 var child = cp.exec(rustinit_command, { cwd: "" }, (error, stdout, stderr) => {

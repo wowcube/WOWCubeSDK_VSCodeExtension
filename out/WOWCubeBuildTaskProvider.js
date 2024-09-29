@@ -368,7 +368,7 @@ class WOWCubeBuildTaskTerminal {
                     var cv = Number(Configuration_1.Configuration.getCurrentVersion());
                     var bv = Number(build_json.sdkVersion);
                     if (cv.valueOf() >= 6.1) {
-                        if (bv < cv) {
+                        if (bv < cv && bv.valueOf() < 6.1) {
                             this._channel.appendLine('\r\nSince WOWCube SDK version 6.1, the compiler provided with the C++ support package was changed.');
                             this._channel.appendLine('Please change the target SDK version of your project to 6.1 or higher and set the following values to the compilation flags of your project before proceeding: ');
                             this._channel.appendLine('* Compiler flags: "-std=c++11 -Oz -flto -fno-exceptions -mexec-model=reactor -z stack-size=10240" ');
@@ -567,6 +567,9 @@ class WOWCubeBuildTaskTerminal {
                 command += ' "' + sdkpath + 'Scramble.cpp"';
                 //gfx
                 command += ' "' + sdkpath + 'Gfx/QRCode.cpp"';
+                if (min_i >= 2) {
+                    command += ' "' + sdkpath + 'Splashscreen.cpp"';
+                }
             }
             //fetch sources and add them to command line
             if (fs.existsSync(currDir) === true) {
@@ -801,6 +804,9 @@ class WOWCubeBuildTaskTerminal {
                 command += ' "' + sdkpath + 'Scramble.cpp"';
                 //gfx
                 command += ' "' + sdkpath + 'Gfx/QRCode.cpp"';
+                if (min_i >= 2) {
+                    command += ' "' + sdkpath + 'Splashscreen.cpp"';
+                }
             }
             //fetch sources and add them to command line
             if (fs.existsSync(currDir) === true) {

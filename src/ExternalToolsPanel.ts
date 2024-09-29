@@ -209,12 +209,12 @@ export class ExternalToolsPanel {
 
                                                                 if(!Script.save())
                                                                 {
-                                                                    throw new Error("Unable to generate installation script.");
+                                                                    throw new Error("Unable to generate installation script, failed to save "+rustini_script);
                                                                 }
                                                             }
                                                             else
                                                             {
-                                                                throw new Error("Unable to generate installation script.");
+                                                                throw new Error("Unable to generate installation script, failed to load "+rustini_script);
                                                             }
 
                                                             var rustinit_command = '"'+Configuration.getFullToolPath("install.sh")+'"';
@@ -308,12 +308,12 @@ export class ExternalToolsPanel {
 
                                                                 if(!Script.save())
                                                                 {
-                                                                    throw new Error("Unable to generate installation script.");
+                                                                    throw new Error("Unable to generate installation script, failed to save "+rustini_script);
                                                                 }
                                                             }
                                                             else
                                                             {
-                                                                throw new Error("Unable to generate installation script.");
+                                                                throw new Error("Unable to generate installation script, failed to load "+rustini_script);
                                                             }
 
 
