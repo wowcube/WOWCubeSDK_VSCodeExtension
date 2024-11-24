@@ -569,6 +569,7 @@ class WOWCubeBuildTaskTerminal {
                 command += ' "' + sdkpath + 'Gfx/QRCode.cpp"';
                 if (min_i >= 2) {
                     command += ' "' + sdkpath + 'Splashscreen.cpp"';
+                    command += ' "' + sdkpath + 'Gfx/SpriteAtlas.cpp"';
                 }
             }
             //fetch sources and add them to command line
@@ -806,6 +807,7 @@ class WOWCubeBuildTaskTerminal {
                 command += ' "' + sdkpath + 'Gfx/QRCode.cpp"';
                 if (min_i >= 2) {
                     command += ' "' + sdkpath + 'Splashscreen.cpp"';
+                    command += ' "' + sdkpath + 'Gfx/SpriteAtlas.cpp"';
                 }
             }
             //fetch sources and add them to command line

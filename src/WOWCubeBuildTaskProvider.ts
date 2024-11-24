@@ -825,6 +825,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				if(min_i>=2)
 				{
 					command+=' "'+sdkpath+'Splashscreen.cpp"';
+					command+=' "'+sdkpath+'Gfx/SpriteAtlas.cpp"';
 				}
 			}
 
@@ -1158,6 +1159,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 				if(min_i>=2)
 				{
 					command+=' "'+sdkpath+'Splashscreen.cpp"';
+					command+=' "'+sdkpath+'Gfx/SpriteAtlas.cpp"';
 				}
 			}
 
