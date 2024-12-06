@@ -361,6 +361,8 @@ export class SearchResultPanel
 			docs_cpp = this.getDocumentation('cpp');
 			docs_rust = this.getDocumentation('rust');
 
+            SearchResultPanel.searchTOC.length = 0;
+            
             SearchResultPanel.searchIndex = lunr(function () 
 			{
 				this.ref('id');

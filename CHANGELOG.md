@@ -1,3 +1,6 @@
+### 2.4.6
+* Bugfix
+
 ### 2.4.5
 * Support for WOWCube SDK 6.2
 
