@@ -1,3 +1,6 @@
+### 2.4.7
+* Fix for incorrect documents database indexing after changing the SDK version
+
 ### 2.4.6
 * Bugfix
 

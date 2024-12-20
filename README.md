@@ -46,6 +46,12 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ## Release Notes
 
+### 2.4.7
+* Fix for incorrect documents database indexing after changing the SDK version
+
+### 2.4.6
+* Bugfix
+
 ### 2.4.5
 * Support for WOWCube SDK 6.2
 
