@@ -13,6 +13,25 @@ const DownloadManager_1 = require("./DownloadManager");
 const ArchiveManager_1 = require("./ArchiveManager");
 const Script_1 = require("./Script");
 class ExternalToolsPanel {
+    static createOrShow(extensionUri) {
+        const column = vscode.window.activeTextEditor
+            ? vscode.window.activeTextEditor.viewColumn : undefined;
+        // If we already have a panel, show it.      
+        if (ExternalToolsPanel.currentPanel) {
+            ExternalToolsPanel.currentPanel._panel.reveal(column);
+            return;
+        }
+        // Otherwise, create a new panel. 
+        const panel = vscode.window.createWebviewPanel(ExternalToolsPanel.viewType, 'Manage External Tools', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
+        ExternalToolsPanel.currentPanel = new ExternalToolsPanel(panel, extensionUri);
+    }
+    static kill() {
+        ExternalToolsPanel.currentPanel?.dispose();
+        ExternalToolsPanel.currentPanel = undefined;
+    }
+    static revive(panel, extensionUri) {
+        ExternalToolsPanel.currentPanel = new ExternalToolsPanel(panel, extensionUri);
+    }
     constructor(panel, extensionUri) {
         this._disposables = [];
         this.writeEmitter = Output_1.Output.terminal();
@@ -322,25 +341,6 @@ class ExternalToolsPanel {
                     break;
             }
         }, null, this._disposables);
-    }
-    static createOrShow(extensionUri) {
-        const column = vscode.window.activeTextEditor
-            ? vscode.window.activeTextEditor.viewColumn : undefined;
-        // If we already have a panel, show it.      
-        if (ExternalToolsPanel.currentPanel) {
-            ExternalToolsPanel.currentPanel._panel.reveal(column);
-            return;
-        }
-        // Otherwise, create a new panel. 
-        const panel = vscode.window.createWebviewPanel(ExternalToolsPanel.viewType, 'Manage External Tools', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
-        ExternalToolsPanel.currentPanel = new ExternalToolsPanel(panel, extensionUri);
-    }
-    static kill() {
-        ExternalToolsPanel.currentPanel?.dispose();
-        ExternalToolsPanel.currentPanel = undefined;
-    }
-    static revive(panel, extensionUri) {
-        ExternalToolsPanel.currentPanel = new ExternalToolsPanel(panel, extensionUri);
     }
     setProgress(v) {
         this._panel.webview.postMessage({ type: 'setProgress', value: v });

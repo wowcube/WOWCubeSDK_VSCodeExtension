@@ -4,6 +4,25 @@ exports.WebAppPanel = void 0;
 const vscode = require("vscode");
 const getNonce_1 = require("./getNonce");
 class WebAppPanel {
+    static createOrShow(extensionUri) {
+        const column = vscode.window.activeTextEditor
+            ? vscode.window.activeTextEditor.viewColumn : undefined;
+        // If we already have a panel, show it.      
+        if (WebAppPanel.currentPanel) {
+            WebAppPanel.currentPanel._panel.reveal(column);
+            return;
+        }
+        // Otherwise, create a new panel. 
+        const panel = vscode.window.createWebviewPanel(WebAppPanel.viewType, 'WOWCube SDK', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
+        WebAppPanel.currentPanel = new WebAppPanel(panel, extensionUri);
+    }
+    static kill() {
+        WebAppPanel.currentPanel?.dispose();
+        WebAppPanel.currentPanel = undefined;
+    }
+    static revive(panel, extensionUri) {
+        WebAppPanel.currentPanel = new WebAppPanel(panel, extensionUri);
+    }
     constructor(panel, extensionUri) {
         this._disposables = [];
         this._panel = panel;
@@ -25,25 +44,6 @@ class WebAppPanel {
                     return;
             }
         }, null, this._disposables);
-    }
-    static createOrShow(extensionUri) {
-        const column = vscode.window.activeTextEditor
-            ? vscode.window.activeTextEditor.viewColumn : undefined;
-        // If we already have a panel, show it.      
-        if (WebAppPanel.currentPanel) {
-            WebAppPanel.currentPanel._panel.reveal(column);
-            return;
-        }
-        // Otherwise, create a new panel. 
-        const panel = vscode.window.createWebviewPanel(WebAppPanel.viewType, 'WOWCube SDK', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
-        WebAppPanel.currentPanel = new WebAppPanel(panel, extensionUri);
-    }
-    static kill() {
-        WebAppPanel.currentPanel?.dispose();
-        WebAppPanel.currentPanel = undefined;
-    }
-    static revive(panel, extensionUri) {
-        WebAppPanel.currentPanel = new WebAppPanel(panel, extensionUri);
     }
     dispose() {
         WebAppPanel.currentPanel = undefined;

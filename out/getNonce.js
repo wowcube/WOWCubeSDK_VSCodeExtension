@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getNonce = void 0;
+exports.getNonce = getNonce;
 function getNonce() {
     let text = "";
     const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -9,5 +9,4 @@ function getNonce() {
     }
     return text;
 }
-exports.getNonce = getNonce;
 //# sourceMappingURL=getNonce.js.map

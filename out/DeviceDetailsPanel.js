@@ -9,6 +9,31 @@ const Configuration_1 = require("./Configuration");
 const Providers_1 = require("./Providers");
 const Output_1 = require("./Output");
 class DeviceDetailsPanel {
+    static createOrShow(extensionUri) {
+        const column = vscode.window.activeTextEditor
+            ? vscode.window.activeTextEditor.viewColumn : undefined;
+        // If we already have a panel, show it.      
+        if (DeviceDetailsPanel.currentPanel) {
+            DeviceDetailsPanel.currentPanel._panel.reveal(column);
+            return;
+        }
+        // Otherwise, create a new panel. 
+        const panel = vscode.window.createWebviewPanel(DeviceDetailsPanel.viewType, 'WOWCube Device', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
+        DeviceDetailsPanel.currentPanel = new DeviceDetailsPanel(panel, extensionUri);
+    }
+    static kill() {
+        DeviceDetailsPanel.currentPanel?.dispose();
+        DeviceDetailsPanel.currentPanel = undefined;
+    }
+    static revive(panel, extensionUri) {
+        DeviceDetailsPanel.currentPanel = new DeviceDetailsPanel(panel, extensionUri);
+    }
+    static setDevice(device) {
+        if (DeviceDetailsPanel.currentPanel?._panel?.visible) {
+            DeviceDetailsPanel.currentPanel?._panel?.webview.postMessage({ type: 'setDeviceName', value: { name: device.name + ' (' + device.mac + ')' } });
+            DeviceDetailsPanel.currentPanel?._update();
+        }
+    }
     constructor(panel, extensionUri) {
         this._disposables = [];
         this._currentState = -1;
@@ -213,31 +238,6 @@ class DeviceDetailsPanel {
                     break;
             }
         }, null, this._disposables);
-    }
-    static createOrShow(extensionUri) {
-        const column = vscode.window.activeTextEditor
-            ? vscode.window.activeTextEditor.viewColumn : undefined;
-        // If we already have a panel, show it.      
-        if (DeviceDetailsPanel.currentPanel) {
-            DeviceDetailsPanel.currentPanel._panel.reveal(column);
-            return;
-        }
-        // Otherwise, create a new panel. 
-        const panel = vscode.window.createWebviewPanel(DeviceDetailsPanel.viewType, 'WOWCube Device', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
-        DeviceDetailsPanel.currentPanel = new DeviceDetailsPanel(panel, extensionUri);
-    }
-    static kill() {
-        DeviceDetailsPanel.currentPanel?.dispose();
-        DeviceDetailsPanel.currentPanel = undefined;
-    }
-    static revive(panel, extensionUri) {
-        DeviceDetailsPanel.currentPanel = new DeviceDetailsPanel(panel, extensionUri);
-    }
-    static setDevice(device) {
-        if (DeviceDetailsPanel.currentPanel?._panel?.visible) {
-            DeviceDetailsPanel.currentPanel?._panel?.webview.postMessage({ type: 'setDeviceName', value: { name: device.name + ' (' + device.mac + ')' } });
-            DeviceDetailsPanel.currentPanel?._update();
-        }
     }
     dispose() {
         DeviceDetailsPanel.currentPanel = undefined;

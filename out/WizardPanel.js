@@ -11,7 +11,28 @@ const Configuration_1 = require("./Configuration");
 const Output_1 = require("./Output");
 const NameBeautifier_1 = require("./NameBeautifier");
 const crypto = require("crypto");
+const canvas = require("canvas");
+//import * as canvas from '@napi-rs/canvas';
 class WizardPanel {
+    static createOrShow(extensionUri) {
+        const column = vscode.window.activeTextEditor
+            ? vscode.window.activeTextEditor.viewColumn : undefined;
+        // If we already have a panel, show it.      
+        if (WizardPanel.currentPanel) {
+            WizardPanel.currentPanel._panel.reveal(column);
+            return;
+        }
+        // Otherwise, create a new panel. 
+        const panel = vscode.window.createWebviewPanel(WizardPanel.viewType, 'WOWCube Cubeapp Project Wizard', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
+        WizardPanel.currentPanel = new WizardPanel(panel, extensionUri);
+    }
+    static kill() {
+        WizardPanel.currentPanel?.dispose();
+        WizardPanel.currentPanel = undefined;
+    }
+    static revive(panel, extensionUri) {
+        WizardPanel.currentPanel = new WizardPanel(panel, extensionUri);
+    }
     constructor(panel, extensionUri) {
         this._disposables = [];
         this.writeEmitter = Output_1.Output.terminal();
@@ -72,7 +93,8 @@ class WizardPanel {
                         else {
                             //all good
                             let uri = vscode_1.Uri.file(ret.path);
-                            let success = vscode.commands.executeCommand('vscode.openFolder', uri);
+                            this.generate_icon(message.value.name, message.value.path, message.value.item, uri);
+                            //let success = vscode.commands.executeCommand('vscode.openFolder', uri);
                         }
                     }
                     break;
@@ -84,25 +106,6 @@ class WizardPanel {
                     }
             }
         }, null, this._disposables);
-    }
-    static createOrShow(extensionUri) {
-        const column = vscode.window.activeTextEditor
-            ? vscode.window.activeTextEditor.viewColumn : undefined;
-        // If we already have a panel, show it.      
-        if (WizardPanel.currentPanel) {
-            WizardPanel.currentPanel._panel.reveal(column);
-            return;
-        }
-        // Otherwise, create a new panel. 
-        const panel = vscode.window.createWebviewPanel(WizardPanel.viewType, 'WOWCube Cubeapp Project Wizard', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
-        WizardPanel.currentPanel = new WizardPanel(panel, extensionUri);
-    }
-    static kill() {
-        WizardPanel.currentPanel?.dispose();
-        WizardPanel.currentPanel = undefined;
-    }
-    static revive(panel, extensionUri) {
-        WizardPanel.currentPanel = new WizardPanel(panel, extensionUri);
     }
     generate(name, path, template) {
         var ret = { path: '', desc: '' };
@@ -116,6 +119,76 @@ class WizardPanel {
             ret = this.generate_rust(name, path, template);
         }
         return ret;
+    }
+    generate_abbreviation(projectName) {
+        // Trim any extra spaces and ensure the name is not empty
+        projectName = projectName.trim();
+        // Case 1: If the name length is 1, use the character itself
+        if (projectName.length === 1) {
+            return projectName.toUpperCase();
+        }
+        // Case 2: If it's a single word, take the first two characters
+        const words = projectName.split('_').filter(Boolean);
+        if (words.length === 1) {
+            return words[0].slice(0, 2).toUpperCase();
+        }
+        // Case 3: If it's multiple words, take the first character of the first two words
+        //The words assumed to be separated with an underscorr
+        const firstTwoWords = words.slice(0, 2);
+        return firstTwoWords.map(word => word[0].toUpperCase()).join('');
+    }
+    generate_icon(name, path, template, uri) {
+        const templatespath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/templates/' + Configuration_1.Configuration.getCurrentVersion() + '/' + WizardPanel.currentLanguage + '/';
+        const templates = require(templatespath + 'templates.json');
+        var fullpath = '';
+        path = path.replace(/\\/g, "/");
+        if (!path.endsWith("/")) {
+            path += '/';
+        }
+        fullpath = path + name;
+        const randomPlaceholder = Math.floor(Math.random() * 6) + 1;
+        const iconFilename = this._extensionUri.fsPath + `/media/${randomPlaceholder}.png`;
+        //const iconFilename:string = templatespath+"icon.png";  
+        const outputImagePath = fullpath + '/assets/icon.png'; // Path to save the output image
+        const text = this.generate_abbreviation(name);
+        const fontSize = 48;
+        const textX = 80; // X-coordinate for the text
+        const textY = 80 + 26; // Y-coordinate for the text
+        // Load the PNG image and draw text on it
+        canvas.loadImage(iconFilename).then(image => {
+            try {
+                canvas.registerFont(this._extensionUri.fsPath + '/media/Rubik-ExtraBold.ttf', { family: 'CustomFont' });
+            }
+            catch (error) {
+                console.error('Error');
+            }
+            // Create a canvas with the same dimensions as the loaded image
+            const c = canvas.createCanvas(image.width, image.height);
+            const ctx = c.getContext('2d');
+            // Draw the loaded image onto the canvas
+            ctx.drawImage(image, 0, 0);
+            // Set the text style
+            //ctx.font = `${fontSize}px Arial`;
+            //console.log(ctx.font);
+            ctx.font = `70px CustomFont`;
+            console.log(ctx.font); // Log the current font style
+            ctx.textAlign = 'center';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Text color (white in this case)
+            ctx.fillText(text, textX, textY + 3); // Draw the text at the specified position
+            ctx.fillStyle = 'rgba(180, 180, 180, 1.0)'; // Text color (white in this case)
+            ctx.fillText(text, textX, textY); // Draw the text at the specified position
+            ctx.fillStyle = 'rgba(255, 255, 255, 1.0)'; // Text color (white in this case)
+            ctx.fillText(text, textX, textY - 3); // Draw the text at the specified position
+            // Save the modified image to the output path
+            const out = fs.createWriteStream(outputImagePath);
+            const stream = c.createPNGStream();
+            stream.pipe(out);
+            out.on('finish', () => {
+                vscode.commands.executeCommand('vscode.openFolder', uri);
+            });
+        }).catch(err => {
+            vscode.window.showErrorMessage("Unable to generate an icon for new project, using default one");
+        });
     }
     generate_rust(name, path, template) {
         var ret = { path: '', desc: '' };
@@ -268,7 +341,6 @@ class WizardPanel {
             this.makeDirSync(fullpath + '/assets');
             this.makeDirSync(fullpath + '/assets/images');
             this.makeDirSync(fullpath + '/assets/sounds');
-            //const iconFilename:string = this._extensionUri.fsPath+"/media/templates/icon.png";
             const iconFilename = templatespath + "icon.png";
             fs.copyFileSync(iconFilename, fullpath + '/assets/icon.png');
             var br = NameBeautifier_1.NameBeautifier.cppClassName(name);

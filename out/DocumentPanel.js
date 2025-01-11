@@ -8,6 +8,19 @@ const fs = require("fs");
 const Configuration_1 = require("./Configuration");
 const Providers_1 = require("./Providers");
 class DocumentPanel {
+    static createOrShowDoc(extensionUri, folder, file, sdkVersion, language) {
+        const column = vscode.window.activeTextEditor
+            ? vscode.window.activeTextEditor.viewColumn : undefined;
+        var exampleKey = '___' + language + '___' + folder + '___' + file;
+        // If we already have a panel, show it.      
+        if (DocumentPanel.panels.has(exampleKey)) {
+            DocumentPanel.panels.get(exampleKey)?._panel.reveal(column);
+            return;
+        }
+        // Otherwise, create a new panel. 
+        const panel = vscode.window.createWebviewPanel(DocumentPanel.viewType, 'WOWCube SDK Document', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
+        DocumentPanel.panels.set(exampleKey, new DocumentPanel(panel, extensionUri, folder, file, sdkVersion, language));
+    }
     constructor(panel, extensionUri, folder, file, version, language) {
         this._disposables = [];
         this._key = "";
@@ -69,19 +82,6 @@ class DocumentPanel {
                     break;
             }
         }, null, this._disposables);
-    }
-    static createOrShowDoc(extensionUri, folder, file, sdkVersion, language) {
-        const column = vscode.window.activeTextEditor
-            ? vscode.window.activeTextEditor.viewColumn : undefined;
-        var exampleKey = '___' + language + '___' + folder + '___' + file;
-        // If we already have a panel, show it.      
-        if (DocumentPanel.panels.has(exampleKey)) {
-            DocumentPanel.panels.get(exampleKey)?._panel.reveal(column);
-            return;
-        }
-        // Otherwise, create a new panel. 
-        const panel = vscode.window.createWebviewPanel(DocumentPanel.viewType, 'WOWCube SDK Document', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
-        DocumentPanel.panels.set(exampleKey, new DocumentPanel(panel, extensionUri, folder, file, sdkVersion, language));
     }
     dispose() {
         DocumentPanel.panels.delete(this._key);

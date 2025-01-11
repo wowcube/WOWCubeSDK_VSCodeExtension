@@ -46,6 +46,9 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ## Release Notes
 
+### 2.5.0
+* Added generation of icons with an abbreviated project name when creating a new cubeapp
+
 ### 2.4.7
 * Fix for incorrect documents database indexing after changing the SDK version
 

@@ -10,6 +10,26 @@ const Project_1 = require("./Project");
 const Configuration_1 = require("./Configuration");
 const FormData = require("form-data");
 class AdHocPanel {
+    static createOrShow(extensionUri) {
+        const column = vscode.window.activeTextEditor
+            ? vscode.window.activeTextEditor.viewColumn : undefined;
+        AdHocPanel.workspace = (vscode.workspace.workspaceFolders && (vscode.workspace.workspaceFolders.length > 0)) ? vscode.workspace.workspaceFolders[0].uri.fsPath : "";
+        // If we already have a panel, show it.      
+        if (AdHocPanel.currentPanel) {
+            AdHocPanel.currentPanel._panel.reveal(column);
+            return;
+        }
+        // Otherwise, create a new panel. 
+        const panel = vscode.window.createWebviewPanel(AdHocPanel.viewType, 'WOWCube Share Ad-Hoc Cubeapp', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
+        AdHocPanel.currentPanel = new AdHocPanel(panel, extensionUri);
+    }
+    static kill() {
+        AdHocPanel.currentPanel?.dispose();
+        AdHocPanel.currentPanel = undefined;
+    }
+    static revive(panel, extensionUri) {
+        AdHocPanel.currentPanel = new AdHocPanel(panel, extensionUri);
+    }
     constructor(panel, extensionUri) {
         this._disposables = [];
         this._cubfile = "";
@@ -54,26 +74,6 @@ class AdHocPanel {
             }
         }, null, this._disposables);
     }
-    static createOrShow(extensionUri) {
-        const column = vscode.window.activeTextEditor
-            ? vscode.window.activeTextEditor.viewColumn : undefined;
-        AdHocPanel.workspace = (vscode.workspace.workspaceFolders && (vscode.workspace.workspaceFolders.length > 0)) ? vscode.workspace.workspaceFolders[0].uri.fsPath : "";
-        // If we already have a panel, show it.      
-        if (AdHocPanel.currentPanel) {
-            AdHocPanel.currentPanel._panel.reveal(column);
-            return;
-        }
-        // Otherwise, create a new panel. 
-        const panel = vscode.window.createWebviewPanel(AdHocPanel.viewType, 'WOWCube Share Ad-Hoc Cubeapp', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
-        AdHocPanel.currentPanel = new AdHocPanel(panel, extensionUri);
-    }
-    static kill() {
-        AdHocPanel.currentPanel?.dispose();
-        AdHocPanel.currentPanel = undefined;
-    }
-    static revive(panel, extensionUri) {
-        AdHocPanel.currentPanel = new AdHocPanel(panel, extensionUri);
-    }
     // abstract and promisify actual network request
     async makeRequest(formData, options) {
         return new Promise((resolve, reject) => {
@@ -110,7 +110,7 @@ class AdHocPanel {
                 host: 'store.wowcube.com',
                 path: '/api/upload',
                 method: 'POST',
-                protocol: 'https:',
+                protocol: 'https:', // note : in the end
                 headers: {
                 //Authorization: `Basic some-token-here`,
                 },

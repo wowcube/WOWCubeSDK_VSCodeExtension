@@ -9,7 +9,7 @@ var InstallationProblem;
 (function (InstallationProblem) {
     InstallationProblem[InstallationProblem["None"] = 0] = "None";
     InstallationProblem[InstallationProblem["EmscriptedPresent"] = -1] = "EmscriptedPresent";
-})(InstallationProblem = exports.InstallationProblem || (exports.InstallationProblem = {}));
+})(InstallationProblem || (exports.InstallationProblem = InstallationProblem = {}));
 class Configuration {
     static getString(key) {
         var ret = "";

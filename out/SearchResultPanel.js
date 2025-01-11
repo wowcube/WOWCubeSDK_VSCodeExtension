@@ -10,6 +10,19 @@ const DocumentPanel_1 = require("./DocumentPanel");
 const ExamplePanel_1 = require("./ExamplePanel");
 const lunr = require("lunr");
 class SearchResultPanel {
+    static createOrShowDoc(extensionUri, search) {
+        const column = vscode.window.activeTextEditor
+            ? vscode.window.activeTextEditor.viewColumn : undefined;
+        var exampleKey = '___' + search;
+        // If we already have a panel, show it.      
+        if (SearchResultPanel.panels.has(exampleKey)) {
+            SearchResultPanel.panels.get(exampleKey)?._panel.reveal(column);
+            return;
+        }
+        // Otherwise, create a new panel. 
+        const panel = vscode.window.createWebviewPanel(SearchResultPanel.viewType, 'WOWCube SDK Search Result', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
+        SearchResultPanel.panels.set(exampleKey, new SearchResultPanel(panel, extensionUri, search));
+    }
     constructor(panel, extensionUri, search) {
         this._disposables = [];
         this._key = "";
@@ -63,19 +76,6 @@ class SearchResultPanel {
                     break;
             }
         }, null, this._disposables);
-    }
-    static createOrShowDoc(extensionUri, search) {
-        const column = vscode.window.activeTextEditor
-            ? vscode.window.activeTextEditor.viewColumn : undefined;
-        var exampleKey = '___' + search;
-        // If we already have a panel, show it.      
-        if (SearchResultPanel.panels.has(exampleKey)) {
-            SearchResultPanel.panels.get(exampleKey)?._panel.reveal(column);
-            return;
-        }
-        // Otherwise, create a new panel. 
-        const panel = vscode.window.createWebviewPanel(SearchResultPanel.viewType, 'WOWCube SDK Search Result', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
-        SearchResultPanel.panels.set(exampleKey, new SearchResultPanel(panel, extensionUri, search));
     }
     dispose() {
         SearchResultPanel.panels.delete(this._key);

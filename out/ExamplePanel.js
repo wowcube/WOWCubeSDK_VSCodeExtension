@@ -11,6 +11,40 @@ const Configuration_1 = require("./Configuration");
 const Providers_1 = require("./Providers");
 const Version_1 = require("./Version");
 class ExamplePanel {
+    static createOrShow(extensionUri, exampleKey, language) {
+        const column = vscode.window.activeTextEditor
+            ? vscode.window.activeTextEditor.viewColumn : undefined;
+        // If we already have a panel, show it.      
+        if (ExamplePanel.panels.has(language + '___' + exampleKey)) {
+            if (ExamplePanel.panels.get(language + '___' + exampleKey)?._version === Configuration_1.Configuration.getCurrentVersion()) {
+                ExamplePanel.panels.get(language + '___' + exampleKey)?._panel.reveal(column);
+                return;
+            }
+            else {
+                ExamplePanel.panels.get(language + '___' + exampleKey)?._panel.dispose();
+            }
+        }
+        // Otherwise, create a new panel. 
+        const panel = vscode.window.createWebviewPanel(ExamplePanel.viewType, 'WOWCube SDK Document', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
+        ExamplePanel.panels.set(language + '___' + exampleKey, new ExamplePanel(panel, extensionUri, exampleKey, "", language));
+    }
+    static createOrShowForce(extensionUri, exampleKey, forceVersion, language) {
+        const column = vscode.window.activeTextEditor
+            ? vscode.window.activeTextEditor.viewColumn : undefined;
+        // If we already have a panel, show it.      
+        if (ExamplePanel.panels.has(language + '___' + exampleKey)) {
+            if (ExamplePanel.panels.get(language + '___' + exampleKey)?._version === forceVersion) {
+                ExamplePanel.panels.get(language + '___' + exampleKey)?._panel.reveal(column);
+                return;
+            }
+            else {
+                ExamplePanel.panels.get(language + '___' + exampleKey)?._panel.dispose();
+            }
+        }
+        // Otherwise, create a new panel. 
+        const panel = vscode.window.createWebviewPanel(ExamplePanel.viewType, 'WOWCube SDK Document', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
+        ExamplePanel.panels.set(language + '___' + exampleKey, new ExamplePanel(panel, extensionUri, exampleKey, forceVersion, language));
+    }
     constructor(panel, extensionUri, key, forceVersion, language) {
         this._disposables = [];
         this._key = "";
@@ -106,40 +140,6 @@ class ExamplePanel {
                     break;
             }
         }, null, this._disposables);
-    }
-    static createOrShow(extensionUri, exampleKey, language) {
-        const column = vscode.window.activeTextEditor
-            ? vscode.window.activeTextEditor.viewColumn : undefined;
-        // If we already have a panel, show it.      
-        if (ExamplePanel.panels.has(language + '___' + exampleKey)) {
-            if (ExamplePanel.panels.get(language + '___' + exampleKey)?._version === Configuration_1.Configuration.getCurrentVersion()) {
-                ExamplePanel.panels.get(language + '___' + exampleKey)?._panel.reveal(column);
-                return;
-            }
-            else {
-                ExamplePanel.panels.get(language + '___' + exampleKey)?._panel.dispose();
-            }
-        }
-        // Otherwise, create a new panel. 
-        const panel = vscode.window.createWebviewPanel(ExamplePanel.viewType, 'WOWCube SDK Document', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
-        ExamplePanel.panels.set(language + '___' + exampleKey, new ExamplePanel(panel, extensionUri, exampleKey, "", language));
-    }
-    static createOrShowForce(extensionUri, exampleKey, forceVersion, language) {
-        const column = vscode.window.activeTextEditor
-            ? vscode.window.activeTextEditor.viewColumn : undefined;
-        // If we already have a panel, show it.      
-        if (ExamplePanel.panels.has(language + '___' + exampleKey)) {
-            if (ExamplePanel.panels.get(language + '___' + exampleKey)?._version === forceVersion) {
-                ExamplePanel.panels.get(language + '___' + exampleKey)?._panel.reveal(column);
-                return;
-            }
-            else {
-                ExamplePanel.panels.get(language + '___' + exampleKey)?._panel.dispose();
-            }
-        }
-        // Otherwise, create a new panel. 
-        const panel = vscode.window.createWebviewPanel(ExamplePanel.viewType, 'WOWCube SDK Document', column || vscode.ViewColumn.Two, getWebviewOptions(extensionUri));
-        ExamplePanel.panels.set(language + '___' + exampleKey, new ExamplePanel(panel, extensionUri, exampleKey, forceVersion, language));
     }
     generateExampleCpp(key, path) {
         var ret = { path: '', desc: '' };
