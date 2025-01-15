@@ -273,6 +273,45 @@ pre {
 <div style="width: 100%; height: 1px; background-color: #cccccc; margin-top: 10px;"></div>
 <br/>
 <br/>
+<h1>SDK Version 6.2</h1>
+<h2>Pawn</h2>
+<ul>
+	<li><span style="color:green">Added</span> <strong>ON_Pat(const count, const display, const bool:opposite)</strong></li>
+	<li><span style="color:orangered">Deprecated</span> <strong>ON_Tap(const count, const display, const bool:opposite)</strong></li>
+
+	<br/>
+	<li><span style="color:green">Added</span> <strong>GFX_drawSubImage(const center[GFX_POINT], winX, winY, winW, winH, opacity, colorKey, scaleX, scaleY, angle, GFX_mirror: mirror, id)</strong></li>
+	<li><span style="color:green">Added</span> <strong>GFX_drawSubImageXY(x, y, winX, winY, winW, winH, opacity, colorKey, scaleX, scaleY, angle, GFX_mirror: mirror, id)</strong></li>
+<br/>
+	<li><span style="color:green">Reworked splashscreen </li>
+<br/>
+	<li><span style="color:green">Added</span> <strong>PlayRandomSound(const snd[], const volume, const bool: stopPlaying = true, size = sizeof(snd))</strong></li>
+	<li><span style="color:green">Added</span> <strong>PlayLoopRandomSound(const snd[], const volume, const delayMin, const delayMax, dt, size = sizeof(snd))</strong></li>
+</ul>
+<h2>C++</h2>
+<ul>
+	<li><span style="color:green">Added</span> <strong>virtual void Application::on_Pat(uint32_t count)</strong></li>
+	<li><span style="color:orangered">Deprecated</span> <strong>virtual void Application::on_Tap(uint32_t count)</strong></li>
+
+	<br/>
+	<li><span style="color:green">Added</span> <strong>Gi32_t GFX_drawSubImage(spriteID_t id,i32_t x,i32_t y,u32_t rect_x,u32_t rect_y,u32_t rect_w,u32_t rect_h,u32_t opacity,u32_t colorKey,u32_t scale_x, u32_t scale_y,u32_t angle, u32_t mirror)</strong></li>
+	
+	<li><span style="color:green">Added</span> <strong>Gi32_t GFX_drawSubImage(spriteID_t id,i32_t x,i32_t y,u32_t rect_x,u32_t rect_y,u32_t rect_w,u32_t rect_h,u32_t opacity,u32_t colorKey,u32_t scale_x, u32_t scale_y,u32_t angle, u32_t mirror)</strong></li>
+	<br/>
+	<li><span style="color:green">Reworked splashscreen </li>
+	<br/>
+	<li><span style="color:green">Added</span> <strong>Cubios::SoundCollection(std::vector<<std::string>>& names)</strong></li>
+	<li><span style="color:green">Added</span> <strong>Cubios::SoundCollection(std::vector<<Cubios::Sound*>>& sounds)</strong></li>
+	<li><span style="color:green">Added</span> <strong>Cubios::SoundCollection::PlayRandomSound(uint8_t volume = 100, bool stopCurrent = true)</strong></li>
+	<li><span style="color:green">Added</span> <strong>Cubios::SoundCollection::RepeatRandomSounds(uint8_t volume, int delayMin, int delayMax, int deltaTime)</strong></li>
+	<li><span style="color:green">Added</span> <strong>Cubios::SoundCollection::Stop()</strong></li>
+	<li><span style="color:green">Added</span> <strong>Cubios::SoundCollection::IsPlaying()</strong></li>
+
+	<br/>
+	<li><span style="color:green">Added</span> <strong>Cubios::Gfx::SpriteAtlas class</strong></li>
+	<li><span style="color:green">Added</span> <strong>Cubios::Gfx::SpriteAtlasElement class</strong></li>
+
+</ul>
 
 <h1>SDK Version 6.0</h1>
 <h2>Pawn</h2>
