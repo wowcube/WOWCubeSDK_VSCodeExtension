@@ -11,7 +11,10 @@ const Configuration_1 = require("./Configuration");
 const Output_1 = require("./Output");
 const NameBeautifier_1 = require("./NameBeautifier");
 const crypto = require("crypto");
-const canvas = require("canvas");
+const Canvas_1 = require("./Canvas");
+//import { Image } from 'canvas';
+//import { Canvas } from "canvas";
+//import * as canvas from 'canvas';
 //import * as canvas from '@napi-rs/canvas';
 class WizardPanel {
     static createOrShow(extensionUri) {
@@ -154,13 +157,18 @@ class WizardPanel {
         const fontSize = 48;
         const textX = 80; // X-coordinate for the text
         const textY = 80 + 26; // Y-coordinate for the text
+        const canvas = (0, Canvas_1.LoadCanvas)(this._extensionUri);
+        if (canvas == null) {
+            vscode.window.showErrorMessage("Unable to generate an icon for new project, using default one");
+            vscode.commands.executeCommand('vscode.openFolder', uri);
+        }
         // Load the PNG image and draw text on it
-        canvas.loadImage(iconFilename).then(image => {
+        canvas.loadImage(iconFilename).then((image) => {
             try {
                 canvas.registerFont(this._extensionUri.fsPath + '/media/Rubik-ExtraBold.ttf', { family: 'CustomFont' });
             }
             catch (error) {
-                console.error('Error');
+                console.error('Unable to register Rubik-ExtraBold.ttf');
             }
             // Create a canvas with the same dimensions as the loaded image
             const c = canvas.createCanvas(image.width, image.height);
@@ -168,8 +176,6 @@ class WizardPanel {
             // Draw the loaded image onto the canvas
             ctx.drawImage(image, 0, 0);
             // Set the text style
-            //ctx.font = `${fontSize}px Arial`;
-            //console.log(ctx.font);
             ctx.font = `70px CustomFont`;
             console.log(ctx.font); // Log the current font style
             ctx.textAlign = 'center';
@@ -186,8 +192,9 @@ class WizardPanel {
             out.on('finish', () => {
                 vscode.commands.executeCommand('vscode.openFolder', uri);
             });
-        }).catch(err => {
+        }).catch((err) => {
             vscode.window.showErrorMessage("Unable to generate an icon for new project, using default one");
+            vscode.commands.executeCommand('vscode.openFolder', uri);
         });
     }
     generate_rust(name, path, template) {

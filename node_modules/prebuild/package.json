@@ -1,0 +1,72 @@
+{
+  "name": "prebuild",
+  "version": "13.0.1",
+  "description": "A command line tool for easily making prebuilt binaries for multiple versions of node, electron or node-webkit on a specific platform",
+  "scripts": {
+    "test": "tape test && npm run lint",
+    "lint": "standard"
+  },
+  "keywords": [
+    "prebuilt",
+    "binaries",
+    "native",
+    "addon",
+    "module",
+    "c",
+    "c++",
+    "bindings",
+    "devops",
+    "electron",
+    "node-webkit",
+    "node-api"
+  ],
+  "dependencies": {
+    "cmake-js": "^7.3.0",
+    "detect-libc": "^2.0.2",
+    "each-series-async": "^1.0.1",
+    "execspawn": "^1.0.1",
+    "ghreleases": "^3.0.2",
+    "github-from-package": "0.0.0",
+    "glob": "^10.3.10",
+    "minimist": "^1.2.8",
+    "napi-build-utils": "^1.0.2",
+    "node-abi": "^3.54.0",
+    "node-gyp": "^10.0.1",
+    "node-ninja": "^1.0.2",
+    "noop-logger": "^0.1.1",
+    "npm-which": "^3.0.1",
+    "npmlog": "^7.0.1",
+    "nw-gyp": "^3.6.6",
+    "rc": "^1.2.8",
+    "run-waterfall": "^1.1.7",
+    "tar-stream": "^3.1.7"
+  },
+  "devDependencies": {
+    "a-native-module": "^1.0.0",
+    "standard": "^14.3.4",
+    "tape": "^5.7.4"
+  },
+  "bin": {
+    "prebuild": "./bin.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/prebuild/prebuild.git"
+  },
+  "author": "Mathias Buus (@mafintosh)",
+  "contributors": [
+    "Julian Gruber <julian@juliangruber.com> (https://github.com/juliangruber)",
+    "Brett Lawson <brett19@gmail.com> (https://github.com/brett19)",
+    "Pieter Hintjens <ph@imatix.com> (https://github.com/hintjens)",
+    "Lars-Magnus Skog <ralphtheninja@riseup.net> (https://github.com/ralphtheninja)",
+    "Lukas Geiger <lukas.geiger94@gmail.com> (https://github.com/lgeiger)"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/prebuild/prebuild/issues"
+  },
+  "homepage": "https://github.com/prebuild/prebuild",
+  "engines": {
+    "node": "^16.14.0 || >=18.0.0"
+  }
+}
