@@ -177,7 +177,6 @@ class WizardPanel {
             ctx.drawImage(image, 0, 0);
             // Set the text style
             ctx.font = `70px CustomFont`;
-            console.log(ctx.font); // Log the current font style
             ctx.textAlign = 'center';
             ctx.fillStyle = 'rgba(0, 0, 0, 0.2)'; // Text color (white in this case)
             ctx.fillText(text, textX, textY + 3); // Draw the text at the specified position
