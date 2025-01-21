@@ -374,6 +374,9 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 			{
 				fs.readdirSync(sourceFiles).forEach(file => 
 					{
+						//rust
+						if(file=='target') return;
+						
 						if(file!=='.DS_Store')
 						{
 							if(!fs.lstatSync(sourceFiles+file).isDirectory())
@@ -629,7 +632,7 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 											if(names_rust.has(key))
 											{
 												var articleName = names_rust.get(key);
-												body+=`<li class="liitem" key="${key}" lang="cpp">${articleName}</li>`;
+												body+=`<li class="liitem" key="${key}" lang="rust">${articleName}</li>`;
 											}
 											else
 											{
@@ -707,7 +710,7 @@ export class ExamplesViewProvider implements vscode.WebviewViewProvider
 							var item = this.docs_rust[i][1][j];
 							item = item.substring(0,item.length-3);
 							item = item.substring(item.indexOf('.')+1);
-							body+=`<li class="liitem" file="${this.docs_rust[i][1][j]}" folder="${topic}" doc="1" lang="cpp">${item}</li>`;
+							body+=`<li class="liitem" file="${this.docs_rust[i][1][j]}" folder="${topic}" doc="1" lang="rust">${item}</li>`;
 						}
 
 						body+=`</ul></li>`;

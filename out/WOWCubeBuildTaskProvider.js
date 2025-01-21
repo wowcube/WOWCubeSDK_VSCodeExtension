@@ -302,7 +302,7 @@ class WOWCubeBuildTaskTerminal {
                 }
             }
             var errorHappened = false;
-            var child = cp.exec(scriptfile, { cwd: "" }, (error, stdout, stderr) => {
+            var child = cp.exec('"' + scriptfile + '"', { cwd: "" }, (error, stdout, stderr) => {
                 if (stderr && stderr.length > 0) {
                     if (stderr.length > 2) {
                         this._channel.appendLine(stderr);

@@ -265,6 +265,9 @@ class ExamplesViewProvider {
             }
             if (fs.existsSync(sourceFiles) === true) {
                 fs.readdirSync(sourceFiles).forEach(file => {
+                    //rust
+                    if (file == 'target')
+                        return;
                     if (file !== '.DS_Store') {
                         if (!fs.lstatSync(sourceFiles + file).isDirectory()) {
                             files.push([file, sourceFiles + file]);
@@ -465,7 +468,7 @@ class ExamplesViewProvider {
                             try {
                                 if (names_rust.has(key)) {
                                     var articleName = names_rust.get(key);
-                                    body += `<li class="liitem" key="${key}" lang="cpp">${articleName}</li>`;
+                                    body += `<li class="liitem" key="${key}" lang="rust">${articleName}</li>`;
                                 }
                                 else {
                                     body += `<li class="liitem" key="${key}">Unnamed Article</li>`;
@@ -523,7 +526,7 @@ class ExamplesViewProvider {
                         var item = this.docs_rust[i][1][j];
                         item = item.substring(0, item.length - 3);
                         item = item.substring(item.indexOf('.') + 1);
-                        body += `<li class="liitem" file="${this.docs_rust[i][1][j]}" folder="${topic}" doc="1" lang="cpp">${item}</li>`;
+                        body += `<li class="liitem" file="${this.docs_rust[i][1][j]}" folder="${topic}" doc="1" lang="rust">${item}</li>`;
                     }
                     body += `</ul></li>`;
                 }

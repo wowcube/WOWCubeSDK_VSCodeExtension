@@ -445,7 +445,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 			var errorHappened:boolean = false;
 
-			var child:cp.ChildProcess = cp.exec(scriptfile, { cwd: ""}, (error, stdout, stderr) => 
+			var child:cp.ChildProcess = cp.exec('"'+scriptfile+'"', { cwd: ""}, (error, stdout, stderr) => 
 			{
 				if (stderr && stderr.length > 0) 
 				{                                                    
