@@ -1199,7 +1199,7 @@ export class DeviceDetailsPanel {
                     else
                         { 
                             this._panel.webview.postMessage({ type: 'endUpload'});
-                            this._channel.appendLine('CUB file has been successfully uploaded, refreshing applicaiton list...');
+                            this._channel.appendLine('CUB file has been successfully uploaded, refreshing application list...');
                         }
 
                         Providers.btdevices.showWait(false);

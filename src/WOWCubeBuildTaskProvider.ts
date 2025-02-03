@@ -1477,6 +1477,18 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 		});
 	}
 
+	private replaceUnicodeWithAscii(input: string): string 
+	{
+		// Unicode character mapping
+		const replacements: { [key: string]: string } = {
+			'™': 'TM',
+			'®': '(R)'
+		};
+	
+		// Replace each character in the string
+		return input.replace(/[\u2122\u00AE]/g, (match) => replacements[match] || match);
+	}
+
 	private async doBuild(target:string): Promise<void> 
     {
 		return new Promise<void>((resolve,reject) => 

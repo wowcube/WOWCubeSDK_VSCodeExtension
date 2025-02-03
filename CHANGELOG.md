@@ -1,3 +1,6 @@
+### 2.5.1
+* Improved support for unicode character-containing project names
+
 ### 2.5.0
 * Added generation of icons with an abbreviated project name when creating a new cubeapp
 

@@ -1028,6 +1028,15 @@ class WOWCubeBuildTaskTerminal {
             });
         });
     }
+    replaceUnicodeWithAscii(input) {
+        // Unicode character mapping
+        const replacements = {
+            '™': 'TM',
+            '®': '(R)'
+        };
+        // Replace each character in the string
+        return input.replace(/[\u2122\u00AE]/g, (match) => replacements[match] || match);
+    }
     async doBuild(target) {
         return new Promise((resolve, reject) => {
             this._channel.appendLine('Building cub file...');

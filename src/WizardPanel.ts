@@ -207,7 +207,7 @@ export class WizardPanel {
             path = path.replace(/\\/g, "/");
                 if(!path.endsWith("/")) { path+='/';}
 
-                fullpath = path + name;
+                fullpath = path + this.replaceUnicodeWithAscii(name);
 
             const randomPlaceholder = Math.floor(Math.random() * 6) + 1;
             const iconFilename:string = this._extensionUri.fsPath+`/media/${randomPlaceholder}.png`;
@@ -300,7 +300,7 @@ export class WizardPanel {
                 path = path.replace(/\\/g, "/");
                 if(!path.endsWith("/")) { path+='/';}
 
-                fullpath = path + name;
+                fullpath = path + this.replaceUnicodeWithAscii(name);
                 ret.path = fullpath;
 
                 if(fs.existsSync(fullpath))
@@ -449,6 +449,18 @@ export class WizardPanel {
             return ret;
         }
 
+        private  replaceUnicodeWithAscii(input: string): string 
+        {
+            // Unicode character mapping
+            const replacements: { [key: string]: string } = {
+                '™': 'TM',
+                '®': '(R)'
+            };
+        
+            // Replace each character in the string
+            return input.replace(/[\u2122\u00AE]/g, (match) => replacements[match] || match);
+        }
+
         private generate_cpp(name:string, path:string, template:number)
         {
             var ret = {path:'',desc:''};
@@ -473,7 +485,7 @@ export class WizardPanel {
                 path = path.replace(/\\/g, "/");
                 if(!path.endsWith("/")) { path+='/';}
 
-                fullpath = path + name;
+                fullpath = path + this.replaceUnicodeWithAscii(name);
                 ret.path = fullpath;
 
                 if(fs.existsSync(fullpath))
@@ -641,7 +653,7 @@ export class WizardPanel {
                 path = path.replace(/\\/g, "/");
                 if(!path.endsWith("/")) { path+='/';}
 
-                fullpath = path + name;
+                fullpath = path + this.replaceUnicodeWithAscii(name);
                 ret.path = fullpath;
 
                 if(fs.existsSync(fullpath))

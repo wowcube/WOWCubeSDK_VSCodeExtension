@@ -148,7 +148,7 @@ class WizardPanel {
         if (!path.endsWith("/")) {
             path += '/';
         }
-        fullpath = path + name;
+        fullpath = path + this.replaceUnicodeWithAscii(name);
         const randomPlaceholder = Math.floor(Math.random() * 6) + 1;
         const iconFilename = this._extensionUri.fsPath + `/media/${randomPlaceholder}.png`;
         //const iconFilename:string = templatespath+"icon.png";  
@@ -212,7 +212,7 @@ class WizardPanel {
             if (!path.endsWith("/")) {
                 path += '/';
             }
-            fullpath = path + name;
+            fullpath = path + this.replaceUnicodeWithAscii(name);
             ret.path = fullpath;
             if (fs.existsSync(fullpath)) {
                 throw new Error("Project with such name already exists in this folder");
@@ -308,6 +308,15 @@ class WizardPanel {
         }
         return ret;
     }
+    replaceUnicodeWithAscii(input) {
+        // Unicode character mapping
+        const replacements = {
+            '™': 'TM',
+            '®': '(R)'
+        };
+        // Replace each character in the string
+        return input.replace(/[\u2122\u00AE]/g, (match) => replacements[match] || match);
+    }
     generate_cpp(name, path, template) {
         var ret = { path: '', desc: '' };
         const templatespath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/templates/' + Configuration_1.Configuration.getCurrentVersion() + '/' + WizardPanel.currentLanguage + '/';
@@ -324,7 +333,7 @@ class WizardPanel {
             if (!path.endsWith("/")) {
                 path += '/';
             }
-            fullpath = path + name;
+            fullpath = path + this.replaceUnicodeWithAscii(name);
             ret.path = fullpath;
             if (fs.existsSync(fullpath)) {
                 throw new Error("Project with such name already exists in this folder");
@@ -428,7 +437,7 @@ class WizardPanel {
             if (!path.endsWith("/")) {
                 path += '/';
             }
-            fullpath = path + name;
+            fullpath = path + this.replaceUnicodeWithAscii(name);
             ret.path = fullpath;
             if (fs.existsSync(fullpath)) {
                 throw new Error("Project with such name already exists in this folder");
