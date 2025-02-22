@@ -120,7 +120,7 @@ class WOWCubeBuildTaskTerminal {
         return new Promise((resolve, reject) => {
             this._channel.clear();
             this._channel.show(true);
-            this._channel.appendLine('Compiling cub file...');
+            this._channel.appendLine('Compiling cubeapp...');
             const initialVersion = Configuration_1.Configuration.getCurrentVersion();
             const build_json = JSON.parse(fs.readFileSync(this.workspace + '/wowcubeapp-build.json', 'utf-8'));
             this._channel.appendLine('Project name: ' + build_json.name);
@@ -355,7 +355,7 @@ class WOWCubeBuildTaskTerminal {
         return new Promise((resolve, reject) => {
             this._channel.clear();
             this._channel.show(true);
-            this._channel.appendLine('Compiling cub file...');
+            this._channel.appendLine('Compiling cubeapp...');
             this._channel.appendLine('Please be patient as compilation of C++ project may take time, especially for the first time. \r\n');
             const initialVersion = Configuration_1.Configuration.getCurrentVersion();
             const build_json = JSON.parse(fs.readFileSync(this.workspace + '/wowcubeapp-build.json', 'utf-8'));
@@ -639,7 +639,7 @@ class WOWCubeBuildTaskTerminal {
         return new Promise((resolve, reject) => {
             this._channel.clear();
             this._channel.show(true);
-            this._channel.appendLine('Compiling cub file...');
+            this._channel.appendLine('Compiling cubeapp...');
             this._channel.appendLine('Please be patient as compilation of C++ project may take time, especially for the first time. \r\n');
             const initialVersion = Configuration_1.Configuration.getCurrentVersion();
             const build_json = JSON.parse(fs.readFileSync(this.workspace + '/wowcubeapp-build.json', 'utf-8'));
@@ -877,7 +877,7 @@ class WOWCubeBuildTaskTerminal {
         return new Promise((resolve, reject) => {
             this._channel.clear();
             this._channel.show(true);
-            this._channel.appendLine('Compiling cub file...\r\n');
+            this._channel.appendLine('Compiling cubeapp...\r\n');
             const initialVersion = Configuration_1.Configuration.getCurrentVersion();
             const build_json = JSON.parse(fs.readFileSync(this.workspace + '/wowcubeapp-build.json', 'utf-8'));
             this._channel.appendLine('Project name: ' + build_json.name);
@@ -1039,7 +1039,7 @@ class WOWCubeBuildTaskTerminal {
     }
     async doBuild(target) {
         return new Promise((resolve, reject) => {
-            this._channel.appendLine('Building cub file...');
+            this._channel.appendLine('Building cubeapp...');
             this._channel.appendLine('Validating project file');
             /*
             //pre-process json file
@@ -1069,7 +1069,7 @@ class WOWCubeBuildTaskTerminal {
                 const date = new Date();
                 this.setSharedState(date.toTimeString() + ' ' + date.toDateString());
                 if (child.exitCode === 0) {
-                    this._channel.appendLine('Build complete.\r\n');
+                    this._channel.appendLine('Build completed.\r\n');
                     if (target === 'emulator') {
                         this.doRunInEmulator(build_json.name + '.cub');
                     }
@@ -1121,6 +1121,7 @@ class WOWCubeBuildTaskTerminal {
             else {
                 this._channel.appendLine('Application logging is disabled.\r\n');
             }
+            this._channel.appendLine('Uploading ' + cubename + ' (' + source + ')');
             Providers_1.Providers.btdevices.showWait(true);
             Configuration_1.Configuration.setDeviceBusy(device.mac, true);
             var child = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => {

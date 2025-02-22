@@ -1164,6 +1164,8 @@ export class DeviceDetailsPanel {
                     this._channel.appendLine('Application logging is disabled.\r\n');
                 }
 
+                this._channel.appendLine('Uploading '+source);
+
                 Configuration.setDeviceBusy(mac,true);
                 var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
                 {    

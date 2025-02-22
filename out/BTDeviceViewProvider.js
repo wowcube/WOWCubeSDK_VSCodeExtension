@@ -183,7 +183,7 @@ class BTDeviceViewProvider {
             command += " dd";
             this.devices = [];
             if (Configuration_1.Configuration.isAnyDeviceBusy() === true) {
-                vscode.window.showWarningMessage("At least one device from the list is busy, please wait till current operation is complete to scan for new devices.");
+                vscode.window.showWarningMessage("At least one device from the list is busy, please wait till current operation is completed to scan for new devices.");
                 this._view?.webview.postMessage({ type: 'endDiscovery', value: this.devices });
                 this._busy = false;
                 resolve();

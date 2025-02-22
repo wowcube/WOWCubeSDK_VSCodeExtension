@@ -177,7 +177,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			this._channel.clear();
 			this._channel.show(true);
 
-			this._channel.appendLine('Compiling cub file...');
+			this._channel.appendLine('Compiling cubeapp...');
 			const initialVersion = Configuration.getCurrentVersion();
 
 			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));
@@ -522,7 +522,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			this._channel.clear();
 			this._channel.show(true);
 
-			this._channel.appendLine('Compiling cub file...');
+			this._channel.appendLine('Compiling cubeapp...');
 			this._channel.appendLine('Please be patient as compilation of C++ project may take time, especially for the first time. \r\n');
 			const initialVersion = Configuration.getCurrentVersion();
 
@@ -923,7 +923,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			this._channel.clear();
 			this._channel.show(true);
 
-			this._channel.appendLine('Compiling cub file...');
+			this._channel.appendLine('Compiling cubeapp...');
 			this._channel.appendLine('Please be patient as compilation of C++ project may take time, especially for the first time. \r\n');
 			const initialVersion = Configuration.getCurrentVersion();
 
@@ -1257,7 +1257,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			this._channel.clear();
 			this._channel.show(true);
 			
-			this._channel.appendLine('Compiling cub file...\r\n');
+			this._channel.appendLine('Compiling cubeapp...\r\n');
 			const initialVersion = Configuration.getCurrentVersion();
 
 			const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));
@@ -1493,7 +1493,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
     {
 		return new Promise<void>((resolve,reject) => 
         {
-			this._channel.appendLine('Building cub file...');
+			this._channel.appendLine('Building cubeapp...');
 			this._channel.appendLine('Validating project file');
 
 			/*
@@ -1537,7 +1537,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 				if(child.exitCode===0)
 				{
-					this._channel.appendLine('Build complete.\r\n');
+					this._channel.appendLine('Build completed.\r\n');
 
 					if(target==='emulator')
 					{
@@ -1610,6 +1610,8 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			{
 				this._channel.appendLine('Application logging is disabled.\r\n');
 			}
+
+			this._channel.appendLine('Uploading '+cubename+' ('+source+')');
 
 			Providers.btdevices.showWait(true);
 			Configuration.setDeviceBusy(device.mac,true);
