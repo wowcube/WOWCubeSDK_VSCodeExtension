@@ -46,6 +46,9 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ## Release Notes
 
+### 2.5.3
+* Minor UI tweaks
+
 ### 2.5.2
 * Minor UI tweaks
 

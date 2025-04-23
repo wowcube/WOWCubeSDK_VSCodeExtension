@@ -1,3 +1,9 @@
+### 2.5.3
+* Minor UI tweaks
+
+### 2.5.2
+* Minor UI tweaks
+
 ### 2.5.1
 * Improved support for unicode character-containing project names
 
