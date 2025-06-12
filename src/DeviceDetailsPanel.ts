@@ -1139,7 +1139,7 @@ export class DeviceDetailsPanel {
                 command+='"'+source+'"';
                 command+=" -a ";
                 command+=mac;
-                command+=" -r";
+                //command+=" -r";   //run the app as its uploaded
 
                 // logging
                 var mn:number = +Configuration.getLoggingMode()-1;

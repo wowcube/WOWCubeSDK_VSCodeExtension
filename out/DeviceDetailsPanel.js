@@ -854,7 +854,7 @@ class DeviceDetailsPanel {
             command += '"' + source + '"';
             command += " -a ";
             command += mac;
-            command += " -r";
+            //command+=" -r";   //run the app as its uploaded
             // logging
             var mn = +Configuration_1.Configuration.getLoggingMode() - 1;
             if (mn != -1) {
