@@ -133,20 +133,30 @@ export class WizardPanel {
                         break;
                         case 'generate':
                             {
-                                var ret = this.generate(message.value.name,message.value.path,message.value.item);
+                                //check for the match with system-reserved app names 
 
-                                if(ret.path.length===0)
+                                if(message.value.name.toLowerCase()=='platform')
                                 {
                                     //error
-                                    vscode.window.showErrorMessage("Unable to generate new project: "+ret.desc);
+                                    vscode.window.showErrorMessage("Unable to generate new project: the new project name is reserved by the CubiOS operating system and cannot be used. Please choose another name for the project.");
                                 }
                                 else
                                 {
-                                    //all good
-                                    let uri = Uri.file(ret.path);
-                                    this.generate_icon(message.value.name,message.value.path,message.value.item, uri)
+                                    var ret = this.generate(message.value.name,message.value.path,message.value.item);
 
-                                    //let success = vscode.commands.executeCommand('vscode.openFolder', uri);
+                                    if(ret.path.length===0)
+                                    {
+                                        //error
+                                        vscode.window.showErrorMessage("Unable to generate new project: "+ret.desc);
+                                    }
+                                    else
+                                    {
+                                        //all good
+                                        let uri = Uri.file(ret.path);
+                                        this.generate_icon(message.value.name,message.value.path,message.value.item, uri)
+
+                                        //let success = vscode.commands.executeCommand('vscode.openFolder', uri);
+                                    }
                                 }
                             }
                         break;

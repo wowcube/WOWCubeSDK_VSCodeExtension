@@ -88,16 +88,23 @@ class WizardPanel {
                     break;
                 case 'generate':
                     {
-                        var ret = this.generate(message.value.name, message.value.path, message.value.item);
-                        if (ret.path.length === 0) {
+                        //check for the match with system-reserved app names 
+                        if (message.value.name.toLowerCase() == 'platform') {
                             //error
-                            vscode.window.showErrorMessage("Unable to generate new project: " + ret.desc);
+                            vscode.window.showErrorMessage("Unable to generate new project: the new project name is reserved by the CubiOS operating system and cannot be used. Please choose another name for the project.");
                         }
                         else {
-                            //all good
-                            let uri = vscode_1.Uri.file(ret.path);
-                            this.generate_icon(message.value.name, message.value.path, message.value.item, uri);
-                            //let success = vscode.commands.executeCommand('vscode.openFolder', uri);
+                            var ret = this.generate(message.value.name, message.value.path, message.value.item);
+                            if (ret.path.length === 0) {
+                                //error
+                                vscode.window.showErrorMessage("Unable to generate new project: " + ret.desc);
+                            }
+                            else {
+                                //all good
+                                let uri = vscode_1.Uri.file(ret.path);
+                                this.generate_icon(message.value.name, message.value.path, message.value.item, uri);
+                                //let success = vscode.commands.executeCommand('vscode.openFolder', uri);
+                            }
                         }
                     }
                     break;

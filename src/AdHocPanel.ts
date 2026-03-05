@@ -237,14 +237,17 @@ export class AdHocPanel {
             {
                 const build_json = JSON.parse(fs.readFileSync(AdHocPanel.workspace+'/wowcubeapp-build.json', 'utf-8'));//require(AdHocPanel.workspace+'/wowcubeapp-build.json');
                 const output = AdHocPanel.workspace+'/binary/'+build_json.name+'.cub';
-                const icon = AdHocPanel.workspace+'/assets/icon.png';
+
+
+                //const icon = AdHocPanel.workspace+'/assets/icon.png';
+                const icon = AdHocPanel.workspace+'/'+build_json.appIcon.path;
 
                 if(fs.existsSync(output)===false)
                 {
                     this._channel.appendLine("Share Ad-Hoc: Not ready to share, file '"+output+"' is not found!");
                     this._channel.show(true);
 
-                    return false;
+                    return -1;
                 }
 
                 if(fs.existsSync(icon)===false)
@@ -252,7 +255,7 @@ export class AdHocPanel {
                     this._channel.appendLine("Share Ad-Hoc: Not ready to share, file '"+icon+"' is not found!");
                     this._channel.show(true);
 
-                    return false;
+                    return -2;
                 }
 
                 this._cubfile = output;
@@ -261,10 +264,10 @@ export class AdHocPanel {
             }
             catch(error)
             {
-                return false;
+                return -3;
             }
 
-            return true;
+            return 1;
         }
 
         private _getHtmlForWebview(webview: vscode.Webview) 
@@ -308,7 +311,7 @@ export class AdHocPanel {
                         <div id="t2" style="margin-top:10px;margin-bottom:10px;font-size:16px;">Generate link to share your WOWCube ad-hoc cubeapp</div>
                         <div class="separator"></div>`;
           
-                    if(ready===true)
+                    if(ready===1)
                     {
                         ret+=`
                         <div class="view" style="min-width:420px;">   
@@ -323,10 +326,34 @@ export class AdHocPanel {
                     }
                     else
                     {
-                        ret+=`
-                        <div class="negative" style="margin-top:30px;margin-bottom:30px;font-size:16px;">Please build your application before sharing the Ad-Hoc version of it !</div>
-                        <button id="close_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">CLOSE</button>
-                        `;
+                        switch(ready)
+                        {
+                            case -1:
+                                {
+                                ret+=`
+                                <div class="negative" style="margin-top:30px;margin-bottom:30px;font-size:16px;">Please build your application before sharing the Ad-Hoc version of it !</div>
+                                <button id="close_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">CLOSE</button>
+                                `;
+                                }
+                            break;
+                            case -2:
+                                {
+                                ret+=`
+                                <div class="negative" style="margin-top:30px;margin-bottom:30px;font-size:16px;">Unable to share the Ad-Hoc version, application icon is missing!</div>
+                                <button id="close_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">CLOSE</button>
+                                `;
+                                }
+                            break;
+                            case -3:
+                            default:
+                                {
+                                ret+=`
+                                <div class="negative" style="margin-top:30px;margin-bottom:30px;font-size:16px;">Unable to share the Ad-Hoc version, unexpected error occurred!</div>
+                                <button id="close_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">CLOSE</button>
+                                `;
+                                }
+                            break;                                   
+                        }
                     }
 
                 ret+=`

@@ -46,6 +46,10 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ## Release Notes
 
+### 2.5.4
+* Improved file validation for Ad-Hoc sharing
+* Improved management of cubeapps
+
 ### 2.5.3
 * Minor UI tweaks
 

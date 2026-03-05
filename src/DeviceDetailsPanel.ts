@@ -261,8 +261,24 @@ export class DeviceDetailsPanel {
                                             {
                                                 if(answer==="Delete Application")
                                                 {
-                                                    this.doDeleteApp(device.mac,appname);
-                                                    Providers.btdevices.showWait(true); 
+                                                    if(appname.toLowerCase()=='platform.cub')
+                                                        {
+                                                          vscode.window.showWarningMessage("ATTENTION! Removing this application will render the device's operating system inoperable. Recovery will be possible only by reinstalling the firmware. Are you sure you want to continue?",
+                                                          ...["YES, Delete Application", "Cancel"]
+                                                         ).then((answer)=>
+                                                            {
+                                                                if(answer==="YES, Delete Application")
+                                                                {
+                                                                    this.doDeleteApp(device.mac,appname);
+                                                                    Providers.btdevices.showWait(true); 
+                                                                }
+                                                            });   
+                                                        } 
+                                                        else
+                                                        {
+                                                            this.doDeleteApp(device.mac,appname);
+                                                            Providers.btdevices.showWait(true); 
+                                                        }
                                                 }
                                                 else
                                                 {
