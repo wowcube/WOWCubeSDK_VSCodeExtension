@@ -351,27 +351,6 @@ class WOWCubeBuildTaskTerminal {
             });
         });
     }
-    collectSourceFiles(currDir, command) {
-        fs.readdirSync(currDir, { withFileTypes: true }).forEach(entry => {
-            const fullpath = path.join(currDir, entry.name);
-            if (entry.isDirectory()) {
-                command = this.collectSourceFiles(fullpath, command);
-            }
-            else {
-                const file = entry.name;
-                if (file.endsWith('.cpp') ||
-                    file.endsWith('.cxx') ||
-                    file.endsWith('.c++') ||
-                    file.endsWith('.cc') ||
-                    file.endsWith('.c') ||
-                    file.endsWith('.C') ||
-                    file.endsWith('.cppm')) {
-                    command += ' "' + fullpath + '"';
-                }
-            }
-        });
-        return command;
-    }
     doCompileCppCLang(action) {
         return new Promise((resolve, reject) => {
             this._channel.clear();
@@ -595,18 +574,12 @@ class WOWCubeBuildTaskTerminal {
             }
             //fetch sources and add them to command line
             if (fs.existsSync(currDir) === true) {
-                /*
-                fs.readdirSync(currDir).forEach(file =>
-                    {
-
-                        if(file.indexOf('.cpp')!==-1 || file.indexOf('.cxx')!==-1 || file.indexOf('.c++')!==-1 || file.indexOf('.cc')!==-1 || file.indexOf('.c')!==-1 || file.indexOf('.C')!==-1 || file.indexOf('.cppm')!==-1 )
-                        {
-                            var fullpath = currDir+'/'+file;
-                            command+=' "'+fullpath+'"';
-                        }
-                    });
-                */
-                command = this.collectSourceFiles(currDir, command);
+                fs.readdirSync(currDir).forEach(file => {
+                    if (file.indexOf('.cpp') !== -1 || file.indexOf('.cxx') !== -1 || file.indexOf('.c++') !== -1 || file.indexOf('.cc') !== -1 || file.indexOf('.c') !== -1 || file.indexOf('.C') !== -1 || file.indexOf('.cppm') !== -1) {
+                        var fullpath = currDir + '/' + file;
+                        command += ' "' + fullpath + '"';
+                    }
+                });
             }
             else {
                 this._channel.appendLine('WARNING: Folder `' + currDir + '` doesnt exist or can not be opened. Cubeapp may work incorrectly.\r\n');
@@ -839,17 +812,12 @@ class WOWCubeBuildTaskTerminal {
             }
             //fetch sources and add them to command line
             if (fs.existsSync(currDir) === true) {
-                /*
-                fs.readdirSync(currDir).forEach(file =>
-                    {
-                        if(file.indexOf('.cpp')!==-1 || file.indexOf('.cxx')!==-1 || file.indexOf('.c++')!==-1 || file.indexOf('.cc')!==-1 || file.indexOf('.c')!==-1 || file.indexOf('.C')!==-1 || file.indexOf('.cppm')!==-1 )
-                        {
-                            var fullpath = currDir+'/'+file;
-                            command+=' "'+fullpath+'"';
-                        }
-                    });
-                */
-                command = this.collectSourceFiles(currDir, command);
+                fs.readdirSync(currDir).forEach(file => {
+                    if (file.indexOf('.cpp') !== -1 || file.indexOf('.cxx') !== -1 || file.indexOf('.c++') !== -1 || file.indexOf('.cc') !== -1 || file.indexOf('.c') !== -1 || file.indexOf('.C') !== -1 || file.indexOf('.cppm') !== -1) {
+                        var fullpath = currDir + '/' + file;
+                        command += ' "' + fullpath + '"';
+                    }
+                });
             }
             else {
                 this._channel.appendLine('WARNING: Folder `' + currDir + '` doesnt exist or can not be opened. Cubeapp may work incorrectly.\r\n');
