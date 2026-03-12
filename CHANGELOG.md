@@ -1,3 +1,6 @@
+### 2.5.5
+* Fixed the inability to use nested folders in С++ project structure
+
 ### 2.5.4
 * Improved file validation for Ad-Hoc sharing
 * Improved management of cubeapps

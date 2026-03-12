@@ -595,17 +595,6 @@ class WOWCubeBuildTaskTerminal {
             }
             //fetch sources and add them to command line
             if (fs.existsSync(currDir) === true) {
-                /*
-                fs.readdirSync(currDir).forEach(file =>
-                    {
-
-                        if(file.indexOf('.cpp')!==-1 || file.indexOf('.cxx')!==-1 || file.indexOf('.c++')!==-1 || file.indexOf('.cc')!==-1 || file.indexOf('.c')!==-1 || file.indexOf('.C')!==-1 || file.indexOf('.cppm')!==-1 )
-                        {
-                            var fullpath = currDir+'/'+file;
-                            command+=' "'+fullpath+'"';
-                        }
-                    });
-                */
                 command = this.collectSourceFiles(currDir, command);
             }
             else {
@@ -839,16 +828,6 @@ class WOWCubeBuildTaskTerminal {
             }
             //fetch sources and add them to command line
             if (fs.existsSync(currDir) === true) {
-                /*
-                fs.readdirSync(currDir).forEach(file =>
-                    {
-                        if(file.indexOf('.cpp')!==-1 || file.indexOf('.cxx')!==-1 || file.indexOf('.c++')!==-1 || file.indexOf('.cc')!==-1 || file.indexOf('.c')!==-1 || file.indexOf('.C')!==-1 || file.indexOf('.cppm')!==-1 )
-                        {
-                            var fullpath = currDir+'/'+file;
-                            command+=' "'+fullpath+'"';
-                        }
-                    });
-                */
                 command = this.collectSourceFiles(currDir, command);
             }
             else {
