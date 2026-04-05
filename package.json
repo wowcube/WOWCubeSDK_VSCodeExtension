@@ -13,7 +13,6 @@
     "url": "https://github.com/wowcube/WOWCubeSDK_VSCodeExtension.git"
   },
   "extensionKind": [
-    "ui",
     "workspace"
   ],
   "categories": [
