@@ -153,9 +153,9 @@ export class WizardPanel {
                                     {
                                         //all good
                                         let uri = Uri.file(ret.path);
-                                        this.generate_icon(message.value.name,message.value.path,message.value.item, uri)
+                                        //this.generate_icon(message.value.name,message.value.path,message.value.item, uri)
 
-                                        //let success = vscode.commands.executeCommand('vscode.openFolder', uri);
+                                        let success = vscode.commands.executeCommand('vscode.openFolder', uri);
                                     }
                                 }
                             }
@@ -178,9 +178,15 @@ export class WizardPanel {
         {            
             var ret = {path:'',desc:''};
 
+            /*
             if(WizardPanel.currentLanguage=='pawn') { ret =  this.generate_pawn(name,path,template); }
             if(WizardPanel.currentLanguage=='cpp')  { ret =  this.generate_cpp(name,path,template); }
             if(WizardPanel.currentLanguage=='rust')  { ret =  this.generate_rust(name,path,template); }
+            */
+
+            WizardPanel.currentLanguage = "c";
+            Configuration.setCurrentVersion("0.98");
+            ret = this.generate_oct(name, path, template);
 
             return ret;
         }
@@ -284,6 +290,284 @@ export class WizardPanel {
                 vscode.window.showErrorMessage("Unable to generate an icon for new project, using default one");
                 vscode.commands.executeCommand('vscode.openFolder', uri);
             });
+        }
+
+        private generate_oct(name:string, path:string, template:number)
+        {
+            var ret = {path:'',desc:''};
+
+            const templatespath = Configuration.getWOWSDKPath()+'sdk/templates/'+Configuration.getCurrentVersion()+'/'+WizardPanel.currentLanguage+'/';
+            
+            if(!fs.existsSync(templatespath))
+                {
+                    ret.desc = "Project templates are missing, please check WOWCube Development Kit installaton...";
+                    ret.path = '';
+    
+                    return ret;
+                }
+
+            const templates = require(templatespath+'templates.json');
+
+            var fullpath = '';
+            var apppath = '';
+            var category = 'APP_CATEGORY_GAME';
+
+            var needDeleteFolder:boolean = false;
+                     
+            try
+            {
+                path = path.replace(/\\/g, "/");
+                if(!path.endsWith("/")) { path+='/';}
+
+                fullpath = path + this.replaceUnicodeWithAscii(name);
+                ret.path = fullpath;
+
+                if(fs.existsSync(fullpath))
+                {
+                    throw new Error("Project with such name already exists in this folder");
+                }
+
+                var currentTemplate = null;
+
+                for(var i=0;i<templates.length;i++)
+                {
+                    if(templates[i].id === template)
+                    {
+                        currentTemplate = templates[i];
+                        break;
+                    }
+                }
+
+                if(currentTemplate===null)
+                {
+                    throw new Error("Unable to find template source files");
+                }
+
+                this.makeDirSync(fullpath);
+
+                
+                needDeleteFolder = true;
+
+                apppath = fullpath+'/'+Configuration.getAppFolderName(name);
+
+                this.makeDirSync(apppath);
+                
+                this.makeDirSync(fullpath+'/.vscode');
+                //this.makeDirSync(fullpath+'/binary');
+                this.makeDirSync(apppath+'/bin');
+                this.makeDirSync(apppath+'/src');
+                //this.makeDirSync(fullpath+'/assets');
+                //this.makeDirSync(fullpath+'/assets/images');
+                //this.makeDirSync(fullpath+'/assets/sounds');
+                this.makeDirSync(apppath+'/art');
+                this.makeDirSync(apppath+'/art/packed'); 
+                this.makeDirSync(apppath+'/art/exported');
+                this.makeDirSync(apppath+'/sound');
+
+                //const iconFilename:string = this._extensionUri.fsPath+"/media/templates/icon.png";
+                fs.copyFileSync(templatespath+"icon.png",apppath+'/art/exported/icon.png');
+                fs.copyFileSync(templatespath+"ico.csv",apppath+'/art/exported/ico.csv');
+                fs.copyFileSync(templatespath+"ico.psl",apppath+'/art/exported/ico.psl');
+                fs.copyFileSync(templatespath+"ico.log",apppath+'/art/exported/ico.log');
+
+                fs.copyFileSync(templatespath+"ahover_00.png",apppath+'/art/exported/ahover_00.png');
+                fs.copyFileSync(templatespath+"ahover.csv",apppath+'/art/exported/ahover.csv');
+                fs.copyFileSync(templatespath+"ahover.psl",apppath+'/art/exported/ahover.psl');
+                fs.copyFileSync(templatespath+"ahover.log",apppath+'/art/exported/ahover.log');
+
+                fs.copyFileSync(templatespath+"_palettes.txt",apppath+'/art/palettes.txt');
+
+                fs.writeFileSync(apppath+'/art/packed/new', '');
+                fs.writeFileSync(apppath+'/'+Configuration.getAppFolderName(name)+'.target', '');
+
+                //copy octavios sdk files
+                /*
+                this.makeDirSync(fullpath+'/octavios');
+                if(!this.copyDir(Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/'+WizardPanel.currentLanguage+'/octavios', fullpath+'/octavios'))
+                {
+                    throw new Error("Unable to copy Octavios SDK files!");
+                }
+                */
+                //return ret;
+
+                var br;// = NameBeautifier.cppClassName(name);
+
+                //application UUID
+	            var arr:Uint8Array = crypto.pseudoRandomBytes(8);
+
+                let hex = "";
+
+                for (let i = 0; i < arr.length; i++) {
+                hex += arr[i].toString(16).padStart(2, "0");
+                }
+                var uuid:string = hex.toUpperCase();
+
+	            //var uuid:string = "0x" + arr.toString("hex").toUpperCase() + "ULL";//arr.reduce(((t,e)=>t+=(e&=63)<36?e.toString(36):e<62?(e-26).toString(36).toUpperCase():e>62?"-":"_"),"");
+
+ /*               if(br.err===1)
+                {
+                    this._channel.appendLine('Project wizard: class name beautification error: '+br.desc);
+                    this._channel.appendLine('Project wizard: default class name will be used instead');
+                }
+                else
+                {
+                    if(br.length!==0)
+                    {
+                        this._channel.appendLine('Project wizard: '+br.desc);
+                    }
+                }
+*/
+                
+                //return ret;
+
+                for(var i=0;i<currentTemplate.files.length; i++)
+                {
+                    if(currentTemplate.files[i]=='_app_metadata.h')
+                    {
+                        if(!this.replaceInFileAndSave(templatespath+currentTemplate.id+"/"+currentTemplate.files[i],
+                            apppath+'/src/app_metadata.h', '##APPUUID##',uuid))
+                            {
+                              throw new Error("Unable to generate metadata source file");
+                            }
+
+                        if(!this.replaceInFileAndSave(apppath+'/src/app_metadata.h',apppath+'/src/app_metadata.h', '##APPUUID2##',"0"))
+                                {
+                                       throw new Error("Unable to generate metadata source file");
+                                }    
+
+                        if(!this.replaceInFileAndSave(apppath+'/src/app_metadata.h',apppath+'/src/app_metadata.h', '##APPTITLE##',name.toUpperCase()))
+                           {
+                                  throw new Error("Unable to generate metadata source file");
+                           }    
+
+                        if(!this.replaceInFileAndSave(apppath+'/src/app_metadata.h',apppath+'/src/app_metadata.h', '##APPCATEGORY##',category))
+                            {
+                              throw new Error("Unable to generate metadata source file");
+                            }    
+
+                        if(!this.replaceInFileAndSave(apppath+'/src/app_metadata.h',apppath+'/src/app_metadata.h', '##VMAJ##','1'))
+                                {
+                                  throw new Error("Unable to generate metadata source file");
+                                }   
+                        if(!this.replaceInFileAndSave(apppath+'/src/app_metadata.h',apppath+'/src/app_metadata.h', '##VMIN##','0'))
+                                {
+                                   throw new Error("Unable to generate metadata source file");
+                                }                                     
+                        if(!this.replaceInFileAndSave(apppath+'/src/app_metadata.h',apppath+'/src/app_metadata.h', '##VPATCH##','0'))
+                                    {
+                                       throw new Error("Unable to generate metadata source file");
+                                    }         
+                    }
+                    else if(currentTemplate.files[i]=='_app.h')
+                    {
+                        if(!this.replaceInFileAndSave(templatespath+currentTemplate.id+"/"+currentTemplate.files[i],
+                            apppath+'/src/app.h', '##APPMAININCLUDE##',Configuration.getAppFolderName(name)+'.h'))
+                            {
+                              throw new Error("Unable to generate main source file");
+                            }
+
+                     if(!this.replaceInFileAndSave(apppath+'/src/app.h',apppath+'/src/app.h', '##APP_DIR##','../'))
+                            {
+                              throw new Error("Unable to generate main source file");
+                            }  
+
+                     if(!this.replaceInFileAndSave(apppath+'/src/app.h',apppath+'/src/app.h', '##APP_PNG##','../art/packed'))
+                            {
+                             throw new Error("Unable to generate main source file");
+                            }
+
+                     if(!this.replaceInFileAndSave(apppath+'/src/app.h',apppath+'/src/app.h', '##APP_SND##','../sound'))
+                            {
+                              throw new Error("Unable to generate main source file");
+                            }     
+                    }
+                    else if (currentTemplate.files[i]=='_app_body.h')
+                    {
+                        if(!this.replaceInFileAndSave(templatespath+currentTemplate.id+"/"+currentTemplate.files[i],
+                            apppath+'/src/'+Configuration.getAppFolderName(name)+'.h', '##APPIDS##',Configuration.getAppFolderName(name)+'_ids.h'))
+                            {
+                              throw new Error("Unable to generate main source file");
+                            }
+
+                    }
+                    else if(currentTemplate.files[i]=='_app_ids.h')
+                    {
+                        fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.files[i],apppath+'/src/'+Configuration.getAppFolderName(name)+'_ids.h');
+                    }
+                    else
+                    {
+                        fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.files[i],apppath+'/src/'+currentTemplate.files[i]);
+                    }
+                }
+            
+                for(var i=0;i<currentTemplate.images.length; i++)
+                {
+                    fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.images[i],fullpath+'/art/exported/'+currentTemplate.images[i]);
+                }
+
+                for(var i=0;i<currentTemplate.sounds.length; i++)
+                {
+                    fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.sounds[i],fullpath+'/sound/'+currentTemplate.sounds[i]);
+                }
+
+                //create json file for build
+                
+                const json = fs.readFileSync(templatespath+currentTemplate.id+"/_build.json").toString();
+                var str = json.replace(/##NAME##/gi,name);
+                str = str.replace(/##CNAME##/gi,Configuration.getAppFolderName(name)+'.h');
+                str = str.replace(/##FNAME##/gi,Configuration.getAppFolderName(name));
+                str = str.replace(/##INAME##/gi,Configuration.getAppFolderName(name)+'_ids.h');
+                str = str.replace(/##SDKVERSION##/gi,Configuration.getCurrentVersion());
+
+                str = str.replace(/##APPTITLE##/gi,name.toUpperCase());
+                str = str.replace(/##APPCATEGORY##/gi,category);
+                str = str.replace(/##APPUUID##/gi,uuid);
+                str = str.replace(/##APPUUID2##/gi,"0");
+
+                str = str.replace(/##VMAJ##/gi,"1");
+                str = str.replace(/##VMIN##/gi,"0");
+                str = str.replace(/##VPATCH##/gi,"0");
+
+                fs.writeFileSync(fullpath+'/wowcubeapp-build.json',str);
+                
+
+                //create vscode-related configs
+                fs.copyFileSync(templatespath+"_extensions.json",fullpath+'/.vscode/extensions.json');
+                fs.copyFileSync(templatespath+"_settings.json",fullpath+'/.vscode/settings.json');
+
+                if(!this.replaceInFileAndSave(templatespath+"_c_cpp_properties.json", fullpath+"/.vscode/c_cpp_properties.json",
+                    '##APPDIR##',Configuration.getAppFolderName(name)))
+                    {
+                      throw new Error("Unable to generate C/C++ properties file");
+                    }
+
+                if(!this.replaceInFileAndSave(templatespath+"_launch.json", fullpath+"/.vscode/launch.json",
+                        '##APPDIR##',Configuration.getAppFolderName(name)))
+                        {
+                          throw new Error("Unable to generate task launcher properties file");
+                        }
+
+                if(!this.replaceInFileAndSave(templatespath+"_tasks.json", fullpath+"/.vscode/tasks.json",
+                            '##APPDIR##',Configuration.getAppFolderName(name)))
+                            {
+                              throw new Error("Unable to generate task definition file");
+                            }                        
+            }
+            catch(error)
+            {
+                ret.desc = error as string;
+                ret.path = '';
+
+                if(needDeleteFolder===true)
+                {
+                    if(!this.deleteDir(fullpath))
+                    {
+                        ret.desc+='; unalbe to delete recently created project folder!';
+                    }
+                }
+            } 
+
+            return ret;
         }
 
         private generate_rust(name:string, path:string, template:number)
@@ -792,6 +1076,20 @@ export class WizardPanel {
             return filePath;
         }
 
+        copyDir(source: string, destination: string): boolean 
+        {
+            try {
+                fs.cpSync(source, destination, {
+                    recursive: true
+                });
+        
+                return true;
+            }
+            catch (error) {
+                return false;
+            }
+        }
+
         deleteDir(dir:string)
         {
             var ret:boolean = true;
@@ -907,7 +1205,7 @@ export class WizardPanel {
                             </div>
                         
                             
-                            <div style="margin-top:30px;">
+                            <div style="margin-top:30px; visibility:hidden; height:0px;">
                             <div class="badge"> <div class="badge_text">3</div></div>
                             <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Choose programming language</div>
                             <br/>
@@ -926,8 +1224,8 @@ export class WizardPanel {
                             </div>
                             
 
-                            <div style="margin-top:30px;margin-bottom:5px;">
-                                <div class="badge"> <div class="badge_text">4</div></div>
+                            <div style="margin-top:0px;margin-bottom:5px;">
+                                <div class="badge"> <div class="badge_text">3</div></div>
                                 <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Select project template</div>
                             </div>
 

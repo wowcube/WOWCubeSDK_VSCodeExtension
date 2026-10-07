@@ -17,6 +17,8 @@ const WOWCubeProjectProvider_1 = require("./WOWCubeProjectProvider");
 const ExternalToolsPanel_1 = require("./ExternalToolsPanel");
 const Configuration_1 = require("./Configuration");
 const Providers_1 = require("./Providers");
+const fs = require("fs");
+const path = require("path");
 let buildTask;
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -28,7 +30,8 @@ async function activate(context) {
     Providers_1.Providers.init(context.extensionUri);
     //register build task
     const workspaceRoot = (vscode.workspace.workspaceFolders && (vscode.workspace.workspaceFolders.length > 0)) ? vscode.workspace.workspaceFolders[0].uri.fsPath : "";
-    buildTask = vscode.tasks.registerTaskProvider(WOWCubeBuildTaskProvider_1.WOWCubeBuildTaskProvider.wowCubeBuildScriptType, new WOWCubeBuildTaskProvider_1.WOWCubeBuildTaskProvider(workspaceRoot));
+    const buildTaskProvider = new WOWCubeBuildTaskProvider_1.WOWCubeBuildTaskProvider(workspaceRoot);
+    buildTask = vscode.tasks.registerTaskProvider(WOWCubeBuildTaskProvider_1.WOWCubeBuildTaskProvider.wowCubeBuildScriptType, buildTaskProvider);
     //add subscriptions
     context.subscriptions.push(vscode.window.registerWebviewViewProvider(WizardViewProvider_1.WizardViewProvider.viewType, Providers_1.Providers.wizard));
     context.subscriptions.push(vscode.window.registerWebviewViewProvider(BTDeviceViewProvider_1.BTDeviceViewProvider.viewType, Providers_1.Providers.btdevices));
@@ -79,6 +82,32 @@ async function activate(context) {
     let check = Configuration_1.Configuration.getAutoCheckForUpdates();
     if (check == '1') {
         Providers_1.Providers.settings.doCheckUpdate();
+    }
+    //Octavios
+    //check if packed folder exists
+    var tasks = await buildTaskProvider.provideTasks();
+    const task = tasks?.find(t => t.definition.target === 'resources');
+    if (task) {
+        await handleWorkspaceOpened(context, task);
+    }
+}
+async function handleWorkspaceOpened(context, t) {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder)
+        return;
+    const workspaceRoot = workspaceFolder.uri.fsPath;
+    const buildConfig = path.join(workspaceRoot, 'wowcubeapp-build.json');
+    if (!fs.existsSync(buildConfig))
+        return;
+    // This is a WOWCube project.
+    const build_json = JSON.parse(fs.readFileSync(buildConfig, 'utf-8'));
+    const packedFolder = path.join(workspaceRoot, build_json.appFolder, 'art', 'packed');
+    const newFile = path.join(packedFolder, 'new');
+    if (fs.existsSync(newFile)) {
+        if (t) {
+            await vscode.tasks.executeTask(t);
+            fs.unlinkSync(newFile);
+        }
     }
 }
 // this method is called when your extension is deactivated

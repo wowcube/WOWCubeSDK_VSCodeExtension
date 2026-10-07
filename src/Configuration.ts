@@ -587,12 +587,28 @@ export class Configuration
         {
             case 'darwin': //mac
             case 'linux':
-                return 'wowcube-build';
+                return 'oct-builder';
             case 'win32': //windows
-                return 'wowcube-build.exe';
+                return 'oct-builder.exe';
             default:
             //unsupported os
-            return 'wowcube-build';
+            return 'oct-builder';
+        }
+    }
+
+    public static getOctaviosUtils()
+    {
+        var p = os.platform();
+        switch(p)
+        {
+            case 'darwin': //mac
+            case 'linux':
+                return 'utils';
+            case 'win32': //windows
+                return 'utils.exe';
+            default:
+            //unsupported os
+            return 'utils';
         }
     }
 
@@ -770,6 +786,19 @@ export class Configuration
         return homedir;
     }
 
+    public static getOctaviosUtilsPath()
+    {
+        var ret:string =  Configuration.getWOWSDKPath();
+
+        if(typeof(ret)==='undefined' || ret.length===0)
+        {
+            return "";
+        }
+
+        ret+='sdk/'+Configuration.getCurrentVersion()+'/c/octavios/utils/';
+        return ret;
+    }
+
     public static getPawnPath()
     {
         var ret:string =  Configuration.getWOWSDKPath();
@@ -901,6 +930,32 @@ export class Configuration
             break;
         }
         return false;
+    }
+
+    //octavios
+    public static getAppFolderName(projectName: string): string 
+    {
+        let name = projectName;
+    
+        // Replace non-ASCII characters
+        name = name.replace(/[^\x20-\x7E]/g, "_");
+    
+        // Replace spaces
+        name = name.replace(/ /g, "_");
+    
+        // Replace characters not allowed in Windows folder names
+        name = name.replace(/[<>:"/\\|?*]/g, "_");
+    
+        // Windows folder names cannot end with a dot or space
+        name = name.replace(/[. ]+$/g, "_");
+    
+        // Ensure app_ prefix
+        if (!name.startsWith("app_")) 
+        {
+            name = "app_" + name;
+        }
+    
+        return name;
     }
 
     public static async init()

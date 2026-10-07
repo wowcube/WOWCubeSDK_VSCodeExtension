@@ -17,6 +17,9 @@ import { ExternalToolsPanel } from './ExternalToolsPanel';
 import {Configuration, InstallationProblem} from './Configuration';
 import {Providers} from './Providers';
 
+import * as fs from 'fs';
+import * as path from 'path';
+
 let buildTask: vscode.Disposable | undefined;
 
 // this method is called when your extension is activated
@@ -33,7 +36,9 @@ export async function activate(context: vscode.ExtensionContext)
 
 	//register build task
 	const workspaceRoot = (vscode.workspace.workspaceFolders && (vscode.workspace.workspaceFolders.length > 0)) ? vscode.workspace.workspaceFolders[0].uri.fsPath : "";
-	buildTask = vscode.tasks.registerTaskProvider(WOWCubeBuildTaskProvider.wowCubeBuildScriptType, new WOWCubeBuildTaskProvider(workspaceRoot));
+
+	const buildTaskProvider = new WOWCubeBuildTaskProvider(workspaceRoot);
+	buildTask = vscode.tasks.registerTaskProvider(WOWCubeBuildTaskProvider.wowCubeBuildScriptType, buildTaskProvider);
 
 	//add subscriptions
 	context.subscriptions.push(
@@ -123,6 +128,48 @@ export async function activate(context: vscode.ExtensionContext)
 		{
 		Providers.settings.doCheckUpdate();
 		}
+
+		//Octavios
+		//check if packed folder exists
+
+		var tasks = await buildTaskProvider.provideTasks();
+		const task = tasks?.find(
+			t => t.definition.target === 'resources'
+		);
+
+		if(task)
+		{
+			await handleWorkspaceOpened(context,task);
+		}
+}
+
+async function handleWorkspaceOpened(context: vscode.ExtensionContext, t:vscode.Task): Promise<void> 
+{
+
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) return;
+
+    const workspaceRoot = workspaceFolder.uri.fsPath;
+
+    const buildConfig = path.join(workspaceRoot,'wowcubeapp-build.json');
+
+    if (!fs.existsSync(buildConfig))
+        return;
+
+    // This is a WOWCube project.
+
+    const build_json = JSON.parse(fs.readFileSync(buildConfig, 'utf-8'));
+    const packedFolder = path.join(workspaceRoot,build_json.appFolder,'art','packed');
+    const newFile = path.join(packedFolder, 'new');
+
+    if (fs.existsSync(newFile)) 
+		{
+			if (t) 
+				{
+					await vscode.tasks.executeTask(t);
+					fs.unlinkSync(newFile);
+				}
+   		 }
 }
 
 // this method is called when your extension is deactivated

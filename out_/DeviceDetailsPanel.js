@@ -77,10 +77,10 @@ class DeviceDetailsPanel {
                     {
                         const options = {
                             canSelectMany: false,
-                            openLabel: 'Select CUB File',
+                            openLabel: 'Select OCT File',
                             canSelectFiles: true,
                             canSelectFolders: false,
-                            filters: { 'Cubeapps': ['cub', 'CUB'], 'All Files': ['*.*'] }
+                            filters: { 'Cubeapps': ['oct', 'OCT'], 'All Files': ['*.*'] }
                         };
                         vscode.window.showOpenDialog(options).then(fileUri => {
                             if (fileUri && fileUri[0]) {
@@ -901,7 +901,7 @@ class DeviceDetailsPanel {
                         vscode.window.showErrorMessage("Unable to upload this app: " + out[0]);
                     else
                         vscode.window.showErrorMessage("Unable to upload this app");
-                    this._channel.appendLine('CUB file upload error');
+                    this._channel.appendLine('File upload error');
                     this._panel.webview.postMessage({ type: 'endRequest' });
                 }
                 else {
