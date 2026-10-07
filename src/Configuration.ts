@@ -289,7 +289,7 @@ export class Configuration
         {
             case 'darwin'://mac
             {
-                const fname = "/WOWCube Development Kit.app";
+                const fname = "/WOWCube Development Kit";
                 var pos = path.indexOf(fname);
 
                 folder = path.substring(0,pos);
@@ -322,7 +322,7 @@ export class Configuration
                     //{
                         //apparently, if we get here it means there is no record in config yet, so the only option is to set a path that 
                         //we believe would be used by pervailing number of users
-                        path = "/Applications/WOWCube Development Kit.app/Contents/"; //default path
+                        path = os.homedir()+"/WOWCube Development Kit"; //default path
                         this.setWOWSDKPath(path);
                     //}
                 }
@@ -392,9 +392,9 @@ export class Configuration
             {
                 case 'darwin': //mac
                 {
-                    if(fs.existsSync("/Applications/WOWCube Development Kit.app"))
+                    if(fs.existsSync(os.homedir()+"/WOWCube Development Kit"))
                     {
-                        path = "/Applications/WOWCube Development Kit.app/Contents/";
+                        path = os.homedir()+"/WOWCube Development Kit/";
                         this.setWOWSDKPath(path);
                     }
                 }
