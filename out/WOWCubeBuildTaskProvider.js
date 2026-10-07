@@ -10,6 +10,7 @@ const Project_1 = require("./Project");
 const Providers_1 = require("./Providers");
 const Output_1 = require("./Output");
 const Script_1 = require("./Script");
+const ResourceBuilder_1 = require("./ResourceBuilder");
 class WOWCubeBuildTaskProvider {
     constructor(workspaceRoot) {
         this.workspaceRoot = workspaceRoot;
@@ -33,6 +34,7 @@ class WOWCubeBuildTaskProvider {
         this.tasks.push(this.getTask('compile', ''));
         this.tasks.push(this.getTask('build', 'emulator'));
         this.tasks.push(this.getTask('build', 'device'));
+        this.tasks.push(this.getTask('build', 'resources'));
         return this.tasks;
     }
     getTask(action, target, definition) {
@@ -78,6 +80,28 @@ class WOWCubeBuildTaskTerminal {
             this.fileWatcher.onDidDelete(() => this.doBuild());
         }
         */
+        if (this.action == 'build') {
+            switch (this.target) {
+                case 'resources':
+                    {
+                        this.doBuildResources();
+                    }
+                    break;
+                case 'emulator':
+                    {
+                        this.doBuildSimulator();
+                    }
+                    break;
+                case 'device':
+                    {
+                        this.doBuildARMModule();
+                    }
+                    break;
+                default:
+                    return;
+            }
+        }
+        return;
         //pre-process json file
         if (Project_1.Project.validateAssets(this.workspace, true) === false) {
             this._channel.appendLine('Project file failed to validate, the project may produce build or runtime errors! Please check the project file.\r\n');
@@ -115,6 +139,167 @@ class WOWCubeBuildTaskTerminal {
     printOutput(data) {
         this._channel.appendLine(data);
         this._channel.show(true);
+    }
+    doBuildSimulator() {
+        return new Promise((resolve, reject) => {
+            const sdkpath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/c';
+            const buildScript = sdkpath + '/octavios/apps/build_sim.cmd';
+            const build_json = JSON.parse(fs.readFileSync(this.workspace + '/wowcubeapp-build.json', 'utf-8'));
+            var sourcefile = this.workspace + '/' + build_json.sourceFile;
+            var appFolder = this.workspace + '/' + build_json.appFolder;
+            this._channel.clear();
+            this._channel.show(true);
+            const command = `"${buildScript}"`;
+            const proc = cp.exec(command, {
+                cwd: appFolder,
+                env: process.env,
+                windowsHide: true
+            });
+            proc.stdout?.on('data', data => {
+                this._channel.appendLine(data.toString());
+                this._channel.show(true);
+            });
+            proc.stderr?.on('data', data => {
+                this._channel.appendLine(data.toString());
+                this._channel.show(true);
+            });
+            proc.on('error', err => {
+                this.closeEmitter.fire(1);
+                reject(err);
+            });
+            proc.on('close', code => {
+                if (code === 0) {
+                    this.closeEmitter.fire(0);
+                    resolve();
+                }
+                else {
+                    this.closeEmitter.fire(1);
+                    reject(new Error(`Build failed with exit code ${code}`));
+                }
+            });
+        });
+    }
+    doBuildARMModule() {
+        return new Promise((resolve, reject) => {
+            const sdkpath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/c';
+            const sourceDir = sdkpath + '/octavios/apps';
+            const build_json = JSON.parse(fs.readFileSync(this.workspace + '/wowcubeapp-build.json', 'utf-8'));
+            var sourcefile = this.workspace + '/' + build_json.sourceFile;
+            var appFolder = this.workspace + '/' + build_json.appFolder;
+            const command = `cmake -G Ninja -S "${sourceDir}" -B out && cmake --build out`;
+            this._channel.clear();
+            this._channel.show(true);
+            this._channel.appendLine('Building cubeapp...');
+            const proc = cp.exec(command, {
+                cwd: appFolder,
+                env: process.env,
+                windowsHide: true,
+                shell: 'cmd.exe'
+            });
+            proc.stdout?.on('data', data => {
+                this._channel.appendLine(data.toString());
+                this._channel.show(true);
+            });
+            proc.stderr?.on('data', data => {
+                this._channel.appendLine(data.toString());
+                this._channel.show(true);
+            });
+            proc.on('error', err => {
+                this.closeEmitter.fire(1);
+                reject(err);
+            });
+            proc.on('close', code => {
+                if (code === 0) {
+                    this.doLinkOCT();
+                }
+                else {
+                    this._channel.appendLine('Build failed.\r\n');
+                    this.closeEmitter.fire(1);
+                    reject(new Error(`Build failed with exit code ${code}`));
+                }
+            });
+        });
+    }
+    doBuildResources() {
+        return new Promise((resolve, reject) => {
+            this._channel.clear();
+            this._channel.show(true);
+            this._channel.appendLine("Packing application resources...");
+            const build_json = JSON.parse(fs.readFileSync(this.workspace + '/wowcubeapp-build.json', 'utf-8'));
+            var sourcefile = this.workspace + '/' + build_json.sourceFile;
+            var appFolder = this.workspace + '/' + build_json.appFolder;
+            var utilspath = Configuration_1.Configuration.getOctaviosUtilsPath();
+            var command = '"' + utilspath + Configuration_1.Configuration.getOctaviosUtils() + '"';
+            var palfile = appFolder + '/art/palettes.txt';
+            var destfolder = appFolder + '/art/packed';
+            var idfile = appFolder + '/src/' + build_json.idsFile;
+            command += ' "' + palfile + '"';
+            command += ' "' + destfolder + '"';
+            command += ' "' + idfile + '"';
+            command += ' -hq';
+            var child = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => {
+                var criticalWaring = false;
+                if (error) {
+                    //reject({ error, stdout, stderr });
+                }
+                if (stderr && stderr.length > 0) {
+                    /*
+                    if(stderr.indexOf('warning 202:') != -1)
+                    {
+                        criticalWaring = true;
+                        stderr = stderr.replace(new RegExp('warning 202:', 'g'),'critical warning 202:');
+                    }
+                    */
+                    this._channel.appendLine(stderr);
+                    this._channel.show(true);
+                }
+                if (stdout && stdout.length > 0) {
+                    /*
+                    if(stdout.indexOf('warning 202:') != -1)
+                    {
+                        criticalWaring = true;
+                        stderr = stderr.replace(new RegExp('warning 202:', 'g'),'critical warning 202:');
+                    }
+                    */
+                    this._channel.appendLine(stdout);
+                    this._channel.show(true);
+                }
+                //const date = new Date();
+                //this.setSharedState(date.toTimeString() + ' ' + date.toDateString());
+                if (child.exitCode === 0) {
+                    if (!criticalWaring) {
+                        this._channel.appendLine('Packing compiled successfully.\r\n');
+                        //if(action==='compile')
+                        //{
+                        this.closeEmitter.fire(0);
+                        resolve();
+                        //}
+                        //else
+                        //{
+                        //	this.doBuild(this.target);
+                        //}
+                    }
+                    /*
+                    else
+                    {
+                        this._channel.appendLine("File compiled with critical warnings, the image can't be run.\r\n");
+
+                        this.closeEmitter.fire(0);
+                        resolve();
+                    }
+                    */
+                }
+                else {
+                    this._channel.appendLine('Failed to pack application resources.\r\n');
+                    this.closeEmitter.fire(0);
+                    resolve();
+                }
+            });
+            ResourceBuilder_1.ResourceBuilder.Build("aaa");
+            this._channel.appendLine('Application resources have been packed successfully.\r\n');
+            this.closeEmitter.fire(0);
+            resolve();
+        });
     }
     doCompileRust(action) {
         return new Promise((resolve, reject) => {
@@ -1092,6 +1277,51 @@ class WOWCubeBuildTaskTerminal {
                     this._channel.appendLine('Failed to build.\r\n');
                     this.closeEmitter.fire(0);
                     resolve();
+                }
+            });
+        });
+    }
+    async doLinkOCT() {
+        return new Promise((resolve, reject) => {
+            this._channel.appendLine('Linking OCT file...\n');
+            const build_json = JSON.parse(fs.readFileSync(this.workspace + '/wowcubeapp-build.json', 'utf-8'));
+            var utilspath = Configuration_1.Configuration.getUtilsPath();
+            var command = '"' + utilspath + Configuration_1.Configuration.getBuilder() + '"';
+            var sourcefile = '"' + this.workspace + '/' + build_json.sourceFile + '"';
+            var appFolder = this.workspace + '/' + build_json.appFolder;
+            command += " " + appFolder + " " + build_json.appFolder;
+            command += ' --manifest ' + '"' + this.workspace + '/wowcubeapp-build.json' + '"';
+            var child = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => {
+                if (error) {
+                    //reject({ error, stdout, stderr });
+                }
+                if (stderr && stderr.length > 0) {
+                    this._channel.appendLine(stderr);
+                    this._channel.show(true);
+                }
+                if (stdout && stdout.length > 0) {
+                    this._channel.appendLine(stdout);
+                    this._channel.show(true);
+                }
+                const date = new Date();
+                this.setSharedState(date.toTimeString() + ' ' + date.toDateString());
+                if (child.exitCode === 0) {
+                    this._channel.appendLine('Link completed.\r\n');
+                    //if(target==='emulator')
+                    //{
+                    //	this.doRunInEmulator(build_json.name+'.cub');
+                    //}
+                    //else
+                    //{
+                    //	this.doRunOnDevice(build_json.name+'.cub');
+                    //}
+                    this.closeEmitter.fire(0);
+                    resolve();
+                }
+                else {
+                    this._channel.appendLine('Failed to link.\r\n');
+                    this.closeEmitter.fire(1);
+                    reject();
                 }
             });
         });

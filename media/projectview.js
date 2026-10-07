@@ -5,53 +5,57 @@
 
     function validate()
     {
+        
         let n = document.getElementById('appname');
         let v = document.getElementById('appversion');
         let t = document.getElementById('targetsdk');
-        let b = document.getElementById('badge');
-        let ai = document.getElementById('appicon');
-        let aibg = document.getElementById('appiconbg');
-        let sf = document.getElementById('sourcefile');
-        let scf = document.getElementById('scriptfile');
+        let ac = document.getElementById('appcategory');
+
+        //let b = document.getElementById('badge');
+        //let ai = document.getElementById('appicon');
+        //let aibg = document.getElementById('appiconbg');
+        //let sf = document.getElementById('sourcefile');
+        //let scf = document.getElementById('scriptfile');
 
         let nt = document.getElementById('appnamet');
         let vt = document.getElementById('appversiont');
         let tt = document.getElementById('targetsdkt');
-        let ait = document.getElementById('appicont');
-        let sft = document.getElementById('sourcefilet');
-        let scft = document.getElementById('scriptfilet');
+        //let ait = document.getElementById('appicont');
+        //let sft = document.getElementById('sourcefilet');
+        //let scft = document.getElementById('scriptfilet');
 
-        let lng = document.getElementById('language_');
-        let intpr = document.getElementById('interpreter_');
+        //let lng = document.getElementById('language_');
+        //let intpr = document.getElementById('interpreter_');
 
-        let cmpflags = document.getElementById('compilerflags');
-        let cmpsettings = document.getElementById('compilersettings');
-        let cmpdefines = document.getElementById('defines');
+        //let cmpflags = document.getElementById('compilerflags');
+        //let cmpsettings = document.getElementById('compilersettings');
+        //let cmpdefines = document.getElementById('defines');
 
-        let incdir1 = document.getElementById('incdir1');
-        let incdir2 = document.getElementById('incdir2');
-        let incdir3 = document.getElementById('incdir3');
-        let incdir4 = document.getElementById('incdir4');
-        let incdir5 = document.getElementById('incdir5');
+        //let incdir1 = document.getElementById('incdir1');
+        //let incdir2 = document.getElementById('incdir2');
+        //let incdir3 = document.getElementById('incdir3');
+        //let incdir4 = document.getElementById('incdir4');
+        //let incdir5 = document.getElementById('incdir5');
 
-        let cmpflags_r = document.getElementById('compilerflags_r');
-        let cmpsettings_r = document.getElementById('compilersettings_r');
+        //let cmpflags_r = document.getElementById('compilerflags_r');
+        //let cmpsettings_r = document.getElementById('compilersettings_r');
 
         var ret = true;
 
         nt.className="";
         vt.className="";
         tt.className="";
-        ait.className="";
-        sft.className="";
-        scft.className="";
+        //ait.className="";
+        //sft.className="";
+        //scft.className="";
 
-        if(typeof(n.value)==='undefined' || n.value.length==0) {nt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a name for the project" }); ret = false;}
-        if(typeof(v.value)==='undefined' || v.value.length==0) {vt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a version of the cubeapp application" }); ret = false;}
-        if(typeof(ai.value)==='undefined' || ai.value.length==0) {ait.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a full path and filename of cubeapp application icon" }); ret = false;}
-        if(typeof(sf.value)==='undefined' || sf.value.length==0) {sft.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid name for the source file" }); ret = false;}
-        if(typeof(scf.value)==='undefined' || scf.value.length==0) {scft.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid name for the object file" }); ret = false;}
+        if(typeof(n.value)==='undefined' || n.value.length==0) {nt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a name for the application" }); ret = false;}
+        if(typeof(v.value)==='undefined' || v.value.length==0) {vt.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a version of the application" }); ret = false;}
+        //if(typeof(ai.value)==='undefined' || ai.value.length==0) {ait.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a full path and filename of cubeapp application icon" }); ret = false;}
+        //if(typeof(sf.value)==='undefined' || sf.value.length==0) {sft.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid name for the source file" }); ret = false;}
+        //if(typeof(scf.value)==='undefined' || scf.value.length==0) {scft.className="negative"; vscode.postMessage({ type: 'error', value: "Please provide a valid name for the object file" }); ret = false;}
 
+        if(typeof(ac.value)==='undefined' || ac.value==0) {vscode.postMessage({ type: 'error', value: "Please assign a category to which the app belongs" }); ret = false;}
         var name = n.value;
        
         if(ret)
@@ -59,21 +63,21 @@
             if (!name.replace(/\s/g, '').length) 
             {
                 nt.className="negative";
-                vscode.postMessage({ type: 'error', value: "Invalid project name"}); ret = false;
+                vscode.postMessage({ type: 'error', value: "Invalid application name"}); ret = false;
             }
 
-            if(name.length>60)
+            if(name.length>79)
             {
                 nt.className="negative";
-                vscode.postMessage({ type: 'error', value: "Project name must be 60 characters long or less"}); ret = false;
+                vscode.postMessage({ type: 'error', value: "Project name must be 79 characters long or less"}); ret = false;
             }
         }   
         
         if(ret)
         {
-            if(/^\d{1,2}\.\d{1,2}\.\d{1,5}/.test(v.value))
+            if(/^\d{1,3}\.\d{1,3}\.\d{1,3}/.test(v.value))
             {
-                var r = /^(\d{1,2})\.(\d{1,2})\.(\d{1,5})/
+                var r = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})/
                 var match = v.value.match(r);
 
                 v.value = match[0];
@@ -84,32 +88,33 @@
                 var min = Number(match[2]);
                 var build = Number(match[3]);
 
-                if(maj>15) 
+                if(maj>255) 
                 {
                     vt.className="negative";
-                    vscode.postMessage({ type: 'error', value: "Major version of cubeapp application should not exceed 15"}); ret = false;
+                    vscode.postMessage({ type: 'error', value: "Major version of the application should not exceed 255"}); ret = false;
                 }
 
-                if(min>15) 
+                if(min>255) 
                 {
                     vt.className="negative";
-                    vscode.postMessage({ type: 'error', value: "Minor version of cubeapp application should not exceed 15"}); ret = false;
+                    vscode.postMessage({ type: 'error', value: "Minor version of the application should not exceed 255"}); ret = false;
                 }
                 
-                if(build>65535) 
+                if(build>255) 
                 {
                     vt.className="negative";
-                    vscode.postMessage({ type: 'error', value: "Build version of cubeapp application should not exceed 65535"}); ret = false;
+                    vscode.postMessage({ type: 'error', value: "Patch version of the application should not exceed 255"}); ret = false;
                 }
                 // Successful match
             } 
             else
             {
                 vt.className="negative";
-                vscode.postMessage({ type: 'error', value: "Please make sure cubeapp version format is XX.XX.XX"}); ret = false;
+                vscode.postMessage({ type: 'error', value: "Please make sure application version format is XX.XX.XX"}); ret = false;
             }
         }
 
+        /*
         var imageAssets = new Array();
         var soundAssets = new Array();
 
@@ -186,9 +191,33 @@
                 catch(e){}
             }
         }
+        */
 
         if(ret===true)
         {
+            var obj = new Object(
+            {
+                name: document.getElementById('_name').value,
+                version:v.value,
+                appFolder: document.getElementById('_appFolder').value,
+                sourceFile: document.getElementById('_sourceFile').value,
+                idsFile: document.getElementById('_idsFile').value,
+                soundAssetsDir: document.getElementById('_soundAssetsDir').value,
+                imageAssetsDir: document.getElementById('_imageAssetsDir').value,
+                sdkVersion: t.value, 
+                appFlags: document.getElementById('_appFlags').value,
+                language: document.getElementById('_language').value,
+                metadata:{ 
+                    application:{
+                        name:name.replace(/[\/|\\:*?"<>]/g, "_"),
+                        category:ac.value,
+                        guid1:document.getElementById('_guid1').value,
+                        guid2:document.getElementById('_guid2').value
+                    }
+                },
+                adhocDescription: document.getElementById('_adhocDescription').value,
+            });
+            /*
             var obj = new Object({
                    name:name.replace(/[\/|\\: *?"<>]/g, "_"),
                    version:v.value,
@@ -233,12 +262,15 @@
                     }
                 );
             }
+            */
             return obj;
         }
         else
         {
             return null;
         }
+        
+       return null;
     };
 
     function updateAssets(d)
@@ -425,11 +457,12 @@
         {
             document.getElementById('appname').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
             document.getElementById('appversion').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
-            document.getElementById('appicon').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
-            document.getElementById('appiconbg').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
-            document.getElementById('sourcefile').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
-            document.getElementById('scriptfile').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+            //document.getElementById('appicon').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+            //document.getElementById('appiconbg').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+            //document.getElementById('sourcefile').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
+            //document.getElementById('scriptfile').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
 
+            /*
             try
             {
                 document.getElementById('compilerflags').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
@@ -449,23 +482,33 @@
                 document.getElementById('incdir_button5').addEventListener('click', () => { vscode.postMessage({ type: 'folder', value: 5 });});
             }
             catch(e){}
+            */
 
+            /*
             try
             {
                 document.getElementById('compilerflags_r').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
                 document.getElementById('compilersettings_r').addEventListener('input',() => { vscode.postMessage({ type: 'update', value: validate() });});
             }
             catch(e){}
+            */
 
             document.getElementById('targetsdk').addEventListener('change',() =>
             {
                vscode.postMessage({ type: 'update', value: validate() });
             });
 
+            document.getElementById('appcategory').addEventListener('change',() =>
+            {
+                vscode.postMessage({ type: 'update', value: validate() });
+            });
+
+            /*
             document.getElementById('badge').addEventListener('change',() =>
             {
                vscode.postMessage({ type: 'update', value: validate() });
             });
+            */
 
             document.getElementById('save_button').addEventListener('click', () => 
             {
@@ -510,10 +553,11 @@
                     {                        
                         var d = JSON.parse(message.text);
 
-                        document.getElementById('appname').value = d.name;
+                        document.getElementById('appname').value = d.metadata.application.name;
                         document.getElementById('appversion').value = d.version;
-                        document.getElementById('appicon').value = d.appIcon.path;
+                        //document.getElementById('appicon').value = d.appIcon.path;
 
+                        /*
                         if(typeof d.appIconBg!=='undefined')
                         {
                             if(typeof d.appIconBg.path!=='undefined')
@@ -534,6 +578,7 @@
                         document.getElementById('scriptfile').value = d.scriptFile;
 
                         document.getElementById('badge').value = d.appFlags;
+                        */
 
                         document.getElementById('targetsdk').value = d.sdkVersion;
 
@@ -559,9 +604,10 @@
                             document.getElementById('targetsdkwarn').innerHTML = 'Application target SDK version '+d.sdkVersion+' is not installed.';
                         }
                         
-                        document.getElementById('language_').value = d.language;
-                        document.getElementById('interpreter_').value = d.interpreter;
+                        //document.getElementById('language_').value = d.language;
+                        //document.getElementById('interpreter_').value = d.interpreter;
 
+                        /*
                         try
                         {
                             if(d.language==='cpp' && d.interpreter==='wasm')
@@ -590,6 +636,7 @@
                         catch(e){}
 
                         updateAssets(d);
+                        */
 
                         validate();
                     }

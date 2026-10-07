@@ -433,12 +433,25 @@ class Configuration {
         switch (p) {
             case 'darwin': //mac
             case 'linux':
-                return 'wowcube-build';
+                return 'oct-builder';
             case 'win32': //windows
-                return 'wowcube-build.exe';
+                return 'oct-builder.exe';
             default:
                 //unsupported os
-                return 'wowcube-build';
+                return 'oct-builder';
+        }
+    }
+    static getOctaviosUtils() {
+        var p = os.platform();
+        switch (p) {
+            case 'darwin': //mac
+            case 'linux':
+                return 'utils';
+            case 'win32': //windows
+                return 'utils.exe';
+            default:
+                //unsupported os
+                return 'utils';
         }
     }
     static getEmulator() {
@@ -576,6 +589,14 @@ class Configuration {
         }
         return homedir;
     }
+    static getOctaviosUtilsPath() {
+        var ret = Configuration.getWOWSDKPath();
+        if (typeof (ret) === 'undefined' || ret.length === 0) {
+            return "";
+        }
+        ret += 'sdk/' + Configuration.getCurrentVersion() + '/c/octavios/utils/';
+        return ret;
+    }
     static getPawnPath() {
         var ret = Configuration.getWOWSDKPath();
         if (typeof (ret) === 'undefined' || ret.length === 0) {
@@ -677,6 +698,23 @@ class Configuration {
                 break;
         }
         return false;
+    }
+    //octavios
+    static getAppFolderName(projectName) {
+        let name = projectName;
+        // Replace non-ASCII characters
+        name = name.replace(/[^\x20-\x7E]/g, "_");
+        // Replace spaces
+        name = name.replace(/ /g, "_");
+        // Replace characters not allowed in Windows folder names
+        name = name.replace(/[<>:"/\\|?*]/g, "_");
+        // Windows folder names cannot end with a dot or space
+        name = name.replace(/[. ]+$/g, "_");
+        // Ensure app_ prefix
+        if (!name.startsWith("app_")) {
+            name = "app_" + name;
+        }
+        return name;
     }
     static async init() {
         //detect SDK path 

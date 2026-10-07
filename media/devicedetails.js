@@ -57,7 +57,7 @@ class AppList
 
         b.addEventListener('click',()=>
         {
-            window.dispatchEvent(new CustomEvent('deleteressed',{detail:app.name}));
+            window.dispatchEvent(new CustomEvent('deleteressed',{detail:app}));
         });
 
         const b2 = document.createElement('button');
@@ -66,9 +66,10 @@ class AppList
 
         b2.addEventListener('click',()=>
         {
-            window.dispatchEvent(new CustomEvent('runpressed',{detail:app.name}));
+            window.dispatchEvent(new CustomEvent('runpressed',{detail:app}));
         });
 
+/*        
         const b3 = document.createElement('button');
         b3.className = 'bt-clearsaves-btn';
         b3.innerHTML = 'Clear Data';
@@ -77,9 +78,10 @@ class AppList
         {
             window.dispatchEvent(new CustomEvent('clearsavespressed',{detail:app.name}));
         });
+*/
 
         d.appendChild(b2);
-        d.appendChild(b3);
+//        d.appendChild(b3);
         d.appendChild(b);
         this.el.appendChild(d);
 
@@ -155,7 +157,7 @@ class AppList
 
             for(var i=0;i<info.length;i++)
             {
-                this.addApp({name:info[i]});
+                this.addApp({name:info[i].appname+' ('+info[i].version+')', guid1:info[i].guid1, guid2:info[i].guid2});
             }
          }
          catch(e){}

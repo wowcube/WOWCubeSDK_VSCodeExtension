@@ -77,10 +77,10 @@ class DeviceDetailsPanel {
                     {
                         const options = {
                             canSelectMany: false,
-                            openLabel: 'Select CUB File',
+                            openLabel: 'Select OCT File',
                             canSelectFiles: true,
                             canSelectFolders: false,
-                            filters: { 'Cubeapps': ['cub', 'CUB'], 'All Files': ['*.*'] }
+                            filters: { 'Cubeapps': ['oct', 'OCT'], 'All Files': ['*.*'] }
                         };
                         vscode.window.showOpenDialog(options).then(fileUri => {
                             if (fileUri && fileUri[0]) {
@@ -108,7 +108,7 @@ class DeviceDetailsPanel {
                                 else {
                                     this._panel.webview.postMessage({ type: 'endRequest' });
                                     Providers_1.Providers.btdevices.showWait(false);
-                                    vscode.window.showWarningMessage("CUB file is not selected");
+                                    vscode.window.showWarningMessage("OCT file is not selected");
                                 }
                             }
                         }
@@ -152,9 +152,11 @@ class DeviceDetailsPanel {
                                 vscode.window.showWarningMessage("Device '" + device.name + "' is busy, please try again later");
                             }
                             else {
-                                var appname = message.value.replace('\r', '');
-                                if (appname !== null) {
-                                    this.doRunApp(device.mac, appname);
+                                var appname = message.value.name.replace('\r', '');
+                                var appguid = message.value.guid1;
+                                var appguid2 = message.value.guid2;
+                                if (appname !== null && appguid !== null && appguid2 !== null) {
+                                    this.doRunApp(device.mac, appname, appguid, appguid2);
                                     Providers_1.Providers.btdevices.showWait(true);
                                 }
                                 else {
@@ -179,20 +181,23 @@ class DeviceDetailsPanel {
                                 vscode.window.showWarningMessage("Device '" + device.name + "' is busy, please try again later");
                             }
                             else {
-                                var appname = message.value.replace('\r', '');
-                                if (appname !== null) {
+                                //var appname = message.value.replace('\r','');
+                                var appname = message.value.name.replace('\r', '');
+                                var appguid = message.value.guid1;
+                                var appguid2 = message.value.guid2;
+                                if (appname !== null && appguid !== null && appguid2 !== null) {
                                     vscode.window.showInformationMessage("Application '" + appname + "' will be deleted from the device", ...["Delete Application", "Cancel"]).then((answer) => {
                                         if (answer === "Delete Application") {
-                                            if (appname.toLowerCase() == 'platform.cub') {
+                                            if (appname.toLowerCase() == 'app_launcher.oct') {
                                                 vscode.window.showWarningMessage("ATTENTION! Removing this application will render the device's operating system inoperable. Recovery will be possible only by reinstalling the firmware. Are you sure you want to continue?", ...["YES, Delete Application", "Cancel"]).then((answer) => {
                                                     if (answer === "YES, Delete Application") {
-                                                        this.doDeleteApp(device.mac, appname);
+                                                        this.doDeleteApp(device.mac, appname, appguid, appguid2);
                                                         Providers_1.Providers.btdevices.showWait(true);
                                                     }
                                                 });
                                             }
                                             else {
-                                                this.doDeleteApp(device.mac, appname);
+                                                this.doDeleteApp(device.mac, appname, appguid, appguid2);
                                                 Providers_1.Providers.btdevices.showWait(true);
                                             }
                                         }
@@ -339,7 +344,7 @@ class DeviceDetailsPanel {
                                 <div id="charge" style="display:inline-block;font-size:14px;"></div>
                             </div>
 
-                            <div style="margin-top:40px;">
+                            <div style="margin-top:40px;visibility:hidden; height:0px;">
                                 <div style="display:inline-block;font-size:14px;"><strong>Logging</strong></div>
                                 <br/>
                                 <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Select the option to receive application logs via bluetooth</div>
@@ -387,10 +392,10 @@ class DeviceDetailsPanel {
                                 <br/>
                             </div>
 
-                            <div style="margin-top:60px;">
+                            <div style="margin-top:0px;">
                                 <div style="display:inline-block;font-size:14px;"><strong>Application Uploader</strong></div>
                                 <br/>
-                                <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Select CUB application file to upload</div>
+                                <div style="display:inline-block;margin:10px;margin-left: 2px;font-size:14px;">Select WOWCube application file to upload</div>
                                 <br/>
                                 <input id="cubuploadname" style="display:inline-block; width:calc(100% - 300px);min-width:140px;" readonly></input>
                                  <button id="cubselect_button" style="display:inline-block; width:120px;margin-left:10px;">Select File</button>
@@ -425,6 +430,7 @@ class DeviceDetailsPanel {
             var err = false;
             var info = "";
             var battery = "";
+            //var apps:Array<string> = new Array();
             var apps = new Array();
             var utilspath = Configuration_1.Configuration.getUtilsPath();
             var command = '"' + utilspath + Configuration_1.Configuration.getLoader() + '"';
@@ -447,14 +453,24 @@ class DeviceDetailsPanel {
                         else {
                             var l = line.split('\n');
                             l.forEach(s => {
-                                if (s.indexOf('Build name:') !== -1) {
-                                    info = s;
+                                if (s.indexOf('Firmware:') !== -1) {
+                                    const match = s.trim().match(/^(.*), battery: (.*), name: (.*)$/);
+                                    if (!match) {
+                                        throw new Error(`Unexpected firmware info format: "${s}"`);
+                                    }
+                                    const [, firmwareStr, batteryStr, nameStr] = match;
+                                    info = firmwareStr;
+                                    battery = batteryStr;
                                 }
-                                if (s.indexOf('%') !== -1) {
-                                    battery = s;
-                                }
-                                if (s.indexOf('.cub') !== -1 || s.indexOf('.CUB') !== -1) {
-                                    apps.push(s);
+                                if (s.indexOf('guid1=') !== -1) //app item string always contains 'guid1' and 'guid2' 
+                                 {
+                                    const match = s.trim().match(/^(.+) \(([^)]*)\) guid1=([0-9a-fA-F]{16}) guid2=([0-9a-fA-F]{16})$/);
+                                    if (match) {
+                                        const [, appname, version, guid1, guid2] = match;
+                                        const app = { appname, version, guid1, guid2 };
+                                        apps.push(app);
+                                    }
+                                    //apps.push(s);
                                 }
                             });
                         }
@@ -518,10 +534,10 @@ class DeviceDetailsPanel {
                         if (line.indexOf('Error:') !== -1) {
                             err = true;
                         }
-                        if (line.indexOf('Build name') !== -1) {
+                        if (line.indexOf('Firmware') !== -1) {
                             var l = line.split('\n');
                             l.forEach(s => {
-                                if (s.indexOf('Build name:') !== -1) {
+                                if (s.indexOf('Firmware:') !== -1) {
                                     info = s;
                                 }
                             });
@@ -666,20 +682,24 @@ class DeviceDetailsPanel {
             });
         });
     }
-    async doDeleteApp(mac, name) {
+    async doDeleteApp(mac, name, guid, guid2) {
         return new Promise((resolve) => {
             var out = new Array();
             var err = false;
             var info = new Array();
             var utilspath = Configuration_1.Configuration.getUtilsPath();
             var command = '"' + utilspath + Configuration_1.Configuration.getLoader() + '"';
-            command += " rm -n ";
+            command += " rm -g1 ";
             command += '"';
-            command += name;
+            command += guid;
+            command += '"';
+            command += " -g2 ";
+            command += '"';
+            command += guid2;
             command += '"';
             command += " -a ";
             command += mac;
-            var s = "Deleting '" + name + "' from device...";
+            var s = "Deleting '" + name + "' from the device...";
             this._channel.appendLine(s);
             this._channel.show(true);
             Configuration_1.Configuration.setDeviceBusy(mac, true);
@@ -771,36 +791,48 @@ class DeviceDetailsPanel {
             });
         });
     }
-    async doRunApp(mac, name) {
+    async doRunApp(mac, name, guid, guid2) {
         return new Promise((resolve) => {
             var out = new Array();
             var err = false;
             var info = new Array();
             var utilspath = Configuration_1.Configuration.getUtilsPath();
             var command = '"' + utilspath + Configuration_1.Configuration.getLoader() + '"';
-            command += " ra -n ";
+            command += " ra -g1 ";
             command += '"';
-            command += name;
+            command += guid;
+            command += '"';
+            command += " -g2 ";
+            command += '"';
+            command += guid2;
             command += '"';
             command += " -a ";
             command += mac;
-            // logging
-            var mn = +Configuration_1.Configuration.getLoggingMode() - 1;
             var s = "";
-            if (mn != -1) {
-                if (mn != 8) {
-                    this._channel.appendLine('Application logging is enabled for module ' + mn + '.\r\n');
-                    s = "Starting '" + name + "' with application logging enabled for module " + mn + "...";
+            // logging
+            /*
+            var mn:number = +Configuration.getLoggingMode()-1;
+
+            if(mn!=-1)
+            {
+                if(mn!=8)
+                {
+                    this._channel.appendLine('Application logging is enabled for module '+ mn+'.\r\n');
+                    s = "Starting '"+name+"' with application logging enabled for module "+mn+"...";
                 }
-                else {
+                else
+                {
                     this._channel.appendLine('Application logging is enabled for all modules.\r\n');
-                    s = "Starting '" + name + "' with application logging enabled for all modules...";
+                    s = "Starting '"+name+"' with application logging enabled for all modules...";
                 }
-                command += " -l -cid " + mn;
+                command+=" -l -cid "+mn;
             }
-            else {
-                s = "Starting '" + name + "'...";
+            else
+            {
+                s = "Starting '"+name+"'...";
             }
+            */
+            s = "Starting '" + name + "'...";
             this._channel.appendLine(s);
             this._channel.show(true);
             Configuration_1.Configuration.setDeviceBusy(mac, true);
@@ -901,12 +933,12 @@ class DeviceDetailsPanel {
                         vscode.window.showErrorMessage("Unable to upload this app: " + out[0]);
                     else
                         vscode.window.showErrorMessage("Unable to upload this app");
-                    this._channel.appendLine('CUB file upload error');
+                    this._channel.appendLine('File upload error');
                     this._panel.webview.postMessage({ type: 'endRequest' });
                 }
                 else {
                     this._panel.webview.postMessage({ type: 'endUpload' });
-                    this._channel.appendLine('CUB file has been successfully uploaded, refreshing application list...');
+                    this._channel.appendLine('File has been successfully uploaded, refreshing application list...');
                 }
                 Providers_1.Providers.btdevices.showWait(false);
                 this.closeEmitter.fire(0);

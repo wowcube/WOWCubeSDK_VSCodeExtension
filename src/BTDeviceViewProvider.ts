@@ -193,7 +193,7 @@ export class BTDeviceViewProvider implements vscode.WebviewViewProvider
 							err = true;
 						}
 
-						if(line.indexOf('Build name')!==-1)
+						if(line.indexOf('Firmware:')!==-1)
 						{
 							info = line;
 						}

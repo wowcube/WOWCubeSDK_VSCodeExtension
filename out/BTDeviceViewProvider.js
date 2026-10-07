@@ -148,7 +148,7 @@ class BTDeviceViewProvider {
                         if (line.indexOf('Error:') !== -1) {
                             err = true;
                         }
-                        if (line.indexOf('Build name') !== -1) {
+                        if (line.indexOf('Firmware:') !== -1) {
                             info = line;
                         }
                     });

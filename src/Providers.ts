@@ -5,6 +5,7 @@ import { BTDeviceViewProvider } from './BTDeviceViewProvider';
 import { SettingsViewProvider } from './SettingsViewProvider';
 import { ExamplesViewProvider } from './ExamplesViewProvider';
 import {WOWCubeProjectProvider} from './WOWCubeProjectProvider';
+
 import { Configuration } from "./Configuration";
 
 export class Providers 
