@@ -237,7 +237,7 @@ class Configuration {
                         //{
                         //apparently, if we get here it means there is no record in config yet, so the only option is to set a path that 
                         //we believe would be used by pervailing number of users
-                        path = os.homedir() + "/WOWCube Development Kit"; //default path
+                        path = os.homedir() + "/WOWCube Development Kit/"; //default path
                         this.setWOWSDKPath(path);
                         //}
                     }
@@ -439,6 +439,19 @@ class Configuration {
             default:
                 //unsupported os
                 return 'oct-builder';
+        }
+    }
+    static getPaletteBuilder() {
+        var p = os.platform();
+        switch (p) {
+            case 'darwin': //mac
+            case 'linux':
+                return 'palette-builder';
+            case 'win32': //windows
+                return 'palette-builder.exe';
+            default:
+                //unsupported os
+                return 'palette-builder';
         }
     }
     static getOctaviosUtils() {

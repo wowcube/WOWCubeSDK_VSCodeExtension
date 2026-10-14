@@ -18,6 +18,130 @@ This extension is designed for WOWCube cubeapp application developers. It simpli
 * Installed cubeapp data management
 * Built-in WOWCube Development Kit updater  
 
+## Resource Studio
+
+Use **WOWCube SDK: Open Resource Studio** in the command palette or **Open Resource Studio**
+in the Explorer context menu for a project file or folder. The command creates
+`wowcubeapp-resources.json` at the selected workspace folder's root if it does not exist.
+Opening that JSON file directly uses the Resource Studio custom editor. Use **Edit JSON**
+or **Reopen Editor With → Text Editor** to edit the underlying document.
+
+The Workspace layout contains a resource list, visual preview, and property inspector.
+The first supported resource types are palettes and sprites:
+
+* Palettes are generated from sprites with `sdk/tools/palette-builder` (`palette-builder.exe`
+  on Windows). The tool produces `#RRGGBBAA` colors quantized to RGB565+A5.
+  They have editable RGB/RGBA colors and an optional transparent color index.
+  They cannot be created as standalone resources.
+* Sprites reference source images and shared palettes by stable resource IDs. They have
+  an authored-pixel pivot (`null` means center) and an optional collider. The inspector
+  provides Full size, Blend, Group, Type and Tags. Number and Frame duration remain hidden
+  for static sprites until animation resources are implemented. The inspector and visual
+  editor scroll independently and retain their positions across edits. Manage groups,
+  types and tags contains creation and deletion; definitions are stored in bundle registries. Deleting
+  entries clears affected sprite assignments in one document edit. Entries in use or
+  deletions that shift constants require confirmation showing the changed constants.
+* Source and indexed previews support zoom up to 128×, Shift + mouse-wheel zoom centered at the
+  cursor and click/drag pivot placement.
+  Indexed preview assigns source pixels to the nearest generated RGB palette entry,
+  then displays that index using the editable palette; it does not modify the source.
+  Space + click an image pixel in indexed mode to select its palette entry without moving
+  the pivot. Picking respects zoom and scrolling.
+
+When registering a sprite, choose an existing palette, generate a new palette, or select
+**RGB565 — no palette**. RGB565 bypasses palette-builder, uses Opaque blend and Plain
+encoding by default, and offers optional Floyd–Steinberg dithering. Select Color Key in
+Encoding to choose a transparent color using the color picker or #RRGGBB field, with a
+threshold from 0 to 255. The RGB565 preview applies the SDK renderer's quantized-channel
+comparison: red/blue tolerance is the threshold and green tolerance is twice that.
+Plain encoding has no transparency. Switching an existing sprite to RGB565 clears
+its palette reference and leaves the palette available for other sprites.
+
+For a new palette, enter its name and color limit (default 256).
+The default name is `<resource_name>_palette`, with the resource prefix shortened when
+needed to fit the 23-character name limit. Canceling adds nothing.
+For later sprites, choose an existing palette or generate a new one. Choosing an existing
+palette regenerates it from every assigned sprite, including the new one. Changing a
+sprite's source or palette assignment also regenerates its destination palette.
+Choose **Generate a new palette…** in an existing sprite's Palette selector to create
+and assign `<resource_name>_palette` with a 256-color limit, using just that sprite's source.
+If the name already exists, enter a unique name; canceling leaves the assignment unchanged.
+Changing a palette's size regenerates it from all assigned source images; individual
+colors remain editable without changing the size. Regeneration replaces manual color edits.
+The sprite view shows palette swatches and editing controls in two columns below the
+preview. Select a swatch and edit its hex RGB/RGBA value or drag the RGBA sliders.
+Edits snap to RGB565+A5 precision, matching palette-builder output.
+Slider input redraws the indexed sprite immediately; committed edits and completed
+rebuilds update the same sprite view. Alpha and Additive previews match source pixels
+against the generated RGBA palette and use each edited palette entry's alpha directly;
+the optional transparent color index forces that entry transparent.
+Generated `mappingColors` are stored separately from the editable `colors`, so manual
+color edits preserve pixel indices across redraws and reopening. **Rebuild palette**
+regenerates both arrays.
+
+The editor allows any integer palette size from 2 to 256. At most 64 palettes are
+allowed, including unused palettes; creating a 65th palette is blocked. The tool may produce fewer
+entries when the images have
+fewer unique colors. The model stores the requested limit in `colorCount` separately from
+the generated `colors`. Both the color limit and mapping colors are required.
+Generation uses a temporary input list and output JSON, then removes both. Tool errors,
+missing source images, or concurrent document edits leave the bundle unchanged. Configure
+the SDK path in Development Kit Settings; the tool is resolved from that SDK's tools folder.
+
+Add any number of project folders in **Source files**. Discovery is recursive and does
+not register resources automatically. Removing a source folder or a resource leaves
+physical files intact. Missing sources are shown without removing their definitions.
+Source paths are relative to the JSON file's containing folder; no fixed asset directory
+is required. Source browsing is limited to 5000 entries per refresh, skips symbolic
+links, and excludes `.git`, `.vscode`, and `node_modules`. Sprite previews support
+PNG files up to 240×240 pixels. Non-fullsize sprites over 120 pixels in either dimension
+show a warning because the runtime doubles their size.
+
+All definitions live in one versioned JSON document. Document edits participate in
+VS Code save, undo, redo, and recovery. **Save manifest** and the normal Save command
+save the bundle. Palette deletion is blocked until dependent sprites are reassigned.
+Palette-mode sprites require a palette; RGB565 sprites do not. Bundles now use
+`schemaVersion: 2`; version 1 bundles are not migrated or supported. To start again, move
+the old bundle aside and use Open Resource Studio to create a new one.
+RGB6666, BUMP, DUDV and REFL are hidden model stubs with no selectable controls or
+rendering/export support. BG is available through Show advanced blend options.
+Unknown resource types and additional
+JSON properties are preserved. SDK format export and build integration are a later stage.
+
+Pivot fields use source pixels and snap to half-pixels. Nine pivot presets include
+Reset to center. Click/drag places the pivot; Shift allows placement outside the image.
+With the canvas focused, arrow keys nudge 0.5 pixels and Shift + arrows nudge 5 pixels.
+The inspector displays the derived runtime pivot separately from preview zoom.
+Out-of-image pivots remain editable and show V-009. Numeric pivot fields require
+half-pixel values; collider fields require finite, nonnegative numbers and the box must
+stay within the source image. Dragging and keyboard resizing stop at its edges. Enabling the collider starts
+with a box covering the source image. Drag its four blue square corner handles to adjust
+it; fields and the overlay update while dragging, with one document edit on release.
+Arrow keys adjust a focused handle by 0.5 pixels (Shift: 5). Disabling the collider
+resets x, y, width and height to zero. Resource names must use a-z, 0-9
+and underscores, be unique, contain at most 23 characters, and avoid reserved names.
+New names are normalized from filenames. Validation also enforces registry capacities
+(255 groups/types, 32 tags), palette capacity (64 palettes), shared alpha/opaque
+compatibility, frame durations, Number limits and valid PNG headers/dimensions.
+Encoding-dependent checks remain part of the later export stage.
+
+### Adding resource types
+
+Register a model descriptor in `src/ResourceBundle.ts` using `ResourceTypes.register`.
+It provides the type name, label, defaults (`create`), validation, and references
+(`getReferences`, used to protect deletions). Then register its webview descriptor in
+`media/resourcetypes.js` using `ResourceStudioTypes.register`: section, label, icon,
+summary, inspector, preview, change handler, and optional preview mounting/cleanup,
+creation fields, and creation validation. The editor derives its sections and type
+picker from these registries. Extend `schemas/wowcubeapp-resources.schema.json` to provide
+raw JSON completion and validation for the new type.
+Set `canCreate:false` on model/UI descriptors for types created indirectly. Resource types
+that use shared palettes provide `getPaletteSource(resource)` in the model descriptor to
+participate in automatic palette generation.
+
+Run `npm run test:resources` for model, webview handler, and provider tests without
+starting an Extension Host. Press F5 to launch the extension for a full UI check.
+
 ## Extension Settings
 
 This extension contributes the next settings:

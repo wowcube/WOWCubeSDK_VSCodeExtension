@@ -201,8 +201,13 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 	{
 	return new Promise<void>((resolve, reject) => 
 	{
-		const sdkpath = Configuration.getWOWSDKPath()+ 'sdk/' + Configuration.getCurrentVersion()+'/c';
-		const buildScript =sdkpath+'/octavios/apps/build_sim.cmd';
+		const sdkpath = Configuration.getWOWSDKPath()+ 'sdk/' + Configuration.getCurrentVersion()+'/c';	
+		var buildScript =sdkpath+'/octavios/apps/build_sim.cmd';
+
+		if(Configuration.isMac())
+		{
+			buildScript = sdkpath+'/octavios/apps/build_sim.sh';
+		}
 
 		const build_json = JSON.parse(fs.readFileSync(this.workspace+'/wowcubeapp-build.json', 'utf-8'));
 		var sourcefile = this.workspace+'/'+build_json.sourceFile;
@@ -213,6 +218,12 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
         const command = `"${buildScript}"`;
 
+		const options = {
+		    cwd: appFolder,
+    		env: process.env,
+    		windowsHide: true};
+
+			/*
         const proc = cp.exec(
             command,
             {
@@ -220,6 +231,10 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
                 env: process.env,
                 windowsHide: true
             });
+			*/
+			const proc = Configuration.isMac()
+    		? cp.execFile('/bin/bash', [buildScript, appFolder], options)
+    		: cp.exec(`"${buildScript}"`, options);
 
 			proc.stdout?.on('data', data => {
 				this._channel.appendLine(data.toString());
@@ -373,10 +388,10 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 					{
 						if(!criticalWaring)
 						{
-							this._channel.appendLine('Packing compiled successfully.\r\n');
+							this._channel.appendLine('Application resources have been packed successfully.\r\n');
 	
 							//if(action==='compile')
-							//{
+							//{October
 								this.closeEmitter.fire(0);
 								resolve();
 							//}
@@ -399,14 +414,13 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 					{
 						this._channel.appendLine('Failed to pack application resources.\r\n');
 	
-						this.closeEmitter.fire(0);
+						this.closeEmitter.fire(1);
 						resolve();
 					}
 				});	
 
 			ResourceBuilder.Build("aaa");
 
-			this._channel.appendLine('Application resources have been packed successfully.\r\n');
 			this.closeEmitter.fire(0);
 			resolve();	
 		});

@@ -1,0 +1,420 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "WOWCube Resource Bundle",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "sourceFolders",
+    "resources",
+    "registries"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 2
+    },
+    "sourceFolders": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "anyOf": [
+          {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!/)(?!.*[\\\\:])(?!(?:.*\\/)?\\.{1,2}(?:\\/|$))(?!.*//)(?!.*\\/$).+$"
+          },
+          {
+            "const": "."
+          }
+        ]
+      }
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9_]{1,23}$",
+            "maxLength": 23,
+            "not": {
+              "enum": [
+                "zero",
+                "0",
+                "pal",
+                "icon",
+                "bmp_none",
+                "bmp_last",
+                "bmp_0",
+                "map_none",
+                "map_last"
+              ]
+            }
+          },
+          "type": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "palette"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "colors",
+                "transparentIndex",
+                "mappingColors",
+                "colorCount"
+              ],
+              "properties": {
+                "colors": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 256,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$"
+                  }
+                },
+                "mappingColors": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 256,
+                  "description": "Generated colors used to assign source pixels to stable palette indices. Reset only when rebuilding the palette.",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$"
+                  }
+                },
+                "colorCount": {
+                  "type": "integer",
+                  "minimum": 2,
+                  "maximum": 256
+                },
+                "transparentIndex": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 255
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "sprite"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "source",
+                "paletteId",
+                "pivot",
+                "collider",
+                "colorMode",
+                "blend",
+                "fullsize",
+                "dither",
+                "compression",
+                "number",
+                "frameRate",
+                "group",
+                "objectType",
+                "tags"
+              ],
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^(?!/)(?!.*[\\\\:])(?!(?:.*\\/)?\\.{1,2}(?:\\/|$))(?!.*//)(?!.*\\/$).+$"
+                },
+                "paletteId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "pivot": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "description": "Authored source pixels; null means image center.",
+                  "required": [
+                    "x",
+                    "y"
+                  ],
+                  "properties": {
+                    "x": {
+                      "type": "number",
+                      "multipleOf": 0.5
+                    },
+                    "y": {
+                      "type": "number",
+                      "multipleOf": 0.5
+                    }
+                  }
+                },
+                "collider": {
+                  "type": "object",
+                  "required": [
+                    "enabled",
+                    "x",
+                    "y",
+                    "width",
+                    "height"
+                  ],
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "x": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "y": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "width": {
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "height": {
+                      "type": "number",
+                      "minimum": 0
+                    }
+                  }
+                },
+                "colorMode": {
+                  "type": "string",
+                  "enum": [
+                    "palette",
+                    "rgb565",
+                    "rgb6666"
+                  ],
+                  "description": "RGB6666 is a hidden, unsupported placeholder."
+                },
+                "blend": {
+                  "type": "string",
+                  "enum": [
+                    "opaque",
+                    "alpha",
+                    "additive",
+                    "bg",
+                    "bump",
+                    "dudv",
+                    "refl"
+                  ],
+                  "description": "BUMP, DUDV and REFL are preserved stubs; BG is advanced."
+                },
+                "fullsize": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "dither": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "compression": {
+                  "enum": [
+                    "plain",
+                    "softkey",
+                    null
+                  ]
+                },
+                "number": {
+                  "type": "integer",
+                  "minimum": -32768,
+                  "maximum": 32767,
+                  "default": 0
+                },
+                "frameRate": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 127,
+                  "default": 1
+                },
+                "group": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "objectType": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Sprite classification; type identifies the resource kind."
+                },
+                "tags": {
+                  "type": "array",
+                  "uniqueItems": true,
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "softkey": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "required": [
+                    "key",
+                    "threshold"
+                  ],
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}$"
+                    },
+                    "threshold": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 255
+                    }
+                  }
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "colorMode": {
+                        "const": "rgb565"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "paletteId": {
+                        "type": "null"
+                      },
+                      "blend": {
+                        "const": "opaque"
+                      },
+                      "compression": {
+                        "enum": [
+                          "plain",
+                          "softkey"
+                        ]
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "colorMode": {
+                        "const": "palette"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "paletteId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "dither": {
+                        "const": false
+                      },
+                      "compression": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "compression": {
+                        "const": "softkey"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "softkey"
+                    ],
+                    "properties": {
+                      "softkey": {
+                        "type": "object"
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "softkey": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "registries": {
+      "type": "object",
+      "required": [
+        "groups",
+        "types",
+        "tags"
+      ],
+      "properties": {
+        "groups": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 255,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "types": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 255,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "tags": {
+          "type": "array",
+          "uniqueItems": true,
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

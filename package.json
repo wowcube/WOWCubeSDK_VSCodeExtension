@@ -28,7 +28,9 @@
     "onCommand:WOWCubeSDK.openExternalTools",
     "onCommand:WOWCubeSDK.scanDevices",
     "onCommand:config.commands.configureViewOnWindowOpen",
-    "onCommand:workbench.action.tasks.runTask"
+    "onCommand:workbench.action.tasks.runTask",
+    "onCustomEditor:WOWCubeSDK.resourceStudio",
+    "onCommand:WOWCubeSDK.openResourceStudio"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -175,6 +177,16 @@
             "filenamePattern": "wowcubeapp-build.json"
           }
         ]
+      },
+      {
+        "viewType": "WOWCubeSDK.resourceStudio",
+        "displayName": "WOWCube Resource Studio",
+        "selector": [
+          {
+            "filenamePattern": "wowcubeapp-resources.json"
+          }
+        ],
+        "priority": "default"
       }
     ],
     "commands": [
@@ -198,6 +210,26 @@
         "command": "WOWCubeSDK.scanDevices",
         "category": "WOWCube SDK",
         "title": "Scan for paired WOWCube devices"
+      },
+      {
+        "command": "WOWCubeSDK.openResourceStudio",
+        "category": "WOWCube SDK",
+        "title": "Open Resource Studio"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "WOWCubeSDK.openResourceStudio",
+          "when": "resourceScheme == file",
+          "group": "navigation@20"
+        }
+      ]
+    },
+    "jsonValidation": [
+      {
+        "fileMatch": "**/wowcubeapp-resources.json",
+        "url": "./schemas/wowcubeapp-resources.schema.json"
       }
     ]
   },
@@ -208,7 +240,8 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "test:resources": "npm run compile && mocha --ui tdd out/test/suite/resourceBundle.test.js && node src/test/paletteBuilder.test.js && node src/test/resourceStudioProvider.test.js && node src/test/resourceStudioWebview.test.js"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",

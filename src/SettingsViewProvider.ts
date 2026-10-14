@@ -432,6 +432,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			this.refreshVersionSelector();
 
 			//Pawn
+			/*
 			var pawnpath = Configuration.getPawnPath();
 			if(fs.existsSync(pawnpath)===false)
 			{
@@ -461,8 +462,9 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 
 				return false;
 			}
-
+			*/
 			//CPP
+			/*
 			var cpppath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/cpp/';
 			if(fs.existsSync(cpppath)===false)
 			{
@@ -471,8 +473,39 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 			
 				return false;
 			}
+			*/
+			
+			//C
+			var cpath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/c/';
+			if(fs.existsSync(cpath)===false)
+			{
+				this._channel.appendLine("SDK Settings Error: Path \""+cpath+"\" is invalid");
+				this._channel.show(true);
+			
+				return false;
+			}
+
+			//OCTAVIOS
+			var octaviospath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/c/octavios';
+			if(fs.existsSync(octaviospath)===false)
+			{
+				this._channel.appendLine("SDK Settings Error: Path \""+octaviospath+"\" is invalid");
+				this._channel.show(true);
+			
+				return false;
+			}
+
+			var telemetrypath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/c/telemetry';
+			if(fs.existsSync(telemetrypath)===false)
+			{
+				this._channel.appendLine("SDK Settings Error: Path \""+telemetrypath+"\" is invalid");
+				this._channel.show(true);
+			
+				return false;
+			}
 
 			//Utils
+			
 			var utilspath = Configuration.getUtilsPath();
 			if(fs.existsSync(utilspath)===false)
 			{
@@ -501,8 +534,10 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 					return false;
 				}
 			}
-
+			
 			//Emulator
+			
+			/*
 			var emulpath = Configuration.getEmulPath();
 			if(fs.existsSync(emulpath)===false)
 			{
@@ -522,6 +557,7 @@ export class SettingsViewProvider implements vscode.WebviewViewProvider
 					return false;
 				}
 			}
+			*/
 
 			return true;
 		}

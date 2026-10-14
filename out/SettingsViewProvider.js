@@ -316,31 +316,65 @@ class SettingsViewProvider {
         if (path.length > 0) {
             this.refreshVersionSelector();
             //Pawn
-            var pawnpath = Configuration_1.Configuration.getPawnPath();
-            if (fs.existsSync(pawnpath) === false) {
-                this._channel.appendLine("SDK Settings Error: Path \"" + pawnpath + "\" is invalid");
+            /*
+            var pawnpath = Configuration.getPawnPath();
+            if(fs.existsSync(pawnpath)===false)
+            {
+                this._channel.appendLine("SDK Settings Error: Path \""+pawnpath+"\" is invalid");
                 this._channel.show(true);
+
                 return false;
             }
-            else {
-                var exe = pawnpath + Configuration_1.Configuration.getPawnCC();
-                if (fs.existsSync(exe) === false) {
-                    this._channel.appendLine("SDK Settings Error: File " + exe + " does not exist");
+            else
+            {
+                var exe = pawnpath+ Configuration.getPawnCC();
+                if(fs.existsSync(exe)===false)
+                {
+                    this._channel.appendLine("SDK Settings Error: File "+exe+" does not exist");
                     this._channel.show(true);
+
                     return false;
                 }
             }
+
             //let's assume if this folder exists, all subfolders for other languages exist too
-            var includepath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/pawn/include/';
-            if (fs.existsSync(includepath) === false) {
-                this._channel.appendLine("SDK Settings Error: Path \"" + includepath + "\" is invalid");
+            var includepath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/pawn/include/';
+            if(fs.existsSync(includepath)===false)
+            {
+                this._channel.appendLine("SDK Settings Error: Path \""+includepath+"\" is invalid");
+                this._channel.show(true);
+
+                return false;
+            }
+            */
+            //CPP
+            /*
+            var cpppath = Configuration.getWOWSDKPath()+'sdk/'+Configuration.getCurrentVersion()+'/cpp/';
+            if(fs.existsSync(cpppath)===false)
+            {
+                this._channel.appendLine("SDK Settings Error: Path \""+cpppath+"\" is invalid");
+                this._channel.show(true);
+            
+                return false;
+            }
+            */
+            //C
+            var cpath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/c/';
+            if (fs.existsSync(cpath) === false) {
+                this._channel.appendLine("SDK Settings Error: Path \"" + cpath + "\" is invalid");
                 this._channel.show(true);
                 return false;
             }
-            //CPP
-            var cpppath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/cpp/';
-            if (fs.existsSync(cpppath) === false) {
-                this._channel.appendLine("SDK Settings Error: Path \"" + cpppath + "\" is invalid");
+            //OCTAVIOS
+            var octaviospath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/c/octavios';
+            if (fs.existsSync(octaviospath) === false) {
+                this._channel.appendLine("SDK Settings Error: Path \"" + octaviospath + "\" is invalid");
+                this._channel.show(true);
+                return false;
+            }
+            var telemetrypath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/c/telemetry';
+            if (fs.existsSync(telemetrypath) === false) {
+                this._channel.appendLine("SDK Settings Error: Path \"" + telemetrypath + "\" is invalid");
                 this._channel.show(true);
                 return false;
             }
@@ -366,20 +400,27 @@ class SettingsViewProvider {
                 }
             }
             //Emulator
-            var emulpath = Configuration_1.Configuration.getEmulPath();
-            if (fs.existsSync(emulpath) === false) {
-                this._channel.appendLine("SDK Settings Error: Path \"" + emulpath + "\" is invalid");
+            /*
+            var emulpath = Configuration.getEmulPath();
+            if(fs.existsSync(emulpath)===false)
+            {
+                this._channel.appendLine("SDK Settings Error: Path \""+emulpath+"\" is invalid");
                 this._channel.show(true);
+
                 return false;
             }
-            else {
-                var exe = emulpath + Configuration_1.Configuration.getEmulator();
-                if (fs.existsSync(exe) === false) {
-                    this._channel.appendLine("SDK Settings Error: File " + exe + " does not exist");
+            else
+            {
+                var exe = emulpath+Configuration.getEmulator();
+                if(fs.existsSync(exe)===false)
+                {
+                    this._channel.appendLine("SDK Settings Error: File "+exe+" does not exist");
                     this._channel.show(true);
+
                     return false;
                 }
             }
+            */
             return true;
         }
         else {

@@ -143,18 +143,33 @@ class WOWCubeBuildTaskTerminal {
     doBuildSimulator() {
         return new Promise((resolve, reject) => {
             const sdkpath = Configuration_1.Configuration.getWOWSDKPath() + 'sdk/' + Configuration_1.Configuration.getCurrentVersion() + '/c';
-            const buildScript = sdkpath + '/octavios/apps/build_sim.cmd';
+            var buildScript = sdkpath + '/octavios/apps/build_sim.cmd';
+            if (Configuration_1.Configuration.isMac()) {
+                buildScript = sdkpath + '/octavios/apps/build_sim.sh';
+            }
             const build_json = JSON.parse(fs.readFileSync(this.workspace + '/wowcubeapp-build.json', 'utf-8'));
             var sourcefile = this.workspace + '/' + build_json.sourceFile;
             var appFolder = this.workspace + '/' + build_json.appFolder;
             this._channel.clear();
             this._channel.show(true);
             const command = `"${buildScript}"`;
-            const proc = cp.exec(command, {
+            const options = {
+                cwd: appFolder,
+                env: process.env,
+                windowsHide: true
+            };
+            /*
+        const proc = cp.exec(
+            command,
+            {
                 cwd: appFolder,
                 env: process.env,
                 windowsHide: true
             });
+            */
+            const proc = Configuration_1.Configuration.isMac()
+                ? cp.execFile('/bin/bash', [buildScript, appFolder], options)
+                : cp.exec(`"${buildScript}"`, options);
             proc.stdout?.on('data', data => {
                 this._channel.appendLine(data.toString());
                 this._channel.show(true);
@@ -268,9 +283,9 @@ class WOWCubeBuildTaskTerminal {
                 //this.setSharedState(date.toTimeString() + ' ' + date.toDateString());
                 if (child.exitCode === 0) {
                     if (!criticalWaring) {
-                        this._channel.appendLine('Packing compiled successfully.\r\n');
+                        this._channel.appendLine('Application resources have been packed successfully.\r\n');
                         //if(action==='compile')
-                        //{
+                        //{October
                         this.closeEmitter.fire(0);
                         resolve();
                         //}
@@ -291,12 +306,11 @@ class WOWCubeBuildTaskTerminal {
                 }
                 else {
                     this._channel.appendLine('Failed to pack application resources.\r\n');
-                    this.closeEmitter.fire(0);
+                    this.closeEmitter.fire(1);
                     resolve();
                 }
             });
             ResourceBuilder_1.ResourceBuilder.Build("aaa");
-            this._channel.appendLine('Application resources have been packed successfully.\r\n');
             this.closeEmitter.fire(0);
             resolve();
         });

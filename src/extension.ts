@@ -13,6 +13,7 @@ import { ExamplesViewProvider } from './ExamplesViewProvider';
 import { WOWCubeBuildTaskProvider } from './WOWCubeBuildTaskProvider';
 import { WOWCubeProjectProvider } from './WOWCubeProjectProvider';
 import { ExternalToolsPanel } from './ExternalToolsPanel';
+import { ResourceStudioProvider } from './ResourceStudioProvider';
 
 import {Configuration, InstallationProblem} from './Configuration';
 import {Providers} from './Providers';
@@ -27,6 +28,8 @@ let buildTask: vscode.Disposable | undefined;
 export async function activate(context: vscode.ExtensionContext) 
 {	
 	console.log('WOWCube SDK extension is loaded...');
+
+	ResourceStudioProvider.register(context);
 	
 	await Configuration.init();
 	Configuration.context = context;

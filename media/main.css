@@ -54,6 +54,7 @@ body {
 	max-width: 300px;
 	border: none;
 	margin: 0 auto;
+	opacity: 0.5;
 }
 
 .bt-scan-button

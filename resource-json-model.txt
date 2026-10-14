@@ -1,0 +1,241 @@
+WOWCube Resource Studio JSON Model
+
+File: wowcubeapp-resources.json
+Schema version: 2
+
+The file stores one resource bundle. It contains resource records, source folder
+paths, and shared classification definitions. Image files remain separate; the
+JSON references them by path. The implemented resource types are palette and
+sprite. Exported device data is not part of this model.
+
+Bundle fields
+
+schemaVersion: number
+    Always 2 for this model.
+sourceFolders: string[]
+    Folders used to discover source assets. Paths are relative to the folder
+    containing the JSON file. "." means that folder. Use forward slashes.
+    A sprite source can be outside these listed folders, while still relative
+    to the folder containing the JSON file.
+resources: Resource[]
+    Palette, sprite, and future resource records in one array.
+registries: object
+    groups: string[] — ordered group names.
+    types: string[] — ordered object classification names.
+    tags: string[] — ordered tag names.
+
+Common resource fields
+
+id: string
+    Stable resource identity. References use this value, not the resource name.
+    Treat IDs as opaque strings; the editor currently generates 32 hex digits.
+name: string
+    Resource name, independent of its source file name and ID.
+type: string
+    Resource kind: "palette" or "sprite" for the implemented types.
+
+Palette fields
+
+type: "palette"
+colors: string[]
+    Current palette colors, indexed from zero. Each string is #RRGGBB or
+    #RRGGBBAA. Six-digit RGB implies alpha 255; the last two digits of RGBA
+    encode alpha, with 00 transparent and ff fully opaque.
+mappingColors: string[]
+    Generated palette colors used to assign source pixels to palette indices.
+    There is one entry for each colors entry, in the same order. These are
+    separate from the current colors: colors[15] can change while
+    mappingColors[15] retains its generated value. Pixel matching uses
+    mappingColors; displayed output uses colors at the resulting index.
+    Alpha-form matching includes alpha, so identical RGB values can
+    occupy separate entries with different opacity.
+colorCount: integer
+    Requested palette capacity, not necessarily colors.length. Generation can
+    produce fewer entries than requested. The default requested capacity is 256.
+transparentIndex: integer | null
+    Optional palette index whose effective alpha is zero, overriding the color
+    string's alpha. null means no explicit transparent-index override.
+
+The current palette-builder produces #RRGGBBAA colors quantized to RGB565+A5.
+On generation, colors and mappingColors initially contain the same values.
+Edited colors use the same RGB565+A5 precision. Quantization discards the low
+3 bits of R/B/A and the low 2 bits of G, then expands by bit replication:
+5-bit channels: (value << 3) | (value >> 2).
+6-bit channels: (value << 2) | (value >> 4).
+Here value is the reduced 5-bit or 6-bit channel. For example, #7f7f7f7f
+becomes #7b7d7b7b. Six-digit edits retain six digits with implicit alpha 255.
+The JSON does not store sprite pixel-index arrays or embedded image data.
+
+Matching source pixels to palette indices
+
+The current indexed preview uses nearest-color matching against mappingColors.
+For a source pixel (r, g, b, a) and a mapping entry (R, G, B, A), channels are
+8-bit values from 0 to 255. A six-digit entry has A = 255.
+
+For blend "alpha" or "additive", the distance is:
+    (r - R)^2 + (g - G)^2 + (b - B)^2 + (a - A)^2
+For blend "opaque" or "bg", the distance is:
+    (r - R)^2 + (g - G)^2 + (b - B)^2
+
+All included channels have equal weight. There is no gamma correction,
+perceptual weighting, or extra source quantization before this comparison.
+An exact match has distance zero and wins over any non-exact match.
+
+Entries are scanned in ascending index order. Equal distances keep the first
+eligible entry, so the lowest eligible index wins. If mappingColors[56] and
+mappingColors[57] are both #181c18, index 56 wins. Duplicates only in colors
+do not affect matching, because the comparison uses mappingColors.
+
+For source pixels with alpha greater than zero, exclude transparentIndex
+from the candidates. Alpha-form matching also excludes mapping entries whose
+alpha is zero. Opaque-form matching otherwise ignores mapping and source alpha.
+The current implementation falls back to index 0 if no eligible entry exists.
+
+A source pixel with alpha zero bypasses nearest-color matching. Its index is
+transparentIndex when set; otherwise it is the first mapping entry with alpha
+zero. If neither exists, the preview uses -1 internally for no palette entry.
+Such pixels remain transparent; -1 is not serialized in the JSON.
+
+After matching, RGB comes from colors[index]. Alpha-form output uses that
+entry's alpha directly, without multiplying it by source alpha. Opaque-form
+output uses alpha 255. The explicit transparentIndex always overrides to zero.
+These rules describe the current preview; no export pixel encoding is stored
+in the JSON model.
+
+Sprite fields
+
+type: "sprite"
+source: string
+    PNG path relative to the folder containing the JSON file, using forward
+    slashes. For example: "characters/hero.png".
+paletteId: string | null
+    ID of the palette resource used by a palettized sprite; null for RGB565.
+colorMode: "palette" | "rgb565" | "rgb6666"
+    "palette": indexed color using paletteId.
+    "rgb565": direct color without a palette.
+    "rgb6666": reserved, unsupported placeholder.
+blend: "opaque" | "alpha" | "additive" | "bg" | "bump" | "dudv" | "refl"
+    Alpha and Additive use alpha-form palettes. Opaque and BG use opaque-form
+    palettes. BG currently behaves as Opaque. Bump, DuDv and Refl are reserved,
+    unsupported placeholders. RGB565 uses Opaque.
+fullsize: boolean
+    true means 1:1 source-to-runtime pixels; false means doubled runtime size.
+    Pivot and collider coordinates remain in source pixels in either case.
+dither: boolean
+    RGB565 dithering flag. Palettized sprites store false.
+compression: "plain" | "softkey" | null
+    RGB565 encoding selection. Palettized sprites store null.
+softkey: {key: string, threshold: integer} | null
+    Color Key settings for "softkey" encoding. key is #RRGGBB; threshold is
+    the matching tolerance. This field may be omitted when unused; the editor
+    normally writes null. "Color Key" is the UI label; the JSON key remains
+    softkey.
+number: integer
+    Reserved sequence metadata, currently 0 for newly created static sprites.
+frameRate: integer
+    Reserved sequence timing metadata, currently 1 for newly created static
+    sprites. Do not interpret this field name as a frames-per-second value.
+group: string | null
+    Assigned name from registries.groups, or null.
+objectType: string | null
+    Assigned name from registries.types, or null. This is classification;
+    the common type field still identifies the resource kind.
+tags: string[]
+    Assigned names from registries.tags. An empty array means no tags.
+pivot: {x: number, y: number} | null
+    Authored position in source pixels, measured from the image's top-left.
+    null means image center, computed as (width/2, height/2). An explicit
+    position can lie outside the image. Coordinates are not normalized.
+collider: {enabled: boolean, x: number, y: number, width: number, height: number}
+    Axis-aligned rectangle in source pixels. x/y identify its top-left;
+    width/height are its dimensions. The rectangle lies within the source
+    image. Disabled colliders are represented by enabled:false and four zeros.
+
+Except for unused softkey, the fields listed for each implemented resource
+are present in its record. Use null explicitly for nullable fields rather
+than omitting them. Additional fields and unknown resource types can be
+present and are preserved by Resource Studio.
+
+Empty bundle
+
+{
+  "schemaVersion": 2,
+  "sourceFolders": [],
+  "resources": [],
+  "registries": {
+    "groups": [],
+    "types": [],
+    "tags": []
+  }
+}
+
+Example bundle with one palette and one sprite
+
+The source image in this example is 32 by 32 pixels.
+
+{
+  "schemaVersion": 2,
+  "sourceFolders": ["characters", "effects"],
+  "resources": [
+    {
+      "id": "palette_hero",
+      "name": "hero_palette",
+      "type": "palette",
+      "colors": ["#00000000", "#ff000084", "#ff0000ff"],
+      "mappingColors": ["#00000000", "#ff000084", "#ff0000ff"],
+      "colorCount": 256,
+      "transparentIndex": 0
+    },
+    {
+      "id": "sprite_hero",
+      "name": "hero",
+      "type": "sprite",
+      "source": "characters/hero.png",
+      "paletteId": "palette_hero",
+      "colorMode": "palette",
+      "blend": "alpha",
+      "fullsize": false,
+      "dither": false,
+      "compression": null,
+      "softkey": null,
+      "number": 0,
+      "frameRate": 1,
+      "group": "characters",
+      "objectType": "player",
+      "tags": ["playable"],
+      "pivot": null,
+      "collider": {"enabled": true, "x": 4, "y": 2, "width": 24, "height": 30}
+    }
+  ],
+  "registries": {
+    "groups": ["characters"],
+    "types": ["player"],
+    "tags": ["playable"]
+  }
+}
+
+RGB565 mode fields
+
+This is a fragment showing the mode-specific fields; all other sprite fields
+remain present as described above.
+
+{
+  "paletteId": null,
+  "colorMode": "rgb565",
+  "blend": "opaque",
+  "dither": false,
+  "compression": "plain",
+  "softkey": null
+}
+
+For RGB565 with Color Key, replace the last two fields with:
+
+{
+  "compression": "softkey",
+  "softkey": {"key": "#ff00ff", "threshold": 0}
+}
+
+Implementation references
+
+src/ResourceBundle.ts — model definitions.
+schemas/wowcubeapp-resources.schema.json — machine-readable JSON Schema.
