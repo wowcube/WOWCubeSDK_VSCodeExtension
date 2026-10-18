@@ -2,8 +2,11 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import { getNonce } from './getNonce';
-import { ResourceBundles, ResourceTypes, isResourcePath, ResourceBundle, PaletteResource } from './ResourceBundle';
+import { ResourceBundles, ResourceTypes, isResourcePath, ResourceBundle, PaletteResource, SpriteResource } from './ResourceBundle';
 import { PaletteBuilder } from './PaletteBuilder';
+import * as PaletteCompatibility from '../media/palettecompatibility';
+import { SpriteSequences } from './SpriteSequence';
+import { SequenceEditor } from './SequenceEditor';
 import { MapResource } from './MapResource';
 import * as ResourceValidation from '../media/resourcevalidation';
 
@@ -285,6 +288,10 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 							{
 								await this.edit(document, message.version, async bundle =>
 								{
+									if(typeof message.action === 'string' && message.action.startsWith('sequence'))
+									{
+										return SequenceEditor.change(bundle, message, projectUri, {relative:uri => this.getRelativePath(projectUri, uri), size:source => this.validateSpriteSource(projectUri, source), palette:palette => this.generatePalette(projectUri, bundle, palette, palette.colorCount)});
+									}
 									switch(message.action)
 									{
 										case 'create':
@@ -310,7 +317,7 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 													}
 													palette = ResourceTypes.get('palette')!.create(crypto.randomBytes(16).toString('hex'), name) as PaletteResource;
 													palette.colorCount = Number(message.options.colorCount);
-													palette.colors = ['#000000'];
+													palette.colors = ['#00000000'];
 													palette.mappingColors = palette.colors.slice();
 													bundle.resources.push(palette);
 												}
@@ -368,6 +375,7 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 											if(previous.type === 'palette')
 											{
 												const palette = previous as PaletteResource;
+												if(message.resource.transparentIndex !== palette.transparentIndex || message.resource.colors[0] !== palette.colors[0]) { throw new Error('Color 0 is reserved for transparency and cannot be edited.'); }
 												message.resource.mappingColors = palette.mappingColors.slice();
 												message.resource.colors = (message.resource.colors as string[]).map(ResourceValidation.quantizePaletteColor);
 											}
@@ -395,7 +403,7 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 											{
 												const chosen = await vscode.window.showInputBox({value:name, title:'Generate a new palette',
 													prompt:'This palette name already exists. Enter a unique name for the new palette.',
-													validateInput:value => ResourceValidation.name(value, bundle.resources.map(item => item.name))});
+													validateInput:value => ResourceValidation.name(value, SpriteSequences.usedNames(bundle))});
 												if(chosen === undefined) { return false; }
 												name = chosen.trim();
 											}
@@ -441,6 +449,11 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 												else { item[field] = null; }
 												}
 											break;
+										case 'reservePaletteIndex':
+											const legacyPalette = bundle.resources.find(item => item.id === message.id && item.type === 'palette') as PaletteResource | undefined;
+											if(!legacyPalette) { throw new Error('Palette no longer exists.'); }
+											PaletteCompatibility.reserve(legacyPalette);
+											break;
 										case 'resizePalette':
 											const palette = bundle.resources.find(item => item.id === message.id && item.type === 'palette') as PaletteResource | undefined;
 											if(!palette)
@@ -450,6 +463,11 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 											await this.generatePalette(projectUri, bundle, palette, Number(message.colorCount));
 											break;
 										case 'remove':
+											const removedSprite = bundle.resources.find(resource => resource.id === message.id && resource.type === 'sprite') as SpriteResource | undefined;
+											if(removedSprite?.sequence)
+											{
+												throw new Error('Cannot delete sprite "'+removedSprite.name+'" here because it is a frame in animation "'+removedSprite.sequence.name+'". Open that animation in the Animations tab and use "Remove selected frame" to remove it and update the animation.');
+											}
 											const dependents = ResourceBundles.getDependents(bundle, message.id);
 											if(dependents.length)
 											{
@@ -520,12 +538,13 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 				throw new Error('The bundle changed in another editor. Review the refreshed values and try again.');
 			}
 			const bundle = ResourceBundles.parse(document.getText());
+			const previousAliases = SpriteSequences.aliasErrors(bundle);
 			if(await change(bundle) === false) { return; }
 			if(document.version !== version)
 			{
 				throw new Error('The bundle changed while generating the palette. Review the refreshed values and try again.');
 			}
-			const errors = ResourceBundles.validate(bundle);
+			const errors = [...ResourceBundles.validate(bundle), ...SpriteSequences.aliasErrors(bundle).filter(error => !previousAliases.includes(error))];
 			if(errors.length)
 			{
 				throw new Error(errors.join('\n'));
@@ -555,7 +574,7 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 	{
 		const sizeError = ResourceValidation.paletteSize(size);
 		if(sizeError) { throw new Error(sizeError); }
-		const errors = ResourceBundles.validate(bundle);
+		const errors = [...ResourceBundles.validate(bundle), ...SpriteSequences.aliasErrors(bundle)];
 		if(errors.length)
 		{
 			throw new Error(errors.join('\n'));
@@ -588,7 +607,8 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 			}
 			sources.push(uri.fsPath);
 		}
-		palette.colors = await PaletteBuilder.generate(sources, size, palette.transparentIndex === 0);
+		palette.colors = await PaletteBuilder.generate(sources, size, true);
+		palette.transparentIndex = 0;
 		palette.mappingColors = palette.colors.slice();
 		palette.colorCount = size;
 		if(palette.transparentIndex !== null && palette.transparentIndex >= palette.colors.length)
@@ -721,9 +741,10 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 		const typesUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'resourcetypes.js'));
 		const validationUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'resourcevalidation.js'));
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'resourcestudio.js'));
+		const sequenceCssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'sequenceeditor.css'));
 		const mapCssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'mapeditor.css'));
-		const sharedScripts = ['spritepixels.js', 'previewviewport.js', 'mapgeometry.js', 'sourcefiles.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
-		const mapScripts = ['maptextures.js', 'maprenderer.js', 'mapeditor.js', 'mapresource.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
+		const sharedScripts = ['spritepixels.js', 'previewviewport.js', 'mapgeometry.js', 'sourcefiles.js', 'spritelist.js', 'palettecompatibility.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
+		const mapScripts = ['maptextures.js', 'maprenderer.js', 'mapeditor.js', 'mapresource.js', 'sequenceeditor.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
 		return `<!DOCTYPE html>
 		<html lang="en">
 		<head>
@@ -732,6 +753,7 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 			<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
 			<link href="${cssUri}" rel="stylesheet">
 			<link href="${mapCssUri}" rel="stylesheet">
+			<link href="${sequenceCssUri}" rel="stylesheet">
 			<title>Resource Studio</title>
 		</head>
 		<body>

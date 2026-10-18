@@ -41,7 +41,7 @@
 	function paletteChannels(resource, index)
 	{
 		const channels = colorChannels(resource.colors[index]);
-		if(resource.transparentIndex === index) { channels[3] = 0; }
+		if(index === 0) { channels[3] = 0; }
 		return channels;
 	}
 	function convert(data, width, resource, palette)
@@ -57,7 +57,7 @@
 		{
 			if(data[i + 3] === 0)
 			{
-				indices[i/4] = palette.transparentIndex ?? mappingColors.findIndex(color => color[3] === 0);
+				indices[i/4] = 0;
 				continue;
 			}
 			const alpha = paletteAlpha ? data[i + 3] : 255;
@@ -69,7 +69,7 @@
 				index = 0;
 				mappingColors.forEach((color, j) =>
 				{
-					if(j === palette.transparentIndex || (paletteAlpha && color[3] === 0)) { return; }
+					if(j === 0) { return; }
 					const current = (data[i] - color[0])**2 + (data[i + 1] - color[1])**2 + (data[i + 2] - color[2])**2 + (paletteAlpha ? (alpha - color[3])**2 : 0);
 					if(current < distance) { distance = current; index = j; }
 				});
@@ -77,7 +77,7 @@
 			}
 			indices[i/4] = index;
 			data[i] = colors[index][0]; data[i + 1] = colors[index][1]; data[i + 2] = colors[index][2];
-			data[i + 3] = index === palette.transparentIndex ? 0 : paletteAlpha ? colors[index][3] : 255;
+			data[i + 3] = index === 0 ? 0 : paletteAlpha ? colors[index][3] : 255;
 		}
 		return indices;
 	}

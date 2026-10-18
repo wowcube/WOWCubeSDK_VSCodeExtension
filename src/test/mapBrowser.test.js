@@ -7,13 +7,13 @@ const {ResourceBundles, ResourceTypes} = require('../../out/ResourceBundle');
 const media = path.join(__dirname, '../../media');
 const bundle = ResourceBundles.create();
 const palette = ResourceTypes.get('palette').create('palette', 'shared_palette');
-palette.colors = ['#ff000084', '#0000ffff']; palette.mappingColors = palette.colors.slice();
+palette.colors = ['#00000000', '#ff000084', '#0000ffff']; palette.mappingColors = palette.colors.slice();
 const sprite = ResourceTypes.get('sprite').create('hero', 'hero', 'hero.png', {paletteId:palette.id}); sprite.fullsize = true; sprite.pivot = {x:20, y:30};
 const second = {...sprite, id:'other', name:'other', source:'other.png', fullsize:false};
 const map = ResourceTypes.get('map').create('map', 'level_01');
 map.placements = [{id:'top',spriteId:sprite.id,side:1,x:138,y:138}, {id:'bottom',spriteId:second.id,side:1,x:138,y:138}];
 bundle.resources.push(palette, sprite, second, map);
-const scripts = ['sourcefiles.js', 'resourcevalidation.js','spritepixels.js','previewviewport.js','mapgeometry.js','resourcetypes.js','maptextures.js','maprenderer.js','mapeditor.js','mapresource.js','resourcestudio.js'];
+const scripts = ['sourcefiles.js','spritelist.js','palettecompatibility.js', 'resourcevalidation.js','spritepixels.js','previewviewport.js','mapgeometry.js','resourcetypes.js','maptextures.js','maprenderer.js','mapeditor.js','mapresource.js','sequenceeditor.js','resourcestudio.js'];
 const initial = `
 window.testMetrics={images:0,conversions:0,frames:0,draws:0};
 const NativeImage=window.Image;
@@ -31,6 +31,7 @@ window.testMessages.push(message);
 if(message.type==='ready')setTimeout(window.testUpdate,0);
 if(message.type==='change')setTimeout(()=>{
  if(message.action==='update') { const index=window.testBundle.resources.findIndex(item=>item.id===message.resource.id);window.testBundle.resources[index]=message.resource; }
+ if(message.action==='reservePaletteIndex')window.ResourceStudioPaletteCompatibility.reserve(window.testBundle.resources.find(item=>item.id===message.id));
  if(message.action==='create')window.testBundle.resources.push({...structuredClone(window.testTemplate),id:'created',name:message.name});
  window.testVersion++;window.testUpdate();
 },10);
@@ -45,7 +46,7 @@ async function run()
 		const errors = []; page.on('pageerror', error => errors.push(error.message));
 		await page.setContent('<style>'+fs.readFileSync(path.join(media,'resourcestudio.css'),'utf8')+'\n'+fs.readFileSync(path.join(media,'mapeditor.css'),'utf8')+'</style><div id="resource-studio"></div><script>'+initial+'</script>'+scripts.map(file => '<script>'+fs.readFileSync(path.join(media,file),'utf8')+'</script>').join(''));
 		await page.waitForSelector('#map-canvas');
-		assert.deepStrictEqual(await page.locator('.tabs [data-tab]').evaluateAll(nodes=>nodes.map(node=>node.dataset.tab)),['Sprites','Maps','Palettes','Source files']);
+		assert.deepStrictEqual(await page.locator('.tabs [data-tab]').evaluateAll(nodes=>nodes.map(node=>node.dataset.tab)),['Sprites','Maps','Animations','Palettes','Source files']);
 		await page.waitForTimeout(100);
 		await page.evaluate(()=>
 		{
@@ -247,8 +248,19 @@ async function run()
 		assert.ok(spriteHeight<spriteBefore.height-40,'Sprite handle must resize preview height.');
 		await page.locator('#preview-zoom').selectOption('128');
 		assert.strictEqual(await page.locator('#preview-zoom').inputValue(),'128');
+		await page.locator('[data-color-index="1"]').click();
 		await change(async()=>{await page.locator('[data-key="colorHex"]').fill('#7f7f7f7f');await page.locator('[data-key="colorHex"]').press('Tab');});
-		assert.strictEqual(await page.evaluate(()=>window.testBundle.resources.find(item=>item.id==='palette').colors[0]),'#7b7d7b7b');
+		assert.strictEqual(await page.evaluate(()=>window.testBundle.resources.find(item=>item.id==='palette').colors[1]),'#7b7d7b7b');
+		// Legacy palettes are repaired through the UI without losing edited entries.
+		const previousPalette=await page.evaluate(()=>structuredClone(window.testBundle.resources.find(item=>item.id==='palette')));
+		await page.evaluate(()=>{const palette=window.testBundle.resources.find(item=>item.id==='palette');palette.colors.shift();palette.mappingColors.shift();palette.transparentIndex=null;window.testVersion++;window.testUpdate();});
+		await page.waitForSelector('[data-reserve-palette="palette"]');
+		await change(()=>page.locator('[data-reserve-palette="palette"]').click());
+		assert.deepStrictEqual(await page.evaluate(()=>window.testBundle.resources.find(item=>item.id==='palette')),previousPalette);
+		await page.locator('[data-color-index="0"]').click();assert.strictEqual(await page.locator('[data-key="colorHex"]').isDisabled(),true);
+		assert.strictEqual(await page.locator('[data-key="channelA"]').isDisabled(),true);
+		assert.strictEqual(await page.locator('[data-key="transparentIndex"]').count(),0);
+
 		await change(async()=>{await page.locator('[data-key="pivotX"]').fill('10.5');await page.locator('[data-key="pivotX"]').press('Tab');});
 		assert.strictEqual(await page.evaluate(()=>window.testBundle.resources.find(item=>item.id==='hero').pivot.x),10.5);
 		assert.strictEqual((await page.locator('#sprite-preview').boundingBox()).height,spriteHeight,'Sprite height must survive edits.');

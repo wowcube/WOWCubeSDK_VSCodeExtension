@@ -2,7 +2,9 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ResourceBundles = exports.ResourceTypes = exports.hiddenSpriteModes = void 0;
 exports.isResourcePath = isResourcePath;
+const PaletteCompatibility = require("../media/palettecompatibility");
 const ResourceValidation = require("../media/resourcevalidation");
+const SpriteSequence_1 = require("./SpriteSequence");
 const MapResource_1 = require("./MapResource");
 // These modes are preserved for future support but never offered by the editor.
 exports.hiddenSpriteModes = { color: ['rgb6666'], blend: ['bump', 'dudv', 'refl'] };
@@ -35,7 +37,7 @@ ResourceTypes.register({
     type: 'palette',
     label: 'Palette',
     canCreate: false,
-    create: (id, name) => ({ id, name, type: 'palette', colors: ['#000000', '#ffffff'], mappingColors: ['#000000', '#ffffff'], colorCount: 256, transparentIndex: null }),
+    create: (id, name) => ({ id, name, type: 'palette', colors: ['#00000000', '#ffffff'], mappingColors: ['#00000000', '#ffffff'], colorCount: 256, transparentIndex: 0 }),
     getReferences: () => [],
     validate: (resource) => {
         const errors = [];
@@ -111,7 +113,7 @@ ResourceTypes.register({
         if (resource.compression !== 'softkey' && softkey != null) {
             errors.push('V-020: Softkey settings require Softkey encoding.');
         }
-        for (const [key, min, max] of [['number', -32768, 32767], ['frameRate', 1, 127]]) {
+        for (const [key, min, max] of [['number', -32768, 32767], ['frameRate', resource.sequence ? 0 : 1, 127]]) {
             if (!Number.isInteger(resource[key]) || !isNumber(resource[key], min, max)) {
                 errors.push(ResourceValidation.integer(resource[key], min, max, key === 'number' ? 'V-011' : 'V-010', key));
             }
@@ -208,6 +210,7 @@ class ResourceBundles {
                 errors.push(...resourceType.validate(resource, bundle).map(error => resource.name + ': ' + error));
             }
         }
+        errors.push(...SpriteSequence_1.SpriteSequences.validate(bundle));
         const palettes = bundle.resources.filter(resource => resource.type === 'palette');
         if (palettes.length > ResourceValidation.maxPalettes) {
             errors.push('V-016: At most ' + ResourceValidation.maxPalettes + ' palettes are allowed.');
@@ -223,8 +226,11 @@ class ResourceBundles {
         }
         return errors;
     }
+    static getBuildErrors(bundle) {
+        return [...SpriteSequence_1.SpriteSequences.buildErrors(bundle), ...bundle.resources.filter(resource => resource.type === 'palette').map(resource => PaletteCompatibility.issue(resource)).filter((error) => !!error)];
+    }
     static getWarnings(bundle) {
-        const warnings = [];
+        const warnings = this.getBuildErrors(bundle);
         const palettes = bundle.resources.filter(resource => resource.type === 'palette');
         for (const palette of palettes) {
             if (!bundle.resources.some(resource => resource.paletteId === palette.id)) {

@@ -21,6 +21,26 @@
 			}
 			return name;
 		},
+		usedNames:function (resources, excludeResource, excludeSequence)
+		{
+			const used = resources.filter(item => item.id !== excludeResource).map(item => item.name);
+			for(const item of resources)
+			{
+				if(item.type === 'sprite' && item.sequence && item.sequence.id !== excludeSequence) { used.push(item.sequence.name, item.sequence.name+'_end'); }
+			}
+			return used;
+		},
+		animationName:function (name, used = [])
+		{
+			if(['none', 'last'].includes(name)) { return 'Animation name "'+name+'" is reserved by the engine. Choose another name.'; }
+			return validation.name(name, used) || (used.includes(name+'_end') ? 'Animation "'+name+'" would create a reserved or already used identifier "'+name+'_end". Choose another name.' : undefined);
+		},
+		deriveAnimationName:function (base, used = [])
+		{
+			const reserved = used.slice(); let name = validation.deriveName(base, reserved);
+			while(validation.animationName(name, used)) { reserved.push(name); name = validation.deriveName(base, reserved); }
+			return name;
+		},
 		paletteName:function (name)
 		{
 			return name.slice(0, 15)+'_palette';

@@ -5,7 +5,7 @@
 	const validation = window.ResourceStudioValidation;
 	const saved = vscode.getState() || {};
 	const state = {tab:saved.tab || 'Sprites', selected:saved.selected || '', colorIndex:saved.colorIndex || 0,
-		previewMode:saved.previewMode || 'indexed', zoom:!saved.zoom || saved.zoom === 'fit' ? 'fit' : String(Math.max(0.5, Math.min(128, Number(saved.zoom) || 1))), previewHeight:saved.previewHeight, filter:'', busy:false, dialog:null, spacePressed:false, advancedBlend:!!saved.advancedBlend, mapViews:saved.mapViews || {}, sourceGroupsOpen:[]};
+		previewMode:saved.previewMode || 'indexed', zoom:!saved.zoom || saved.zoom === 'fit' ? 'fit' : String(Math.max(0.5, Math.min(128, Number(saved.zoom) || 1))), previewHeight:saved.previewHeight, filter:'', busy:false, dialog:null, spacePressed:false, advancedBlend:!!saved.advancedBlend, mapViews:saved.mapViews || {}, sequenceViews:saved.sequenceViews || {}, spriteGroupsOpen:saved.spriteGroupsOpen || {}, sourceGroupsOpen:[]};
 	let bundle;
 	let sources = [];
 	let resourceTypes = [];
@@ -19,6 +19,7 @@
 	let sourceFilesView;
 	let previewScroll = {top:0, left:0};
 	let pendingName = '';
+	let pendingSequenceIds;
 	let selectedSource = '';
 	let selectedFolder;
 	let saveRequested = false;
@@ -26,7 +27,7 @@
 	function finishFlush()
 	{
 		if(state.busy) { return; }
-		for(const requestId of flushRequests.splice(0)) { vscode.postMessage({type:'flushedEdits', requestId, error:error || (!bundle ? 'Unable to build an invalid resource bundle.' : undefined)}); }
+		for(const requestId of flushRequests.splice(0)) { vscode.postMessage({type:'flushedEdits', requestId, error:error || (disposePreview?.validate && !disposePreview.validate() ? 'Correct the invalid animation field before building.' : undefined) || (!bundle ? 'Unable to build an invalid resource bundle.' : undefined)}); }
 	}
 	let pendingFocusKey;
 	const displayMessage = value => /\bV-020:/.test(String(value)) ? String(value).replace(/\bSoftkey\b/g, 'Color Key') : String(value);
@@ -39,6 +40,7 @@
 	function helpers()
 	{
 		return {state, bundle, sources, root, main:root.querySelector('main'), previewScroll, escape, field, input, select, updateResource, saveState, selectPaletteColor,
+			sendChange, renderSpriteList:(items, renderItem, scope) => window.ResourceStudioSpriteList.render(items, renderItem, scope, state, escape),
 			chooseMapBackground:id => sendChange({action:'chooseMapBackground', id})};
 	}
 	function selectPaletteColor(index, reveal = false)
@@ -49,7 +51,7 @@
 
 	function saveState()
 	{
-		vscode.setState({tab:state.tab, selected:state.selected, colorIndex:state.colorIndex, previewMode:state.previewMode, zoom:state.zoom, previewHeight:state.previewHeight, advancedBlend:state.advancedBlend, mapViews:state.mapViews});
+		vscode.setState({tab:state.tab, selected:state.selected, colorIndex:state.colorIndex, previewMode:state.previewMode, zoom:state.zoom, previewHeight:state.previewHeight, advancedBlend:state.advancedBlend, mapViews:state.mapViews, sequenceViews:state.sequenceViews, spriteGroupsOpen:state.spriteGroupsOpen});
 	}
 
 	function getResource()
@@ -63,7 +65,7 @@
 
 	function getSection(resource)
 	{
-		return window.ResourceStudioTypes.get(resource.type)?.section || 'Sprites';
+		return resource.type === 'sprite' && resource.sequence ? 'Animations' : window.ResourceStudioTypes.get(resource.type)?.section || 'Sprites';
 	}
 
 	function disableBusyControls()
@@ -85,7 +87,9 @@
 	function mapRefreshKey()
 	{
 		const resource = bundle && getResource();
-		if(state.dialog || error || state.tab !== 'Maps' || resource?.type !== 'map') { return; }
+		if(state.dialog || error) { return; }
+		if(state.tab === 'Animations' && resource?.sequence) { return JSON.stringify(['sequence', resource.sequence.id, bundle.resources.map(item => [item.id, item.name, item.sequence])]); }
+		if(state.tab !== 'Maps' || resource?.type !== 'map') { return; }
 		return JSON.stringify([{...bundle, resources:bundle.resources.map(item => item === resource ? {...item, placements:null} : item)},
 			sources, resourceTypes, project, sourceWarning, warnings]);
 	}
@@ -95,6 +99,7 @@
 		{
 			return;
 		}
+		if(message.action === 'sequenceImport') { pendingSequenceIds = new Set(bundle.resources.filter(item => item.sequence).map(item => item.sequence.id)); }
 		state.busy = true;
 		error = '';
 		pendingFocusKey = root.contains(document.activeElement) ? document.activeElement.dataset.key : undefined;
@@ -137,12 +142,12 @@
 		const selectionEnd = active?.selectionEnd;
 		const draftValue = active?.value;
 		const resourceSections = [...new Set(resourceTypes.map(type => window.ResourceStudioTypes.get(type.type)?.section).filter(section => section && section !== 'Sprites'))];
-		const sections = ['Sprites', ...resourceSections.filter(section => section === 'Maps'), ...resourceSections.filter(section => section !== 'Maps'), 'Source files'];
+		const sections = ['Sprites', ...resourceSections.filter(section => section === 'Maps'), ...(window.ResourceStudioSequences ? ['Animations'] : []), ...resourceSections.filter(section => section !== 'Maps'), 'Source files'];
 		if(!sections.includes(state.tab))
 		{
 			state.tab = 'Sprites';
 		}
-		const entries = bundle.resources.filter(resource => getSection(resource) === state.tab);
+		const entries = bundle.resources.filter(resource => (getSection(resource) === state.tab || state.tab === 'Sprites' && resource.type === 'sprite') && (state.tab !== 'Animations' || resource.sequence.index === 0));
 		if(state.tab !== 'Source files' && !entries.some(resource => resource.id === state.selected))
 		{
 			state.selected = entries[0]?.id || '';
@@ -160,12 +165,7 @@
 			'" aria-pressed="'+(state.tab === tab)+'">'+escape(tab)+(tab === 'Source files' ? ' · '+sources.filter(source => !bundle.resources.some(item => item.source === source.path)).length+' unused' : '')+'</button>').join('')+
 			'</nav><div id="studio-error" class="error-banner" role="alert" '+(!error ? 'hidden' : '')+'>'+escape(error)+'</div><div class="layout">'+
 			'<aside class="library"><div class="section-label">'+escape(state.tab)+'</div>'+
-			(state.tab === 'Source files' ? renderFolders() : entries.map(item =>
-			{
-				const type = window.ResourceStudioTypes.get(item.type);
-				return '<button class="item '+(item.id === state.selected ? 'active' : '')+'" data-select="'+escape(item.id)+'" aria-pressed="'+(item.id === state.selected)+'">'+
-					'<span class="resource-icon" aria-hidden="true">'+(type?.icon || '◇')+'</span><span>'+escape(item.name)+'<small>'+escape(type?.getSummary(item) || item.type+' · unsupported')+'</small></span></button>';
-			}).join(''))+(resource ? window.ResourceStudioTypes.get(resource.type)?.renderLibrary?.(resource, helpers()) || '' : '')+
+			(state.tab === 'Source files' ? renderFolders() : state.tab === 'Sprites' ? window.ResourceStudioSpriteList.render(entries, renderLibraryItem, 'Sprites', state, escape) : entries.map(renderLibraryItem).join(''))+(resource ? window.ResourceStudioTypes.get(resource.type)?.renderLibrary?.(resource, helpers()) || '' : '')+
 			'<div class="library-footer">'+bundle.resources.filter(item => item.type !== 'palette').length+' resources<br>'+bundle.resources.filter(item => item.type === 'palette').length+
 			' shared palettes<br>'+bundle.sourceFolders.length+' source folders</div></aside><main class="content'+(state.tab !== 'Source files' && resource ? ' resource-view' : '')+'">'+
 			(warnings.length ? '<details class="notice"><summary>Resource diagnostics · '+warnings.length+'</summary>'+warnings.map(warning => '<p>'+escape(warning)+'</p>').join('')+'</details>' : '')+
@@ -211,8 +211,9 @@
 		}
 		if(state.tab !== 'Source files' && resource)
 		{
-			disposePreview = window.ResourceStudioTypes.get(resource.type)?.mountPreview?.(resource, {...helpers(), onPreviewReady:restoreScrollPositions});
+			disposePreview = state.tab === 'Animations' ? window.ResourceStudioSequences.mount(resource, helpers()) : window.ResourceStudioTypes.get(resource.type)?.mountPreview?.(resource, {...helpers(), onPreviewReady:restoreScrollPositions});
 		}
+		else if(state.tab === 'Animations') { disposePreview = window.ResourceStudioSequences.mount(undefined, helpers()); }
 		else if(state.tab === 'Source files')
 		{
 			const source = sources.find(item => item.path === selectedSource);
@@ -249,9 +250,17 @@
 		saveState();
 	}
 
+	function renderLibraryItem(item)
+	{
+		const type = window.ResourceStudioTypes.get(item.type);
+		return '<button class="item '+(item.id === state.selected ? 'active' : '')+'" data-select="'+escape(item.id)+'" aria-pressed="'+(item.id === state.selected)+'">'+
+			'<span class="resource-icon" aria-hidden="true">'+(type?.icon || '◇')+'</span><span>'+escape(state.tab === 'Animations' ? item.sequence.name : item.name)+'<small>'+escape(state.tab === 'Animations' ? 'Animation' : type?.getSummary(item) || item.type+' · unsupported')+'</small></span></button>';
+	}
+
 	function renderResource(resource)
 	{
-		const addButton = '<button class="primary" data-action="newResource">+ Add resource</button>';
+		if(state.tab === 'Animations') { return window.ResourceStudioSequences.render(resource, helpers()); }
+		const addButton = '<button class="primary" data-action="newResource">'+(state.tab === 'Sprites' ? '+ Add new sprite' : state.tab === 'Maps' ? '+ Add new map' : '+ Add resource')+'</button>';
 		if(!resource)
 		{
 			return '<div class="heading"><strong>'+escape(state.tab)+'</strong><span class="spacer"></span>'+addButton+'</div>'+
@@ -307,7 +316,7 @@
 		if(resource)
 		{
 			state.selected = id;
-			state.tab = getSection(resource);
+			state.tab = state.tab === 'Sprites' && resource.type === 'sprite' ? 'Sprites' : getSection(resource);
 			state.dialog = null;
 			error = '';
 			render();
@@ -316,7 +325,7 @@
 
 	function showDialog(type, source = '')
 	{
-		state.dialog = {type, source, name:source ? validation.deriveName(source, bundle.resources.map(resource => resource.name)) : '', paletteId:bundle.resources.find(item => item.type === 'palette')?.id || '', colorCount:256};
+		state.dialog = {type, source, name:source ? validation.deriveName(source, validation.usedNames(bundle.resources)) : '', paletteId:bundle.resources.find(item => item.type === 'palette')?.id || '', colorCount:256};
 		error = '';
 		render();
 		root.querySelector('[data-dialog="name"]').focus();
@@ -364,6 +373,10 @@
 		{
 			selectPaletteColor(Number(button.dataset.colorIndex));
 			return;
+		}
+		if(button.dataset.reservePalette)
+		{
+			sendChange({action:'reservePaletteIndex', id:button.dataset.reservePalette}); return;
 		}
 		if(button.dataset.rebuildPalette)
 		{
@@ -428,6 +441,7 @@
 				sendChange({action:'remove', id:state.selected});
 				break;
 			case 'save':
+				if(disposePreview?.validate && !disposePreview.validate()) { return; }
 			case 'refresh':
 			case 'editText':
 				vscode.postMessage({type:button.dataset.action});
@@ -441,6 +455,10 @@
 
 	root.addEventListener('toggle', function (event)
 	{
+		if(root.contains(event.target) && event.target.dataset?.spriteGroup !== undefined)
+		{
+			window.ResourceStudioSpriteList.toggle(event.target, state); saveState();
+		}
 		if(root.contains(event.target) && event.target.dataset?.sourceFolder !== undefined) { sourceFilesView?.toggle(event.target); }
 	}, true);
 
@@ -452,7 +470,7 @@
 			state.dialog[element.dataset.dialog] = element.value;
 			if(element.dataset.dialog === 'source' && !state.dialog.name)
 			{
-				state.dialog.name = validation.deriveName(element.value, bundle.resources.map(resource => resource.name));
+				state.dialog.name = validation.deriveName(element.value, validation.usedNames(bundle.resources));
 				render();
 			}
 		}
@@ -551,7 +569,7 @@
 			if(key === 'name')
 			{
 				resource.name = element.value.trim();
-				const error = validation.name(resource.name, bundle.resources.filter(item => item.id !== resource.id).map(item => item.name));
+				const error = validation.name(resource.name, validation.usedNames(bundle.resources, resource.id));
 				if(error) { throw new Error(error); }
 			}
 			else
@@ -576,7 +594,7 @@
 		}
 		const dialog = state.dialog;
 		const name = dialog.name.trim();
-		const nameError = validation.name(name, bundle.resources.map(resource => resource.name));
+		const nameError = validation.name(name, validation.usedNames(bundle.resources));
 		if(nameError)
 		{
 			error = nameError;
@@ -605,7 +623,7 @@
 		{
 			state.spacePressed = true;
 			const target = event.target || document.activeElement;
-			if(target?.closest?.('[data-map-lock]') || target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName))
+			if(target?.closest?.('[data-map-lock], [data-sequence-action], [data-sequence-frame], .sprite-group > summary') || target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName))
 			{
 				return;
 			}
@@ -614,10 +632,11 @@
 		if((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's')
 		{
 			event.preventDefault();
-			if(root.contains(document.activeElement) && document.activeElement.dataset.key)
+			if(root.contains(document.activeElement) && (document.activeElement.dataset.key || document.activeElement.dataset.sequenceKey))
 			{
 				document.activeElement.blur();
 			}
+			if(disposePreview?.validate && !disposePreview.validate()) { return; }
 			if(!state.busy)
 			{
 				vscode.postMessage({type:'save'});
@@ -649,7 +668,7 @@
 		{
 			flushRequests.push(message.requestId);
 			const active = document.activeElement;
-			if(!state.busy && root.contains(active) && (active.dataset.key || active.dataset.mapKey)) { active.blur(); }
+			if(!state.busy && root.contains(active) && (active.dataset.key || active.dataset.mapKey || active.dataset.sequenceKey)) { active.blur(); }
 			finishFlush();
 		}
 		else if(message.type === 'update')
@@ -677,6 +696,12 @@
 			warnings = (message.warnings || []).map(displayMessage);
 			selectedFolder = message.selectedFolder;
 			state.busy = Boolean(message.busy);
+			if(pendingSequenceIds && !state.busy)
+			{
+				const created = bundle.resources.find(item => item.sequence?.index === 0 && !pendingSequenceIds.has(item.sequence.id));
+				if(created) { state.selected = created.id; state.tab = 'Animations'; }
+				pendingSequenceIds = undefined;
+			}
 			if(pendingName && !state.busy)
 			{
 				const created = bundle.resources.find(resource => resource.name === pendingName);
@@ -725,6 +750,7 @@
 		{
 			state.busy = false;
 			pendingName = '';
+			pendingSequenceIds = undefined;
 			saveRequested = false;
 			error = displayMessage(message.message);
 			render();

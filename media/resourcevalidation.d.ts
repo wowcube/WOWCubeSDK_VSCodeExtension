@@ -8,3 +8,7 @@ export interface Collider { enabled:boolean; x:number; y:number; width:number; h
 export function collider(collider:Collider, width:number, height:number):string | undefined;
 export function clampCollider(collider:Collider, width:number, height:number):Collider;
 export const maxPalettes:number;
+
+export function usedNames(resources:{id:string; name:string; type:string; sequence?:unknown}[], excludeResource?:string, excludeSequence?:string):string[];
+export function animationName(name:string, used?:string[]):string | undefined;
+export function deriveAnimationName(base:string, used?:string[]):string;

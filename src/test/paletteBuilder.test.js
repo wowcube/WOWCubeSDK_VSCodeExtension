@@ -80,11 +80,11 @@ async function run()
 					callback(new Error('tool exit'), '', 'Unable to decode image');
 					return;
 				}
-				await fs.promises.writeFile(args[3], JSON.stringify({colors:mode === 'invalid' ? ['#ff0000zz'] : ['#FF000084', '#0000ffff', '#00000000']}));
+				await fs.promises.writeFile(args[3], JSON.stringify({colors:mode === 'invalid' ? ['#ff0000zz'] : ['#00000000', '#FF000084', '#0000ffff']}));
 				callback(null, 'Palette: 2 colors\n', 'Quality: test\n');
 			}).catch(error => callback(error, '', ''));
 		};
-		assert.deepStrictEqual(await PaletteBuilder.generate([...sources, sources[0]], 256, true), ['#ff000084', '#0000ffff', '#00000000']);
+		assert.deepStrictEqual(await PaletteBuilder.generate([...sources, sources[0]], 256, true), ['#00000000', '#ff000084', '#0000ffff']);
 		assert.ok(logged.includes('Palette: 2 colors'));
 		assert.ok(logged.includes('Quality: test'));
 		assert.strictEqual(fs.existsSync(temporaryFolder), false);
@@ -95,7 +95,7 @@ async function run()
 		mode = 'invalid';
 		await assert.rejects(PaletteBuilder.generate(sources, 256, true), /invalid palette/);
 		assert.strictEqual(fs.existsSync(temporaryFolder), false);
-		await assert.rejects(PaletteBuilder.generate(sources, 257), /1 to 256/);
+		await assert.rejects(PaletteBuilder.generate(sources, 257), /2 to 256/);
 		await assert.rejects(PaletteBuilder.generate([], 256), /source images/);
 		await assert.rejects(PaletteBuilder.generate([sources[0]+'\nextra'], 256), /valid absolute paths/);
 		Configuration.getUtilsPath = () => path.join(fixture, 'missing');
@@ -121,8 +121,8 @@ async function run()
 				await fs.promises.writeFile(sources[i], bitmap);
 			}
 			const colors = await PaletteBuilder.generate(sources, 256);
-			assert.deepStrictEqual(colors.slice().sort(), ['#0000ffff', '#ff0000ff']);
-			assert.strictEqual((await PaletteBuilder.generate(sources, 1)).length, 1);
+			assert.deepStrictEqual(colors.slice(1).sort(), ['#0000ffff', '#ff0000ff']);
+			await assert.rejects(PaletteBuilder.generate(sources, 1), /2 to 256/);
 			const alphaSource = path.join(fixture, 'semi transparent 色.png');
 			await fs.promises.writeFile(alphaSource, rgbaPng([255, 0, 0, 255, 255, 0, 0, 128, 255, 0, 0, 64, 0, 255, 0, 0]));
 			const alphaColors = await PaletteBuilder.generate([alphaSource], 16, true);
@@ -135,7 +135,7 @@ async function run()
 			assert.strictEqual(limitedColors.length, 2);
 			assert.strictEqual(limitedColors[0], '#00000000');
 			await fs.promises.writeFile(alphaSource, rgbaPng([127, 127, 127, 127]));
-			assert.deepStrictEqual(await PaletteBuilder.generate([alphaSource], 2), [quantizePaletteColor('#7f7f7f7f')]);
+			assert.deepStrictEqual(await PaletteBuilder.generate([alphaSource], 2), ['#00000000', quantizePaletteColor('#7f7f7f7f')]);
 			console.log('Installed palette-builder integration passed: RGB565+A5, distinct alpha entries, transparent reservation, shared sources, reduced palette sizes, spaces, and Unicode.');
 		}
 		console.log('Palette builder checks passed: platform names, CLI/list handling, output validation, and temporary-file cleanup on success and failure.');

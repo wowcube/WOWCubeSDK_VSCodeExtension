@@ -7,6 +7,9 @@ const crypto = require("crypto");
 const getNonce_1 = require("./getNonce");
 const ResourceBundle_1 = require("./ResourceBundle");
 const PaletteBuilder_1 = require("./PaletteBuilder");
+const PaletteCompatibility = require("../media/palettecompatibility");
+const SpriteSequence_1 = require("./SpriteSequence");
+const SequenceEditor_1 = require("./SequenceEditor");
 const ResourceValidation = require("../media/resourcevalidation");
 class ResourceStudioProvider {
     static async flushEdits(resources) {
@@ -226,6 +229,9 @@ class ResourceStudioProvider {
                             working = true;
                             try {
                                 await this.edit(document, message.version, async (bundle) => {
+                                    if (typeof message.action === 'string' && message.action.startsWith('sequence')) {
+                                        return SequenceEditor_1.SequenceEditor.change(bundle, message, projectUri, { relative: uri => this.getRelativePath(projectUri, uri), size: source => this.validateSpriteSource(projectUri, source), palette: palette => this.generatePalette(projectUri, bundle, palette, palette.colorCount) });
+                                    }
                                     switch (message.action) {
                                         case 'create':
                                             const resourceType = ResourceBundle_1.ResourceTypes.get(message.resourceType);
@@ -245,7 +251,7 @@ class ResourceStudioProvider {
                                                     }
                                                     palette = ResourceBundle_1.ResourceTypes.get('palette').create(crypto.randomBytes(16).toString('hex'), name);
                                                     palette.colorCount = Number(message.options.colorCount);
-                                                    palette.colors = ['#000000'];
+                                                    palette.colors = ['#00000000'];
                                                     palette.mappingColors = palette.colors.slice();
                                                     bundle.resources.push(palette);
                                                 }
@@ -302,6 +308,9 @@ class ResourceStudioProvider {
                                             }
                                             if (previous.type === 'palette') {
                                                 const palette = previous;
+                                                if (message.resource.transparentIndex !== palette.transparentIndex || message.resource.colors[0] !== palette.colors[0]) {
+                                                    throw new Error('Color 0 is reserved for transparency and cannot be edited.');
+                                                }
                                                 message.resource.mappingColors = palette.mappingColors.slice();
                                                 message.resource.colors = message.resource.colors.map(ResourceValidation.quantizePaletteColor);
                                             }
@@ -325,7 +334,7 @@ class ResourceStudioProvider {
                                             if (bundle.resources.some(item => item.name === name)) {
                                                 const chosen = await vscode.window.showInputBox({ value: name, title: 'Generate a new palette',
                                                     prompt: 'This palette name already exists. Enter a unique name for the new palette.',
-                                                    validateInput: value => ResourceValidation.name(value, bundle.resources.map(item => item.name)) });
+                                                    validateInput: value => ResourceValidation.name(value, SpriteSequence_1.SpriteSequences.usedNames(bundle)) });
                                                 if (chosen === undefined) {
                                                     return false;
                                                 }
@@ -391,6 +400,13 @@ class ResourceStudioProvider {
                                                 }
                                             }
                                             break;
+                                        case 'reservePaletteIndex':
+                                            const legacyPalette = bundle.resources.find(item => item.id === message.id && item.type === 'palette');
+                                            if (!legacyPalette) {
+                                                throw new Error('Palette no longer exists.');
+                                            }
+                                            PaletteCompatibility.reserve(legacyPalette);
+                                            break;
                                         case 'resizePalette':
                                             const palette = bundle.resources.find(item => item.id === message.id && item.type === 'palette');
                                             if (!palette) {
@@ -399,6 +415,10 @@ class ResourceStudioProvider {
                                             await this.generatePalette(projectUri, bundle, palette, Number(message.colorCount));
                                             break;
                                         case 'remove':
+                                            const removedSprite = bundle.resources.find(resource => resource.id === message.id && resource.type === 'sprite');
+                                            if (removedSprite?.sequence) {
+                                                throw new Error('Cannot delete sprite "' + removedSprite.name + '" here because it is a frame in animation "' + removedSprite.sequence.name + '". Open that animation in the Animations tab and use "Remove selected frame" to remove it and update the animation.');
+                                            }
                                             const dependents = ResourceBundle_1.ResourceBundles.getDependents(bundle, message.id);
                                             if (dependents.length) {
                                                 throw new Error('Reassign references first: ' + dependents.map(resource => resource.name).join(', '));
@@ -463,13 +483,14 @@ class ResourceStudioProvider {
                 throw new Error('The bundle changed in another editor. Review the refreshed values and try again.');
             }
             const bundle = ResourceBundle_1.ResourceBundles.parse(document.getText());
+            const previousAliases = SpriteSequence_1.SpriteSequences.aliasErrors(bundle);
             if (await change(bundle) === false) {
                 return;
             }
             if (document.version !== version) {
                 throw new Error('The bundle changed while generating the palette. Review the refreshed values and try again.');
             }
-            const errors = ResourceBundle_1.ResourceBundles.validate(bundle);
+            const errors = [...ResourceBundle_1.ResourceBundles.validate(bundle), ...SpriteSequence_1.SpriteSequences.aliasErrors(bundle).filter(error => !previousAliases.includes(error))];
             if (errors.length) {
                 throw new Error(errors.join('\n'));
             }
@@ -494,7 +515,7 @@ class ResourceStudioProvider {
         if (sizeError) {
             throw new Error(sizeError);
         }
-        const errors = ResourceBundle_1.ResourceBundles.validate(bundle);
+        const errors = [...ResourceBundle_1.ResourceBundles.validate(bundle), ...SpriteSequence_1.SpriteSequences.aliasErrors(bundle)];
         if (errors.length) {
             throw new Error(errors.join('\n'));
         }
@@ -520,7 +541,8 @@ class ResourceStudioProvider {
             }
             sources.push(uri.fsPath);
         }
-        palette.colors = await PaletteBuilder_1.PaletteBuilder.generate(sources, size, palette.transparentIndex === 0);
+        palette.colors = await PaletteBuilder_1.PaletteBuilder.generate(sources, size, true);
+        palette.transparentIndex = 0;
         palette.mappingColors = palette.colors.slice();
         palette.colorCount = size;
         if (palette.transparentIndex !== null && palette.transparentIndex >= palette.colors.length) {
@@ -627,9 +649,10 @@ class ResourceStudioProvider {
         const typesUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'resourcetypes.js'));
         const validationUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'resourcevalidation.js'));
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'resourcestudio.js'));
+        const sequenceCssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'sequenceeditor.css'));
         const mapCssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'mapeditor.css'));
-        const sharedScripts = ['spritepixels.js', 'previewviewport.js', 'mapgeometry.js', 'sourcefiles.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
-        const mapScripts = ['maptextures.js', 'maprenderer.js', 'mapeditor.js', 'mapresource.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
+        const sharedScripts = ['spritepixels.js', 'previewviewport.js', 'mapgeometry.js', 'sourcefiles.js', 'spritelist.js', 'palettecompatibility.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
+        const mapScripts = ['maptextures.js', 'maprenderer.js', 'mapeditor.js', 'mapresource.js', 'sequenceeditor.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
         return `<!DOCTYPE html>
 		<html lang="en">
 		<head>
@@ -638,6 +661,7 @@ class ResourceStudioProvider {
 			<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
 			<link href="${cssUri}" rel="stylesheet">
 			<link href="${mapCssUri}" rel="stylesheet">
+			<link href="${sequenceCssUri}" rel="stylesheet">
 			<title>Resource Studio</title>
 		</head>
 		<body>

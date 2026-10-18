@@ -296,6 +296,18 @@ async function run()
 		failTool = undefined;
 		await saveHandler(savedDocument);
 
+
+		// Updating the executable invalidates outputs even when the JSON is unchanged.
+		const beforeToolUpdate=calls.length;
+		await fs.promises.writeFile(path.join(tools,'resource-builder.exe'),'updated compiler');
+		await ResourceBuilder.build(workspace);assert.strictEqual(calls.length,beforeToolUpdate+1);
+		await ResourceBuilder.build(workspace);assert.strictEqual(calls.length,beforeToolUpdate+1);
+		// Compiler incompatibilities are caught before launching any process.
+		const incompatible=ResourceBundles.create();
+		const legacyPalette=ResourceTypes.get('palette').create('legacy','legacy_palette');legacyPalette.transparentIndex=null;legacyPalette.colors=['#ff0000ff'];legacyPalette.mappingColors=legacyPalette.colors.slice();incompatible.resources.push(legacyPalette);
+		await fs.promises.writeFile(resources,JSON.stringify(incompatible));
+		await assert.rejects(ResourceBuilder.build(workspace),/reserve color 0/);assert.strictEqual(calls.length,beforeToolUpdate+1);
+
 		if(process.env.WOWCUBE_RESOURCE_BUILDER)
 		{
 			ResourceStudioProvider.flushEdits = original.flushEdits;
@@ -340,7 +352,23 @@ async function run()
 			await ResourceBuilder.build(workspace);
 			assert.strictEqual((await fs.promises.stat(header)).mtimeMs, modified);
 			assert.strictEqual((await fs.promises.stat(mapPath)).mtimeMs, mapModified);
-			console.log('Installed resource-builder integration passed: packed assets, map rename and saved positions decoded from binary, index/header generation, and reuse of compiled JSON.');
+
+			const {SpriteSequences}=require('../../out/SpriteSequence');
+			const frames=SpriteSequences.createFrames(bundle,'walk',[{source:'hero.png',width:1,height:1},{source:'hero.png',width:1,height:1}],0);
+			frames.forEach((frame,index)=>{frame.paletteId=palette.id;frame.frameRate=index;frame.pivot={x:-2.5,y:3.5};frame.number=42+index;frame.fullsize=index===1;});
+			bundle.resources.push(...frames);await fs.promises.writeFile(resources,JSON.stringify(bundle));await ResourceBuilder.build(workspace);
+			const compiledPalette=await fs.promises.readFile(path.join(workspace,'app/art/packed/hero_palette.pal'));
+			assert.strictEqual(compiledPalette.readUInt32LE(0),0);assert.notStrictEqual(compiledPalette.readUInt32LE(4),0);
+			const animationHeader=await fs.promises.readFile(header,'utf8');
+			const assetIds=Object.fromEntries([...animationHeader.matchAll(/BMP_([a-z0-9_]+)\s*=\s*(\d+)/g)].map(match=>[match[1],+match[2]]));
+			for(const [index,frame] of frames.entries())
+			{
+				const bytes=await fs.promises.readFile(path.join(workspace,'app/art/packed',frame.name+'.raw'));
+				assert.strictEqual(bytes.readUInt16LE(2),assetIds[frames[1-index].name]);assert.strictEqual(bytes.readInt8(45),index);assert.strictEqual(bytes.readInt16LE(40),42+index);
+				const scale=frame.fullsize?1:2;assert.strictEqual(bytes.readFloatLE(4),scale*frame.pivot.x-.5);assert.strictEqual(bytes.readFloatLE(8),scale*frame.pivot.y-.5);
+			}
+			assert.strictEqual(assetIds.walk,assetIds[frames[0].name]);assert.strictEqual(assetIds.walk_end,assetIds[frames[1].name]);
+			console.log('Installed resource-builder integration passed: packed assets, map rename and saved positions decoded from binary, index/header generation, sequence links/timing/pivots and cache reuse.');
 		}
 		console.log('Resource build checks passed: persistent JSON hashing, ordering, shared builds, save handling, output logging, platform names, failures, and retries.');
 	}

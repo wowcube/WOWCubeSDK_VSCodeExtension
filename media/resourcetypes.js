@@ -46,20 +46,19 @@
 				'<button class="swatch '+(index === helpers.state.colorIndex ? 'selected' : '')+'" data-color-index="'+index+'" '+
 				'aria-label="Edit color '+index+' '+paletteColor(resource, index)+'" aria-pressed="'+(index === helpers.state.colorIndex)+'">'+
 				'<span class="swatch-color" data-color="'+paletteColor(resource, index)+'"></span><span class="swatch-index">'+index+
-				(resource.transparentIndex === index ? ' ◌' : '')+'</span></button>').join('')+'</div>';
+				(index === 0 ? ' ◌' : '')+'</span></button>').join('')+'</div>';
 		},
 		renderInspector:function (resource, helpers)
 		{
 			const index = Math.min(helpers.state.colorIndex, resource.colors.length - 1);
 			const channels = paletteChannels(resource, index);
 			return helpers.field('Palette size · 2–256', helpers.input('colorCount', resource.colorCount, 'number', 'min="2" max="256" step="1"'))+
-				helpers.field('Color '+index+' · hex RGB / RGBA', helpers.input('colorHex', paletteColor(resource, index), 'text', 'maxlength="9" spellcheck="false"'))+
+				helpers.field('Color '+index+' · hex RGB / RGBA', helpers.input('colorHex', paletteColor(resource, index), 'text', 'maxlength="9" spellcheck="false" '+(index === 0 ? 'disabled' : '')))+
 				'<div class="rgba-sliders">'+['R', 'G', 'B', 'A'].map((channel, i) =>
-					'<label class="rgba-channel"><span>'+channel+'</span>'+helpers.input('channel'+channel, channels[i], 'range', 'min="0" max="255" step="1" aria-label="'+['Red', 'Green', 'Blue', 'Alpha'][i]+'"')+
+					'<label class="rgba-channel"><span>'+channel+'</span>'+helpers.input('channel'+channel, channels[i], 'range', 'min="0" max="255" step="1" aria-label="'+['Red', 'Green', 'Blue', 'Alpha'][i]+'" '+(index === 0 ? 'disabled' : ''))+
 					'<output data-channel-output="'+channel+'">'+channels[i]+'</output></label>').join('')+'</div>'+
-				helpers.field('Transparent color', helpers.select('transparentIndex', [{value:'', label:'None'},
-					...resource.colors.map((color, i) => ({value:String(i), label:i+' · '+color}))],
-					resource.transparentIndex === null ? '' : String(resource.transparentIndex)))+
+				'<p class="minor">Color 0 is reserved for transparency and cannot be edited. The palette size includes this entry.</p>'+
+				(window.ResourceStudioPaletteCompatibility.issue(resource) ? '<p class="notice">'+helpers.escape(window.ResourceStudioPaletteCompatibility.issue(resource))+'</p><button data-reserve-palette="'+helpers.escape(resource.id)+'">Reserve transparent color 0</button>' : '')+
 				'<div class="notice">Changing the size regenerates colors from every assigned sprite. Individual colors can be edited without changing the size.</div>'+
 				'<button data-rebuild-palette="'+helpers.escape(resource.id)+'">Rebuild palette</button>';
 		},
@@ -75,6 +74,7 @@
 		change:function (resource, key, element, helpers)
 		{
 			const index = Math.min(helpers.state.colorIndex, resource.colors.length - 1);
+			if(key === 'transparentIndex' || index === 0 && (key === 'color' || key === 'colorHex' || key.startsWith('channel'))) { throw new Error('Color 0 is reserved for transparency and cannot be edited.'); }
 			if(key === 'colorCount')
 			{
 				throw new Error('Palette size changes require generation from the source images.');
@@ -86,10 +86,6 @@
 					throw new Error('Use a six-digit hex color or eight-digit RGBA color, for example #347e98ff.');
 				}
 				resource.colors[index] = validation.quantizePaletteColor(element.value);
-				if(resource.transparentIndex === index && (resource.colors[index].length === 7 || parseInt(resource.colors[index].slice(7, 9), 16) > 0))
-				{
-					resource.transparentIndex = null;
-				}
 			}
 			else if(key.startsWith('channel'))
 			{
@@ -102,10 +98,6 @@
 				const channels = paletteChannels(resource, index);
 				channels[channel] = value;
 				resource.colors[index] = validation.quantizePaletteColor('#'+channels.map(value => value.toString(16).padStart(2, '0')).join(''));
-				if(channel === 3 && parseInt(resource.colors[index].slice(7, 9), 16) > 0 && resource.transparentIndex === index)
-				{
-					resource.transparentIndex = null;
-				}
 			}
 			else if(key === 'transparentIndex')
 			{
@@ -165,7 +157,7 @@
 		},
 		validateCreate:function (dialog, helpers)
 		{
-			const nameError = validation.name(dialog.name, helpers.bundle.resources.map(resource => resource.name));
+			const nameError = validation.name(dialog.name, validation.usedNames(helpers.bundle.resources));
 			if(nameError) { throw new Error(nameError); }
 			if(!dialog.source)
 			{
@@ -175,7 +167,7 @@
 			{
 				if(helpers.bundle.resources.filter(resource => resource.type === 'palette').length >= validation.maxPalettes) { throw new Error('V-016: At most '+validation.maxPalettes+' palettes are allowed.'); }
 				const name = dialog.paletteName ?? validation.paletteName(dialog.name);
-				const error = validation.name(name, [...helpers.bundle.resources.map(resource => resource.name), dialog.name]);
+				const error = validation.name(name, [...validation.usedNames(helpers.bundle.resources), dialog.name]);
 				if(error)
 				{
 					throw new Error(error);

@@ -8,9 +8,9 @@ const path = require("path");
 const Configuration_1 = require("./Configuration");
 const Output_1 = require("./Output");
 class PaletteBuilder {
-    static async generate(sources, size, reserveTransparent = false) {
-        if (!Number.isInteger(size) || size < 1 || size > 256) {
-            throw new Error('Palette size must be an integer from 1 to 256.');
+    static async generate(sources, size, reserveTransparent = true) {
+        if (!Number.isInteger(size) || size < (reserveTransparent ? 2 : 1) || size > 256) {
+            throw new Error('Palette size must be an integer from ' + (reserveTransparent ? 2 : 1) + ' to 256.');
         }
         if (!sources.length || sources.some(source => !path.isAbsolute(source) || /[\r\n]/.test(source))) {
             throw new Error('Palette generation requires source images with valid absolute paths.');
@@ -64,6 +64,9 @@ class PaletteBuilder {
             if (!Array.isArray(result.colors) || result.colors.length < 1 || result.colors.length > size ||
                 result.colors.some((color) => typeof color !== 'string' || !/^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(color))) {
                 throw new Error('Palette builder returned an invalid palette or too many colors.');
+            }
+            if (reserveTransparent && result.colors[0].toLowerCase() !== '#00000000') {
+                throw new Error('Palette builder did not reserve transparent color 0. Update palette-builder in the SDK tools folder.');
             }
             return result.colors.map((color) => color.toLowerCase());
         }

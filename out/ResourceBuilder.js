@@ -7,6 +7,7 @@ const path = require("path");
 const crypto = require("crypto");
 const cp = require("child_process");
 const Configuration_1 = require("./Configuration");
+const ResourceBundle_1 = require("./ResourceBundle");
 const Output_1 = require("./Output");
 const ResourceStudioProvider_1 = require("./ResourceStudioProvider");
 class ResourceBuilder {
@@ -65,24 +66,30 @@ class ResourceBuilder {
             Output_1.Output.channel().appendLine('[resource-builder] No resource bundle; skipping resource compilation.');
             return;
         }
-        const hash = crypto.createHash('sha256').update(contents).digest('hex');
-        const key = 'resourceBuilder:' + vscode.Uri.file(resources).toString();
-        const state = Configuration_1.Configuration.context.workspaceState;
-        const channel = Output_1.Output.channel();
-        if (state.get(key) === hash) {
-            channel.appendLine('[resource-builder] Resources are up to date.');
-            return;
+        const errors = ResourceBundle_1.ResourceBundles.getBuildErrors(ResourceBundle_1.ResourceBundles.parse(contents.toString('utf8')));
+        if (errors.length) {
+            throw new Error(errors.join('\n'));
         }
         const toolsPath = Configuration_1.Configuration.getUtilsPath();
         if (!toolsPath) {
             throw new Error('Configure the WOWCube Development Kit path before building resources.');
         }
         const tool = path.join(toolsPath, Configuration_1.Configuration.getResourceBuilder());
+        let executable;
         try {
-            await fs.promises.access(tool, fs.constants.F_OK);
+            executable = await fs.promises.readFile(tool);
         }
         catch {
             throw new Error('Resource builder not found: ' + tool + '. Install it in the SDK tools folder.');
+        }
+        // A new compiler must rebuild outputs produced by the previous executable.
+        const hash = crypto.createHash('sha256').update(contents).update(executable).digest('hex');
+        const key = 'resourceBuilder:' + vscode.Uri.file(resources).toString();
+        const state = Configuration_1.Configuration.context.workspaceState;
+        const channel = Output_1.Output.channel();
+        if (state.get(key) === hash) {
+            channel.appendLine('[resource-builder] Resources are up to date.');
+            return;
         }
         channel.appendLine('[resource-builder] ' + (reason === 'save' ? 'Resource file saved. Building resources...' : 'Building resources...'));
         channel.show(true);

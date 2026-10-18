@@ -135,7 +135,7 @@ PaletteBuilder.generate = async function (sources, size, reserveTransparent)
 	{
 		document.version++;
 	}
-	return Array(Math.min(size, sources.length*2)).fill('#12345684');
+	const colors = Array(Math.min(size, sources.length*2)).fill('#12345684'); colors[0] = '#00000000'; return colors;
 };
 
 async function run()
@@ -177,7 +177,17 @@ async function run()
 		failGeneration = true;
 		await receive({type:'change', action:'create', version:document.version, resourceType:'sprite', name:'rgb_first', source:'effects/spark.png', options:{colorMode:'rgb565'}});
 		const firstRgb = JSON.parse(text).resources[0];
-		assert.strictEqual(firstRgb.colorMode, 'rgb565');
+		assert.strictEqual(firstRgb.colorMode, 'rgb565');		await receive({type:'change', action:'update', version:document.version, resource:{...firstRgb, sequence:{id:'sequence', name:'fox', index:0}}});
+		const beforeFrameDeletion = text;
+		await receive({type:'change', action:'remove', version:document.version, id:firstRgb.id});
+		assert.strictEqual(text, beforeFrameDeletion, 'A frame deletion from Sprites must leave the animation intact.');
+		assert.match(messages.at(-1).message, /Cannot delete sprite "rgb_first" here because it is a frame in animation "fox"/);
+		assert.match(messages.at(-1).message, /Animations tab.*Remove selected frame/);
+		await receive({type:'change',action:'create',version:document.version,resourceType:'sprite',name:'fox_end',source:'effects/spark.png',options:{colorMode:'rgb565'}});
+		assert.strictEqual(text,beforeFrameDeletion);assert.match(messages.at(-1).message,/fox_end/);
+
+		await receive({type:'change', action:'update', version:document.version, resource:firstRgb});
+
 		assert.strictEqual(firstRgb.paletteId, null);
 		assert.strictEqual(firstRgb.blend, 'opaque');
 		assert.strictEqual(generations.length, rgbGenerations);
@@ -251,7 +261,7 @@ async function run()
 		assert.strictEqual(sprite.paletteId, palette.id);
 		assert.strictEqual(palette.colorCount, 256);
 		assert.strictEqual(palette.colors.length, 2);
-		assert.deepStrictEqual(palette.colors, ['#12345684', '#12345684']);
+		assert.deepStrictEqual(palette.colors, ['#00000000', '#12345684']);
 		assert.deepStrictEqual(palette.mappingColors, palette.colors);
 		assert.deepStrictEqual(generations.at(-1).sources, ['/project/characters/hero.png']);
 		await receive({type:'change', action:'create', version:document.version, resourceType:'sprite', name:'spark', source:'effects/spark.png', options:{paletteId:palette.id}});
@@ -264,11 +274,19 @@ async function run()
 		assert.strictEqual(generations.at(-1).sources.length, 2);
 		let currentPalette = JSON.parse(text).resources[0];
 		const generationCount = generations.length;
-		currentPalette.colors[0] = '#7f7f7f7f';
+		currentPalette.colors[1] = '#7f7f7f7f';
 		await receive({type:'change', action:'update', version:document.version, resource:currentPalette});
 		assert.strictEqual(generations.length, generationCount);
-		assert.strictEqual(JSON.parse(text).resources[0].colors[0], '#7b7d7b7b');
-		assert.deepStrictEqual(JSON.parse(text).resources[0].mappingColors, ['#12345684', '#12345684', '#12345684', '#12345684']);
+		assert.strictEqual(JSON.parse(text).resources[0].colors[1], '#7b7d7b7b');
+		assert.deepStrictEqual(JSON.parse(text).resources[0].mappingColors, ['#00000000', '#12345684', '#12345684', '#12345684']);
+		assert.strictEqual(generations.at(-1).reserveTransparent,true);
+		const beforeReservedEdit=text, reservedEdit=JSON.parse(text).resources[0];reservedEdit.colors[0]='#ff0000ff';
+		await receive({type:'change',action:'update',version:document.version,resource:reservedEdit});assert.strictEqual(text,beforeReservedEdit);assert.match(messages.at(-1).message,/reserved/);
+		const oldBundle=JSON.parse(text), oldPalette=oldBundle.resources[0];oldPalette.colors.shift();oldPalette.mappingColors.shift();oldPalette.transparentIndex=null;
+		const editedColors=oldPalette.colors.slice(), matchingColors=oldPalette.mappingColors.slice();text=JSON.stringify(oldBundle);document.version++;
+		await receive({type:'change',action:'reservePaletteIndex',version:document.version,id:oldPalette.id});
+		const repaired=JSON.parse(text).resources[0];assert.strictEqual(repaired.transparentIndex,0);assert.deepStrictEqual(repaired.colors,['#00000000',...editedColors]);assert.deepStrictEqual(repaired.mappingColors,['#00000000',...matchingColors]);
+
 		await receive({type:'change', action:'create', version:document.version, resourceType:'sprite', name:'spark_private', source:'effects/spark.png', options:{paletteName:'private_palette', colorCount:16}});
 		const privatePalette = JSON.parse(text).resources[3];
 		const privateSprite = JSON.parse(text).resources[4];

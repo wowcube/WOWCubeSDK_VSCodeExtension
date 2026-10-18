@@ -60,9 +60,9 @@
 		validateCreate:() => {},
 		renderLibrary:function (resource, helpers)
 		{
-			return '<section class="map-sprite-library" aria-label="Available sprites"><div class="section-label">Available sprites</div>'+sprites(helpers).map(sprite =>
+			return '<section class="map-sprite-library" aria-label="Available sprites"><div class="section-label">Available sprites</div>'+helpers.renderSpriteList(sprites(helpers), sprite =>
 				'<div class="map-source-sprite">'+thumbnail(sprite, helpers)+'<span>'+helpers.escape(sprite.name)+'<small>'+(sprite.fullsize ? 'FULLSIZE' : 'Normal')+'</small></span>'+
-				'<button data-map-add="'+helpers.escape(sprite.id)+'" aria-label="Add '+helpers.escape(sprite.name)+' to map">+</button></div>').join('')+
+				'<button data-map-add="'+helpers.escape(sprite.id)+'" aria-label="Add '+helpers.escape(sprite.name)+' to map">+</button></div>', 'Maps')+
 				(!sprites(helpers).length ? '<p class="minor">Register a sprite in Sprites first.</p>' : '')+'</section>';
 		},
 		renderWorkspace:function (resource, helpers)

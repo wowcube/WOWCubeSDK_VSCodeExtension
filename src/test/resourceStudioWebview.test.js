@@ -21,10 +21,10 @@ const context = vm.createContext({
 	document:{getElementById:function () { return root; }, activeElement:{}},
 	acquireVsCodeApi:function ()
 	{
-		return {getState:function () { return {tab:'Palettes'}; }, setState:function () {}, postMessage:function (message) { sent.push(message); }};
+		return {getState:function () { return {tab:'Palettes',colorIndex:1}; }, setState:function () {}, postMessage:function (message) { sent.push(message); }};
 	}
 });
-for(const file of ['sourcefiles.js', 'resourcevalidation.js', 'spritepixels.js', 'previewviewport.js', 'resourcetypes.js', 'resourcestudio.js'])
+for(const file of ['sourcefiles.js','spritelist.js','palettecompatibility.js', 'resourcevalidation.js', 'spritepixels.js', 'previewviewport.js', 'resourcetypes.js', 'resourcestudio.js'])
 {
 	vm.runInContext(fs.readFileSync(path.join(__dirname, '../../media', file), 'utf8'), context);
 }
@@ -72,7 +72,7 @@ assert.strictEqual(sent.at(-1).colorCount, 16);
 assert.ok(!root.innerHTML.includes('New palette'));
 acknowledge();
 change('colorHex', '#347E98');
-assert.strictEqual(sent.at(-1).resource.colors[0], '#317d9c');
+assert.strictEqual(sent.at(-1).resource.colors[1], '#317d9c');
 acknowledge();
 change('name', 'renamed');
 assert.strictEqual(sent.at(-1).resource.id, 'palette-1');
@@ -90,24 +90,19 @@ assert.strictEqual(sent.at(-1).type, 'save');
 
 const spriteType = context.window.ResourceStudioTypes.get('sprite');
 const paletteType = context.window.ResourceStudioTypes.get('palette');
-const editedPalette = {colors:['#ff0000ff'], mappingColors:['#ff0000ff'], transparentIndex:0};
-const colorHelpers = {state:{colorIndex:0}};
+const editedPalette = {colors:['#00000000', '#ff0000ff'], mappingColors:['#00000000', '#ff0000ff'], transparentIndex:0};
+const colorHelpers = {state:{colorIndex:1}};
 paletteType.change(editedPalette, 'colorHex', {value:'#7f7f7f7f'}, colorHelpers);
-assert.strictEqual(editedPalette.colors[0], '#7b7d7b7b');
-assert.strictEqual(editedPalette.transparentIndex, null);
-assert.deepStrictEqual(editedPalette.mappingColors, ['#ff0000ff']);
+assert.strictEqual(editedPalette.colors[1], '#7b7d7b7b');
+assert.strictEqual(editedPalette.transparentIndex, 0);
+assert.deepStrictEqual(editedPalette.mappingColors, ['#00000000', '#ff0000ff']);
 for(const [channel, value, expected] of [['R', 128, '#847d7b7b'], ['G', 128, '#84827b7b'], ['B', 128, '#8482847b'], ['A', 128, '#84828484']])
 {
 	paletteType.change(editedPalette, 'channel'+channel, {value:String(value)}, colorHelpers);
-	assert.strictEqual(editedPalette.colors[0], expected);
+	assert.strictEqual(editedPalette.colors[1], expected);
 }
-editedPalette.transparentIndex = 0;
-paletteType.change(editedPalette, 'channelA', {value:'7'}, colorHelpers);
-assert.strictEqual(editedPalette.colors[0], '#84828400');
-assert.strictEqual(editedPalette.transparentIndex, 0);
-paletteType.change(editedPalette, 'channelA', {value:'8'}, colorHelpers);
-assert.strictEqual(editedPalette.colors[0], '#84828408');
-assert.strictEqual(editedPalette.transparentIndex, null);
+assert.throws(()=>paletteType.change(editedPalette,'colorHex',{value:'#ffffffff'},{state:{colorIndex:0}}),/reserved/);
+assert.throws(()=>paletteType.change(editedPalette,'transparentIndex',{value:'1'},colorHelpers),/reserved/);
 const sprite = {pivot:null, collider:{enabled:false, x:0, y:0, width:0, height:0}};
 spriteType.change(sprite, 'colliderWidth', {value:'12'}, {state:{imageSizes:{undefined:{width:40, height:60}}}});
 spriteType.change(sprite, 'pivotX', {value:'10.5'}, {state:{imageSizes:{undefined:{width:40, height:60}}}});
@@ -163,7 +158,7 @@ assert.strictEqual(sent.at(-1).options.colorCount, 256);
 assert.strictEqual(sent.at(-1).resourceType, 'sprite');
 
 // Later registrations offer both existing and new palettes.
-bundle.resources = [{id:'palette-1', name:'world', type:'palette', colors:['#000000'], mappingColors:['#000000'], colorCount:256, transparentIndex:null}];
+bundle.resources = [{id:'palette-1', name:'world', type:'palette', colors:['#00000000', '#ff0000'], mappingColors:['#00000000', '#ff0000'], colorCount:256, transparentIndex:0}];
 version++;
 update();
 click({registerSource:'second.png'});
@@ -293,7 +288,7 @@ for(const checked of [true, false])
 root.contains = previousContains;
 root.querySelectorAll = previousQueryAll;
 context.document.activeElement = {};
-click({colorIndex:'0'});
+click({colorIndex:'1'});
 assertScrollPreserved();
 assert.ok(root.innerHTML.includes('Generate a new palette…'));
 rootHandlers.change({target:{dataset:{key:'paletteId'}, value:'__new_palette__', type:'select-one'}});
@@ -306,7 +301,7 @@ assert.strictEqual(liveRefreshes, 1);
 assert.strictEqual(sent.length, beforeSlider);
 rootHandlers.change({target:{dataset:{paletteId:'palette-1', key:'channelR'}, value:'42', type:'range'}});
 assert.strictEqual(sent.at(-1).resource.id, 'palette-1');
-assert.strictEqual(sent.at(-1).resource.colors[0], '#290000ff');
+assert.strictEqual(sent.at(-1).resource.colors[1], '#290000ff');
 acknowledge();
 assert.ok(root.innerHTML.includes('Sprite preview'));
 assert.ok(root.innerHTML.includes('value="0.5"'));
@@ -378,7 +373,7 @@ context.document.createElement = function ()
 		getImageData:function () { return {data:new Uint8ClampedArray(sourcePixels)}; },
 		putImageData:function (data) { converted = Array.from(data.data); }}; }};
 };
-const previewPalette = {id:'preview-palette', type:'palette', colors:['#ff000080', '#e70000'], mappingColors:['#ff0000', '#e70000'], transparentIndex:null};
+const previewPalette = {id:'preview-palette', type:'palette', colors:['#00000000', '#ff000080', '#e70000'], mappingColors:['#00000000', '#ff0000', '#e70000'], transparentIndex:0};
 const previewSprite = {...bundle.resources[1], paletteId:previewPalette.id};
 const zoomState = {zoom:'4', previewMode:'indexed'};
 const preview = spriteType.mountPreview(previewSprite, {state:zoomState, previewScroll:{top:90, left:24}, bundle:{resources:[previewPalette]},
@@ -393,12 +388,12 @@ canvas.onpointerdown({button:0, pointerId:1, clientX:4, clientY:4, preventDefaul
 assert.strictEqual(prevented, true);
 assert.strictEqual(focusOptions.preventScroll, true);
 stage.scrollTop = 135;
-previewPalette.colors[0] = '#00ff0040';
+previewPalette.colors[1] = '#00ff0040';
 preview.refreshPalette();
 assert.deepStrictEqual(converted, [0, 255, 0, 64]);
 assert.strictEqual(stage.scrollTop, 135);
 canvas.onpointercancel();
-previewPalette.colors[0] = '#0000ff';
+previewPalette.colors[1] = '#0000ff';
 preview.refreshPalette();
 assert.deepStrictEqual(converted, [0, 0, 255, 255]);
 function wheel(deltaY)
@@ -443,7 +438,7 @@ function mountPalette(palette, state = pickingState)
 const reopened = mountPalette(reopenedPalette);
 assert.deepStrictEqual(converted, [0, 0, 255, 255]);
 reopened();
-const rebuiltPalette = {...reopenedPalette, mappingColors:['#e70000', '#ff0000'], colors:['#e70000', '#ff00ff']};
+const rebuiltPalette = {...reopenedPalette, mappingColors:['#00000000', '#e70000', '#ff0000'], colors:['#00000000', '#e70000', '#ff00ff']};
 const rebuilt = mountPalette(rebuiltPalette);
 assert.deepStrictEqual(converted, [255, 0, 255, 255]);
 rebuilt();
@@ -451,7 +446,7 @@ rebuilt();
 // Pick the stored index, even when edited display colors are identical; honor flips/bounds.
 imageWidth = 2;
 sourcePixels = [255, 0, 0, 255, 0, 0, 255, 255];
-const pickingPalette = {...reopenedPalette, mappingColors:['#ff0000', '#0000ff'], colors:['#00ff00', '#00ff00']};
+const pickingPalette = {...reopenedPalette, mappingColors:['#00000000', '#ff0000', '#0000ff'], colors:['#00000000', '#00ff00', '#00ff00']};
 // The first Space + click must pick a color even if Space started in an inspector input.
 studioState.previewMode = 'indexed';
 studioState.zoom = 'fit';
@@ -459,7 +454,7 @@ const firstSpaceClick = mountPalette(pickingPalette, studioState);
 windowHandlers.keydown({code:'Space', key:' ', target:{tagName:'INPUT'}});
 canvas.onpointerdown({button:0, clientX:1, clientY:4, preventDefault:function () {}});
 canvas.onpointerup({clientX:1, clientY:4});
-assert.deepStrictEqual(pickedColors, [0]);
+assert.deepStrictEqual(pickedColors, [1]);
 windowHandlers.keyup({code:'Space'});
 firstSpaceClick();
 pickedColors.length = 0;
@@ -475,10 +470,10 @@ spaceClick(1);
 spaceClick(7);
 spaceClick(-1);
 spaceClick(8);
-assert.deepStrictEqual(pickedColors, [0, 1]);
+assert.deepStrictEqual(pickedColors, [1, 2]);
 spaceClick(1, 2);
 canvas.onpointerdown({button:2, ctrlKey:false});
-assert.deepStrictEqual(pickedColors, [0, 1]);
+assert.deepStrictEqual(pickedColors, [1, 2]);
 picking();
 // Equal RGB values with different alpha must map to distinct, stable palette entries.
 imageWidth = 4;

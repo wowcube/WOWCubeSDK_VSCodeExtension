@@ -52,9 +52,9 @@ mappingColors: string[]
 colorCount: integer
     Requested palette capacity, not necessarily colors.length. Generation can
     produce fewer entries than requested. The default requested capacity is 256.
-transparentIndex: integer | null
-    Optional palette index whose effective alpha is zero, overriding the color
-    string's alpha. null means no explicit transparent-index override.
+transparentIndex: 0
+    Always zero. colors[0] and mappingColors[0] are #00000000, reserved for
+    transparency. The requested capacity (2–256) includes this reserved entry.
 
 The current palette-builder produces #RRGGBBAA colors quantized to RGB565+A5.
 On generation, colors and mappingColors initially contain the same values.
@@ -86,19 +86,16 @@ eligible entry, so the lowest eligible index wins. If mappingColors[56] and
 mappingColors[57] are both #181c18, index 56 wins. Duplicates only in colors
 do not affect matching, because the comparison uses mappingColors.
 
-For source pixels with alpha greater than zero, exclude transparentIndex
-from the candidates. Alpha-form matching also excludes mapping entries whose
-alpha is zero. Opaque-form matching otherwise ignores mapping and source alpha.
-The current implementation falls back to index 0 if no eligible entry exists.
+For source pixels with alpha greater than zero, compare entries 1 through
+the last mapping entry. Index 0 is always excluded. Opaque-form matching
+ignores mapping and source alpha. If there are no candidates, use index 0.
 
 A source pixel with alpha zero bypasses nearest-color matching. Its index is
-transparentIndex when set; otherwise it is the first mapping entry with alpha
-zero. If neither exists, the preview uses -1 internally for no palette entry.
-Such pixels remain transparent; -1 is not serialized in the JSON.
+always 0. Such pixels remain transparent.
 
 After matching, RGB comes from colors[index]. Alpha-form output uses that
 entry's alpha directly, without multiplying it by source alpha. Opaque-form
-output uses alpha 255. The explicit transparentIndex always overrides to zero.
+output uses alpha 255. Index 0 always has zero alpha.
 These rules describe the current preview; no export pixel encoding is stored
 in the JSON model.
 
@@ -131,10 +128,28 @@ softkey: {key: string, threshold: integer} | null
     normally writes null. "Color Key" is the UI label; the JSON key remains
     softkey.
 number: integer
-    Reserved sequence metadata, currently 0 for newly created static sprites.
+    Application-defined Number metadata; not the sequence index. Defaults to 0.
 frameRate: integer
-    Reserved sequence timing metadata, currently 1 for newly created static
-    sprites. Do not interpret this field name as a frames-per-second value.
+    Engine hold counter (Rate), not frames per second. Sequence frames use
+    0–127; at engine multiplier 1 the duration is (frameRate + 1) * 50 ms.
+    Static sprites retain the default 1. Runtime multipliers may change timing.
+sequence: {id: string, name: string, index: integer} (optional)
+    Present only on sprites belonging to an animation sequence. id identifies
+    the sequence, name is shared by all its frames and unique across resources
+    and sequences, and index is its zero-based order. Indices are contiguous.
+    Every animation requires at least two frames for compilation. Both name
+    and name + "_end" are reserved identifiers and must not collide with any
+    resource name or another animation's generated identifiers.
+    Every frame is a distinct sprite with a globally unique ID and resource
+    name, even when a source image occurs more than once. Number is unrelated.
+    There is no animation resource type. A frame belongs to one sequence.
+    The fixed sequence origin is (0, 0), in source pixels with Y down. A frame
+    displayed with top-left (X, Y) stores pivot {x:-X, y:-Y}. Different source
+    dimensions do not change the origin. FULLSIZE scaling is applied later by
+    the existing runtime/export conversion, not by changing these pivots.
+    Preview looping is not exported. The resource builder links consecutive
+    frame IDs through Seq, including the last back to the first. It generates
+    BMP_<name> and BMP_<name>_end for the first and last frames respectively.
 group: string | null
     Assigned name from registries.groups, or null.
 objectType: string | null

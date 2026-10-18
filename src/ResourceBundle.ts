@@ -1,4 +1,6 @@
+import * as PaletteCompatibility from '../media/palettecompatibility';
 import * as ResourceValidation from '../media/resourcevalidation';
+import { SpriteSequences, SequenceMembership } from './SpriteSequence';
 import { mapResourceType } from './MapResource';
 
 export interface Resource
@@ -21,6 +23,7 @@ export interface PaletteResource extends Resource
 export interface SpriteResource extends Resource
 {
 	type:'sprite';
+	sequence?:SequenceMembership;
 	source:string;
 	paletteId:string | null;
 	colorMode:'palette' | 'rgb565' | 'rgb6666';
@@ -102,7 +105,7 @@ ResourceTypes.register({
 	type:'palette',
 	label:'Palette',
 	canCreate:false,
-	create:(id, name):PaletteResource => ({id, name, type:'palette', colors:['#000000', '#ffffff'], mappingColors:['#000000', '#ffffff'], colorCount:256, transparentIndex:null}),
+	create:(id, name):PaletteResource => ({id, name, type:'palette', colors:['#00000000', '#ffffff'], mappingColors:['#00000000', '#ffffff'], colorCount:256, transparentIndex:0}),
 	getReferences:() => [],
 	validate:(resource) =>
 	{
@@ -186,7 +189,7 @@ ResourceTypes.register({
 			errors.push('V-020: Softkey requires a #RRGGBB color and an integer threshold from 0 to 255.');
 		}
 		if(resource.compression !== 'softkey' && softkey != null) { errors.push('V-020: Softkey settings require Softkey encoding.'); }
-		for(const [key, min, max] of [['number', -32768, 32767], ['frameRate', 1, 127]] as const)
+		for(const [key, min, max] of [['number', -32768, 32767], ['frameRate', resource.sequence ? 0 : 1, 127]] as const)
 		{
 			if(!Number.isInteger(resource[key]) || !isNumber(resource[key], min, max))
 			{
@@ -310,6 +313,7 @@ export class ResourceBundles
 				errors.push(...resourceType.validate(resource, bundle).map(error => resource.name+': '+error));
 			}
 		}
+		errors.push(...SpriteSequences.validate(bundle));
 		const palettes = bundle.resources.filter(resource => resource.type === 'palette');
 		if(palettes.length > ResourceValidation.maxPalettes) { errors.push('V-016: At most '+ResourceValidation.maxPalettes+' palettes are allowed.'); }
 		if(1 + bundle.resources.filter(resource => ['sprite', 'palette', 'map', 'sound'].includes(resource.type)).length > 5120)
@@ -327,9 +331,14 @@ export class ResourceBundles
 		return errors;
 	}
 
+	public static getBuildErrors(bundle:ResourceBundle):string[]
+	{
+		return [...SpriteSequences.buildErrors(bundle), ...bundle.resources.filter(resource => resource.type === 'palette').map(resource => PaletteCompatibility.issue(resource as PaletteResource)).filter((error):error is string => !!error)];
+	}
+
 	public static getWarnings(bundle:ResourceBundle):string[]
 	{
-		const warnings:string[] = [];
+		const warnings:string[] = this.getBuildErrors(bundle);
 		const palettes = bundle.resources.filter(resource => resource.type === 'palette');
 		for(const palette of palettes)
 		{

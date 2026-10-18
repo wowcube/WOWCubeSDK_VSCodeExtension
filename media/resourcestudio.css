@@ -157,3 +157,10 @@ input[type=color] { height: 36px; padding: 3px; }
 	.tabs { padding: 0 3px; }
 	.tabs button { padding: 10px 8px; }
 }
+
+.sprite-group { margin:4px 0; }
+.sprite-group > summary { cursor:pointer; padding:9px 8px; overflow-wrap:anywhere; border-radius:3px; }
+.sprite-group > summary:hover { background:var(--s-field); }
+.sprite-group > summary:focus-visible { outline:1px solid var(--s-focus); outline-offset:-1px; }
+.sprite-group-count { display:block; padding-left:14px; font-size:11px; color:var(--s-muted); }
+.sprite-group-items { margin-left:12px; border-left:1px solid var(--s-border); padding-left:5px; }

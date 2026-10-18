@@ -7,11 +7,11 @@ import { Output } from './Output';
 
 export class PaletteBuilder
 {
-	public static async generate(sources:string[], size:number, reserveTransparent:boolean = false):Promise<string[]>
+	public static async generate(sources:string[], size:number, reserveTransparent:boolean = true):Promise<string[]>
 	{
-		if(!Number.isInteger(size) || size < 1 || size > 256)
+		if(!Number.isInteger(size) || size < (reserveTransparent ? 2 : 1) || size > 256)
 		{
-			throw new Error('Palette size must be an integer from 1 to 256.');
+			throw new Error('Palette size must be an integer from '+(reserveTransparent ? 2 : 1)+' to 256.');
 		}
 		if(!sources.length || sources.some(source => !path.isAbsolute(source) || /[\r\n]/.test(source)))
 		{
@@ -73,6 +73,7 @@ export class PaletteBuilder
 			{
 				throw new Error('Palette builder returned an invalid palette or too many colors.');
 			}
+			if(reserveTransparent && result.colors[0].toLowerCase() !== '#00000000') { throw new Error('Palette builder did not reserve transparent color 0. Update palette-builder in the SDK tools folder.'); }
 			return result.colors.map((color:string) => color.toLowerCase());
 		}
 		finally

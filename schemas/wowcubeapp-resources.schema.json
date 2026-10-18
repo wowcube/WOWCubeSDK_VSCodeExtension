@@ -90,17 +90,36 @@
                   "items": {
                     "type": "string",
                     "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$"
-                  }
+                  },
+                  "allOf": [
+                    {
+                      "items": [
+                        {
+                          "const": "#00000000"
+                        }
+                      ]
+                    }
+                  ],
+                  "description": "Current display colors. Entry zero is always #00000000."
                 },
                 "mappingColors": {
                   "type": "array",
                   "minItems": 1,
                   "maxItems": 256,
-                  "description": "Generated colors used to assign source pixels to stable palette indices. Reset only when rebuilding the palette.",
+                  "description": "Generated matching colors. Entry zero is always #00000000.",
                   "items": {
                     "type": "string",
                     "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$"
-                  }
+                  },
+                  "allOf": [
+                    {
+                      "items": [
+                        {
+                          "const": "#00000000"
+                        }
+                      ]
+                    }
+                  ]
                 },
                 "colorCount": {
                   "type": "integer",
@@ -108,12 +127,8 @@
                   "maximum": 256
                 },
                 "transparentIndex": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": 0,
-                  "maximum": 255
+                  "const": 0,
+                  "description": "Always 0: the device reserves entry zero for transparency."
                 }
               }
             }
@@ -252,9 +267,10 @@
                 },
                 "frameRate": {
                   "type": "integer",
-                  "minimum": 1,
+                  "minimum": 0,
                   "maximum": 127,
-                  "default": 1
+                  "default": 1,
+                  "description": "Engine hold counter. Animation duration at multiplier 1 is (frameRate + 1) \u00d7 50 ms. Static sprites retain the default 1."
                 },
                 "group": {
                   "type": [
@@ -296,6 +312,31 @@
                       "maximum": 255
                     }
                   }
+                },
+                "sequence": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "name",
+                    "index"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "pattern": "^[a-z0-9_]+$",
+                      "maxLength": 23
+                    },
+                    "index": {
+                      "type": "integer",
+                      "minimum": 0
+                    }
+                  },
+                  "description": "At least two sprite records must share the sequence ID, with contiguous indices from zero. Names reserve both BMP_<name> and BMP_<name>_end."
                 }
               },
               "allOf": [
@@ -369,6 +410,22 @@
                     "properties": {
                       "softkey": {
                         "type": "null"
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "not": {
+                      "required": [
+                        "sequence"
+                      ]
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "frameRate": {
+                        "minimum": 1
                       }
                     }
                   }

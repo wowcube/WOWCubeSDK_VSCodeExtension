@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import * as cp from 'child_process';
 import { Configuration } from './Configuration';
+import { ResourceBundles } from './ResourceBundle';
 import { Output } from './Output';
 import { ResourceStudioProvider } from './ResourceStudioProvider';
 
@@ -59,7 +60,16 @@ export class ResourceBuilder
 			Output.channel().appendLine('[resource-builder] No resource bundle; skipping resource compilation.');
 			return;
 		}
-		const hash = crypto.createHash('sha256').update(contents).digest('hex');
+		const errors = ResourceBundles.getBuildErrors(ResourceBundles.parse(contents.toString('utf8')));
+		if(errors.length) { throw new Error(errors.join('\n')); }
+		const toolsPath = Configuration.getUtilsPath();
+		if(!toolsPath) { throw new Error('Configure the WOWCube Development Kit path before building resources.'); }
+		const tool = path.join(toolsPath, Configuration.getResourceBuilder());
+		let executable:Buffer;
+		try { executable = await fs.promises.readFile(tool); }
+		catch { throw new Error('Resource builder not found: '+tool+'. Install it in the SDK tools folder.'); }
+		// A new compiler must rebuild outputs produced by the previous executable.
+		const hash = crypto.createHash('sha256').update(contents).update(executable).digest('hex');
 		const key = 'resourceBuilder:'+vscode.Uri.file(resources).toString();
 		const state:vscode.Memento = Configuration.context.workspaceState;
 		const channel = Output.channel();
@@ -68,11 +78,6 @@ export class ResourceBuilder
 			channel.appendLine('[resource-builder] Resources are up to date.');
 			return;
 		}
-		const toolsPath = Configuration.getUtilsPath();
-		if(!toolsPath) { throw new Error('Configure the WOWCube Development Kit path before building resources.'); }
-		const tool = path.join(toolsPath, Configuration.getResourceBuilder());
-		try { await fs.promises.access(tool, fs.constants.F_OK); }
-		catch { throw new Error('Resource builder not found: '+tool+'. Install it in the SDK tools folder.'); }
 		channel.appendLine('[resource-builder] '+(reason === 'save' ? 'Resource file saved. Building resources...' : 'Building resources...'));
 		channel.show(true);
 		await new Promise<void>((resolve, reject) =>
