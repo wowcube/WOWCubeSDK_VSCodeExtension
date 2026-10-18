@@ -4,6 +4,7 @@ import * as crypto from 'crypto';
 import { getNonce } from './getNonce';
 import { ResourceBundles, ResourceTypes, isResourcePath, ResourceBundle, PaletteResource } from './ResourceBundle';
 import { PaletteBuilder } from './PaletteBuilder';
+import { MapResource } from './MapResource';
 import * as ResourceValidation from '../media/resourcevalidation';
 
 interface SourceFile
@@ -18,6 +19,13 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 {
 	public static readonly viewType = 'WOWCubeSDK.resourceStudio';
 	public static readonly filename = 'wowcubeapp-resources.json';
+	private static editors:Map<string,() => Promise<void>> = new Map<string,() => Promise<void>>();
+
+	public static async flushEdits(resources:string):Promise<void>
+	{
+		await this.editors.get(path.resolve(resources))?.();
+	}
+
 	private pendingSources:Map<string,string> = new Map<string,string>();
 	private editQueues:Map<string,Promise<void>> = new Map<string,Promise<void>>();
 	private sourceSelections:Map<string,(source:string) => void> = new Map<string,(source:string) => void>();
@@ -108,6 +116,28 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 		let timer:ReturnType<typeof setTimeout> | undefined;
 		let selectedSource:string | undefined;
 		let browseSource:string | undefined;
+		const editorKey = path.resolve(document.uri.fsPath);
+		const flushRequests = new Map<string,(error?:string) => void>();
+		const flushEdits = async ():Promise<void> =>
+		{
+			await this.editQueues.get(document.uri.toString());
+			if(disposed || !panel.visible) { return; }
+			await new Promise<void>((resolve, reject) =>
+			{
+				const requestId = crypto.randomBytes(16).toString('hex');
+				const finish = (error?:string):void =>
+				{
+					clearTimeout(timeout); flushRequests.delete(requestId);
+					if(error) { reject(new Error(error)); } else { resolve(); }
+				};
+				const timeout = setTimeout(() => finish('Resource Studio did not finish committing edits. Try building again.'), 30000);
+				flushRequests.set(requestId, finish);
+				void panel.webview.postMessage({type:'flushEdits', requestId}).then(delivered =>
+				{
+					if(!delivered) { finish('Unable to commit Resource Studio edits before building.'); }
+				}, () => finish('Unable to reach Resource Studio before building.'));
+			});
+		};
 		const updateWebview = async ():Promise<void> =>
 		{
 			const number = ++updateNumber;
@@ -136,7 +166,7 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 					}
 				}
 				const sources = await this.getSources(projectUri, bundle.sourceFolders,
-					[...bundle.resources.map(resource => resource.source), selectedFolder === undefined ? browseSource : undefined]
+					[...bundle.resources.map(resource => resource.source), ...bundle.resources.filter(resource => resource.type === 'map').map(resource => (resource as MapResource).net.backgroundImage), selectedFolder === undefined ? browseSource : undefined]
 						.filter((source):source is string => typeof source === 'string'), panel.webview);
 				if(disposed || number !== updateNumber || version !== document.version)
 				{
@@ -207,9 +237,14 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 					switch(message.type)
 					{
 						case 'ready':
+							ResourceStudioProvider.editors.set(editorKey, flushEdits);
 							selectedSource = this.pendingSources.get(document.uri.toString());
 							this.pendingSources.delete(document.uri.toString());
 							await updateWebview();
+							break;
+						case 'flushedEdits':
+							await this.editQueues.get(document.uri.toString());
+							flushRequests.get(message.requestId)?.(typeof message.error === 'string' ? message.error : undefined);
 							break;
 						case 'save':
 							if(!await document.save())
@@ -290,6 +325,19 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 											else
 											{
 												bundle.resources.push(resource);
+											}
+											break;
+										case 'chooseMapBackground':
+											const map = bundle.resources.find(resource => resource.id === message.id && resource.type === 'map') as MapResource | undefined;
+											if(!map) { throw new Error('Map no longer exists.'); }
+											const images = await vscode.window.showOpenDialog({canSelectMany:false, canSelectFolders:false, canSelectFiles:true, defaultUri:projectUri, openLabel:'Use map background', filters:{images:['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp']}});
+											if(!images?.length) { return false; }
+											if(images?.length)
+											{
+												const image = this.getRelativePath(projectUri, images[0]);
+												const stat = await vscode.workspace.fs.stat(images[0]);
+												if(!(stat.type & vscode.FileType.File) || !/\.(png|jpe?g|webp|gif|bmp)$/i.test(image)) { throw new Error('Choose an image file inside the project.'); }
+												map.net.backgroundImage = image;
 											}
 											break;
 										case 'update':
@@ -438,6 +486,7 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 				}
 				catch(error)
 				{
+					for(const finish of flushRequests.values()) { finish(this.getError(error)); }
 					await updateWebview();
 					await panel.webview.postMessage({type:'error', message:this.getError(error)});
 				}
@@ -446,6 +495,8 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 		panel.onDidDispose(() =>
 		{
 			disposed = true;
+			if(ResourceStudioProvider.editors.get(editorKey) === flushEdits) { ResourceStudioProvider.editors.delete(editorKey); }
+			for(const finish of flushRequests.values()) { finish('Resource Studio closed before its edits could be committed.'); }
 			if(this.sourceSelections.get(document.uri.toString()) === selectSource)
 			{
 				this.sourceSelections.delete(document.uri.toString());
@@ -670,6 +721,9 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 		const typesUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'resourcetypes.js'));
 		const validationUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'resourcevalidation.js'));
 		const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'resourcestudio.js'));
+		const mapCssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'mapeditor.css'));
+		const sharedScripts = ['spritepixels.js', 'previewviewport.js', 'mapgeometry.js', 'sourcefiles.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
+		const mapScripts = ['maptextures.js', 'maprenderer.js', 'mapeditor.js', 'mapresource.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
 		return `<!DOCTYPE html>
 		<html lang="en">
 		<head>
@@ -677,12 +731,15 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
 			<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
 			<link href="${cssUri}" rel="stylesheet">
+			<link href="${mapCssUri}" rel="stylesheet">
 			<title>Resource Studio</title>
 		</head>
 		<body>
 			<div id="resource-studio" aria-label="Resource Studio"><p class="loading">Loading resource bundle…</p></div>
 			<script nonce="${nonce}" src="${validationUri}"></script>
+			${sharedScripts.map(uri => `<script nonce="${nonce}" src="${uri}"></script>`).join('\n')}
 			<script nonce="${nonce}" src="${typesUri}"></script>
+			${mapScripts.map(uri => `<script nonce="${nonce}" src="${uri}"></script>`).join('\n')}
 			<script nonce="${nonce}" src="${scriptUri}"></script>
 		</body>
 		</html>`;

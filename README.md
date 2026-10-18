@@ -27,7 +27,7 @@ Opening that JSON file directly uses the Resource Studio custom editor. Use **Ed
 or **Reopen Editor With → Text Editor** to edit the underlying document.
 
 The Workspace layout contains a resource list, visual preview, and property inspector.
-The first supported resource types are palettes and sprites:
+Supported resource types are palettes, sprites, and maps:
 
 * Palettes are generated from sprites with `sdk/tools/palette-builder` (`palette-builder.exe`
   on Windows). The tool produces `#RRGGBBAA` colors quantized to RGB565+A5.
@@ -98,7 +98,7 @@ PNG files up to 240×240 pixels. Non-fullsize sprites over 120 pixels in either 
 show a warning because the runtime doubles their size.
 
 All definitions live in one versioned JSON document. Document edits participate in
-VS Code save, undo, redo, and recovery. **Save manifest** and the normal Save command
+VS Code save, undo, redo, and recovery. **SAVE CHANGES** and the normal Save command
 save the bundle. Palette deletion is blocked until dependent sprites are reassigned.
 Palette-mode sprites require a palette; RGB565 sprites do not. Bundles now use
 `schemaVersion: 2`; version 1 bundles are not migrated or supported. To start again, move
@@ -106,7 +106,7 @@ the old bundle aside and use Open Resource Studio to create a new one.
 RGB6666, BUMP, DUDV and REFL are hidden model stubs with no selectable controls or
 rendering/export support. BG is available through Show advanced blend options.
 Unknown resource types and additional
-JSON properties are preserved. SDK format export and build integration are a later stage.
+JSON properties are preserved. Resource compilation uses the SDK's `resource-builder` CLI.
 
 Pivot fields use source pixels and snap to half-pixels. Nine pivot presets include
 Reset to center. Click/drag places the pivot; Shift allows placement outside the image.
@@ -123,7 +123,59 @@ and underscores, be unique, contain at most 23 characters, and avoid reserved na
 New names are normalized from filenames. Validation also enforces registry capacities
 (255 groups/types, 32 tags), palette capacity (64 palettes), shared alpha/opaque
 compatibility, frame durations, Number limits and valid PNG headers/dimensions.
-Encoding-dependent checks remain part of the later export stage.
+Encoding-dependent compilation checks are handled by `resource-builder`.
+
+### Building resources
+
+Saving `wowcubeapp-resources.json`, from Resource Studio or the text editor, compiles
+changed resources and refreshes the configured IDs header automatically.
+Simulator and device builds await resource compilation before compiling app source code.
+The **build resources** task runs the same step independently. It saves pending changes
+to `wowcubeapp-resources.json` and invokes `sdk/tools/resource-builder`
+(`resource-builder.exe` on Windows), passing the workspace's `wowcubeapp-build.json`.
+The tool generates packed assets, `index.bin`, and the IDs header in the configured
+app folder. Output and warnings appear in **WOWCube SDK** Output.
+
+Resources compile on the first build and whenever the saved resource JSON content differs
+from the last successful resource build. Its SHA-256 hash is stored in VS Code workspace
+state and persists across restarts. Unchanged JSON skips resource compilation; changing
+only a source image or a file timestamp does not trigger it. Projects without a resource
+JSON skip this step. Failed resource generation or JSON edits during generation stop the
+app build and do not update the successful hash.
+
+### Maps
+
+Open **Maps** and use **Add resource** to create a cube map. The left library lists
+registered sprites. Add the same sprite repeatedly to create independent placements.
+Drag sprites on the map, or edit their face-relative X/Y pivot coordinates. Placement
+is unrestricted, including gaps and areas outside the net. The outliner is ordered
+topmost to bottommost; drag rows or use its stacking buttons to change draw order.
+The outliner and selected-placement parameters have separate scrollable panes.
+Each placement has a lock toggle: locked sprites remain visible but cannot be selected,
+moved, edited, reordered, or deleted until unlocked. Locks are saved as editor view
+state for each map and do not change the resource JSON or exported runtime flags.
+
+Net geometry, Background, and Side markers are below the map. Screen size, inner gap,
+face-edge gap, frame, and padding are independent. Positions are stored as a face ID
+and engine coordinates, so geometry changes preserve device-space placement. At the
+default screen size 120, FULLSIZE sprites use 50% of their source dimensions and other
+sprites use 100%, including the corresponding pivot offset. Geometry controls also
+scale these sizes appropriately when screen size changes. The six stored `~side0`
+through `~side5` entries stay at their face centers even when their dots are hidden.
+Background images are project-relative files selected through a native file picker.
+
+The map uses the same Fit / 0.5×–128× zoom, Shift-wheel zoom (including horizontal
+wheel events), ordinary scrolling, and vertical resize behavior as the sprite preview.
+Map view settings and scroll positions are retained independently of sprite previews.
+Placement edits keep the map canvas and converted textures alive. Texture loads are
+shared through a bounded cache keyed by source revision and rendering settings; drag
+redraws are coalesced per animation frame and skip offscreen sprites.
+Sprite/palette edits are reflected when the map is redrawn; deleting a referenced
+sprite is blocked until its map placements are removed or reassigned.
+
+Map authoring is implemented here. The currently installed `resource-builder` exports
+sprites and palettes only and reports maps as skipped; exporting map records requires
+a map-capable compiler using the contract in `resource-json-model.txt`.
 
 ### Adding resource types
 
@@ -141,6 +193,8 @@ participate in automatic palette generation.
 
 Run `npm run test:resources` for model, webview handler, and provider tests without
 starting an Extension Host. Press F5 to launch the extension for a full UI check.
+`src/test/mapBrowser.test.js` additionally exercises the real editor in Chromium when
+Playwright is available; set `WOWCUBE_BROWSER` to a Chromium executable if necessary.
 
 ## Extension Settings
 

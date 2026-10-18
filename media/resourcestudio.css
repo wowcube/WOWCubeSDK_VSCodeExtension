@@ -60,7 +60,9 @@ button.primary:hover { background: var(--vscode-button-hoverBackground, #1177bb)
 .visual-editor { min-width: 0; }
 .preview-head { display: flex; justify-content: space-between; color: var(--s-muted); font-size: 12px; margin-bottom: 8px; gap: 8px; overflow-wrap: anywhere; }
 .preview { background: var(--s-stage); border: 1px solid var(--s-border); border-radius: 4px; height: 350px; display: flex; align-items: safe center; justify-content: safe center; position: relative; overflow: auto; padding: 20px; }
-#sprite-preview { resize: vertical; min-height: 140px; }
+#sprite-preview { min-height: 140px; }
+.view-resize-handle { height:6px; flex-shrink:0; cursor:row-resize; touch-action:none; background:var(--s-border); }
+.view-resize-handle:hover, .view-resize-handle:focus-visible { background:var(--s-focus); outline:none; }
 .sprite-surface { position: relative; flex-shrink: 0; }
 .sprite-surface canvas { display: block; }
 #sprite-overlay { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
@@ -106,7 +108,13 @@ input[type=color] { height: 36px; padding: 3px; }
 .rgba-channel input { margin: 0; accent-color: var(--s-blue); padding: 0; }
 .rgba-channel output { text-align: right; font-variant-numeric: tabular-nums; }
 .notice { color: var(--s-warning); font-size: 12px; margin: 8px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
-.source-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--s-border); flex-wrap: wrap; }
+.source-group { border:1px solid var(--s-border); border-radius:4px; margin-bottom:8px; }
+.source-group>summary { cursor:pointer; padding:10px 12px; overflow-wrap:anywhere; background:var(--s-side); }
+.source-group>summary .minor { margin-left:12px; }
+.source-group>summary:focus-visible { outline:1px solid var(--s-focus); outline-offset:-1px; }
+.source-row { display: flex; align-items: center; gap: 12px; padding: 13px 12px; border-bottom: 1px solid var(--s-border); flex-wrap: wrap; }
+.source-row.registered .source-title .link { color:#2e7d32; }
+.source-sprite-names { max-width:40%; overflow-wrap:anywhere; }
 .source-title { flex: 1; min-width: 100px; overflow-wrap: anywhere; }
 .source-title small { display: block; color: var(--s-muted); }
 .source-image { max-width: 100%; max-height: 100%; image-rendering: pixelated; }

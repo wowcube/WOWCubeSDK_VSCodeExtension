@@ -375,6 +375,179 @@
                 }
               ]
             }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "map"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "placements",
+                "sideMarkers",
+                "net"
+              ],
+              "properties": {
+                "placements": {
+                  "type": "array",
+                  "description": "Topmost first; each item is a separate instance referencing a sprite resource.",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "id",
+                      "spriteId",
+                      "side",
+                      "x",
+                      "y"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "spriteId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "twistable": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Whether this sprite instance moves with cube twists."
+                      },
+                      "side": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 5
+                      },
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                },
+                "sideMarkers": {
+                  "type": "array",
+                  "minItems": 6,
+                  "maxItems": 6,
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "name",
+                      "side",
+                      "x",
+                      "y"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "pattern": "^~side[0-5]$"
+                      },
+                      "side": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 5
+                      },
+                      "x": {
+                        "const": 0
+                      },
+                      "y": {
+                        "const": 0
+                      }
+                    }
+                  }
+                },
+                "net": {
+                  "type": "object",
+                  "required": [
+                    "screenSize",
+                    "innerGap",
+                    "faceEdgeGap",
+                    "frame",
+                    "padding",
+                    "lineColor",
+                    "background",
+                    "markerColor",
+                    "markers",
+                    "backgroundImage"
+                  ],
+                  "properties": {
+                    "screenSize": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "innerGap": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "multipleOf": 2
+                    },
+                    "faceEdgeGap": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "frame": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "padding": {
+                      "type": "object",
+                      "required": [
+                        "right",
+                        "bottom"
+                      ],
+                      "properties": {
+                        "right": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "bottom": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      }
+                    },
+                    "lineColor": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$"
+                    },
+                    "background": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "markerColor": {
+                      "type": "string",
+                      "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$"
+                    },
+                    "markers": {
+                      "type": "boolean"
+                    },
+                    "backgroundImage": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "string",
+                          "pattern": "^(?!/)(?!.*[\\\\:])(?!(?:.*\\/)?\\.{1,2}(?:\\/|$))(?!.*//)(?!.*\\/$).+$"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
           }
         ]
       }

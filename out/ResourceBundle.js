@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ResourceBundles = exports.ResourceTypes = exports.hiddenSpriteModes = void 0;
 exports.isResourcePath = isResourcePath;
 const ResourceValidation = require("../media/resourcevalidation");
+const MapResource_1 = require("./MapResource");
 // These modes are preserved for future support but never offered by the editor.
 exports.hiddenSpriteModes = { color: ['rgb6666'], blend: ['bump', 'dudv', 'refl'] };
 function isNumber(value, min, max = Infinity) {
@@ -135,6 +136,7 @@ ResourceTypes.register({
         return errors;
     }
 });
+ResourceTypes.register(MapResource_1.mapResourceType);
 class ResourceBundles {
     static create() {
         return { schemaVersion: 2, sourceFolders: [], resources: [], registries: { groups: [], types: [], tags: [] } };

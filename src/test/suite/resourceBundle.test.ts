@@ -112,7 +112,7 @@ suite('Resource bundle', () =>
 	{
 		const {bundle} = createBundle();
 		bundle.customSettings = {future:true};
-		bundle.resources.push({id:'map-1', name:'level', type:'map', layers:[{tiles:[1, 2]}]});
+		bundle.resources.push({id:'map-1', name:'level', type:'future-map', layers:[{tiles:[1, 2]}]});
 		assert.deepStrictEqual(ResourceBundles.parse(JSON.stringify(bundle)), bundle);
 	});
 

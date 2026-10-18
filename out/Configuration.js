@@ -454,6 +454,19 @@ class Configuration {
                 return 'palette-builder';
         }
     }
+    static getResourceBuilder() {
+        var p = os.platform();
+        switch (p) {
+            case 'darwin': //mac
+            case 'linux':
+                return 'resource-builder';
+            case 'win32': //windows
+                return 'resource-builder.exe';
+            default:
+                //unsupported os
+                return 'resource-builder';
+        }
+    }
     static getOctaviosUtils() {
         var p = os.platform();
         switch (p) {

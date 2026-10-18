@@ -5,8 +5,8 @@ Schema version: 2
 
 The file stores one resource bundle. It contains resource records, source folder
 paths, and shared classification definitions. Image files remain separate; the
-JSON references them by path. The implemented resource types are palette and
-sprite. Exported device data is not part of this model.
+JSON references them by path. The implemented resource types are palette,
+sprite, and map. Exported device data is not part of this model.
 
 Bundle fields
 
@@ -32,7 +32,7 @@ id: string
 name: string
     Resource name, independent of its source file name and ID.
 type: string
-    Resource kind: "palette" or "sprite" for the implemented types.
+    Resource kind: "palette", "sprite", or "map" for the implemented types.
 
 Palette fields
 
@@ -156,6 +156,121 @@ are present in its record. Use null explicitly for nullable fields rather
 than omitting them. Additional fields and unknown resource types can be
 present and are preserved by Resource Studio.
 
+Map fields
+
+type: "map"
+placements: MapPlacement[]
+    Ordered sprite instances, TOPMOST FIRST. The first item draws over later
+    items. There is no separate z value. Repeated references to the same sprite
+    are independent instances.
+sideMarkers: SideMarker[]
+    Six stored map entries, one for each face. They are not sprite resources
+    and are separate from the sprite stacking list.
+net: NetSettings
+    Geometry and background settings described below.
+
+MapPlacement fields
+
+id: string
+    Stable instance identity, unique within this map. Independent of spriteId.
+spriteId: string
+    Reference to the id of an existing sprite resource, not its name or path.
+twistable: boolean = false
+    Whether this placed sprite moves with cube twists. Applies independently
+    to each placement, not the referenced sprite. Omission means false.
+side: integer
+    0 TOP, 1 FRONT, 2 RIGHT, 3 BACK, 4 LEFT, 5 BOTTOM.
+x: number
+y: number
+    Sprite pivot position in face-relative ENGINE PIXELS. The face center is
+    (0, 0); X increases rightward and Y increases upward. Coordinates can be
+    negative or outside the face. These are neither normalized coordinates nor
+    top-left image coordinates. Sprite pivot offsets remain source pixels with
+    Y downward, as defined in Sprite fields.
+
+SideMarker fields
+
+name: string
+    Exactly ~side0 through ~side5, corresponding to side below.
+side: integer
+    Face ID using the numbering above.
+x: 0
+y: 0
+    The face center in engine coordinates. The marker's canvas position is
+    derived from net geometry, not stored here. Hiding markers does not remove
+    these six entries.
+
+NetSettings fields and defaults
+
+screenSize: integer = 120
+    One display square's size in logical canvas pixels. Each face has 2 by 2
+    displays. Canvas pixels per engine pixel k = screenSize / 240.
+innerGap: integer = 18
+    Gap between displays inside a face, in logical canvas pixels; even.
+faceEdgeGap: integer = 18
+    Gap between face blocks, in logical canvas pixels.
+frame: integer = 1
+    Outer frame width, in logical canvas pixels.
+padding: {right: integer, bottom: integer} = {right:0, bottom:0}
+    Extra canvas area beyond the grid.
+lineColor: string = "#252525"
+background: string | null = "#8b8b8b"
+    RGB/RGBA hex colors; null background means transparent.
+markers: boolean = true
+    Whether the six side-marker dots are visible in the editor.
+markerColor: string = "#ffffff"
+    RGB/RGBA hex color for the marker dots.
+backgroundImage: string | null = null
+    Optional project-relative image path. The image replaces the generated net
+    backdrop visually; the computed geometry and stored markers remain intact.
+    This is editor presentation, not a reference to a sprite resource.
+
+Geometry settings are independent. Zoom and viewport height are editor view
+state and are not stored in the resource JSON. For net geometry details see
+media/mapgeometry.js and media/mapgeometry.d.ts.
+
+Placement drawing uses scale = k for FULLSIZE sprites and 2*k for normal
+sprites. With face center (cx, cy), a placement's image top-left is:
+    left = cx + x*k - pivot.x*scale
+    top  = cy - y*k - pivot.y*scale
+For a null sprite pivot, use (sourceWidth/2, sourceHeight/2).
+
+Example map resource (sprite_hero references the sprite in the bundle example)
+
+{
+  "id": "map_level",
+  "name": "level_01",
+  "type": "map",
+  "placements": [
+    {"id": "hero_front", "spriteId": "sprite_hero", "side": 1, "x": 138, "y": 138, "twistable": false},
+    {"id": "hero_right", "spriteId": "sprite_hero", "side": 2, "x": -138, "y": -138, "twistable": false}
+  ],
+  "sideMarkers": [
+    {"name": "~side0", "side": 0, "x": 0, "y": 0},
+    {"name": "~side1", "side": 1, "x": 0, "y": 0},
+    {"name": "~side2", "side": 2, "x": 0, "y": 0},
+    {"name": "~side3", "side": 3, "x": 0, "y": 0},
+    {"name": "~side4", "side": 4, "x": 0, "y": 0},
+    {"name": "~side5", "side": 5, "x": 0, "y": 0}
+  ],
+  "net": {
+    "screenSize": 120,
+    "innerGap": 18,
+    "faceEdgeGap": 18,
+    "frame": 1,
+    "padding": {"right": 0, "bottom": 0},
+    "lineColor": "#252525",
+    "background": "#8b8b8b",
+    "markers": true,
+    "markerColor": "#ffffff",
+    "backgroundImage": null
+  }
+}
+
+The current resource-builder exports sprites and palettes only. This map
+record defines the editor/consumer contract; map binary export needs a compiler
+that supports it.
+
 Empty bundle
 
 {
@@ -238,4 +353,5 @@ For RGB565 with Color Key, replace the last two fields with:
 Implementation references
 
 src/ResourceBundle.ts — model definitions.
+src/MapResource.ts — map and placement definitions.
 schemas/wowcubeapp-resources.schema.json — machine-readable JSON Schema.

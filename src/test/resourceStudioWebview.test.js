@@ -24,7 +24,7 @@ const context = vm.createContext({
 		return {getState:function () { return {tab:'Palettes'}; }, setState:function () {}, postMessage:function (message) { sent.push(message); }};
 	}
 });
-for(const file of ['resourcevalidation.js', 'resourcetypes.js', 'resourcestudio.js'])
+for(const file of ['sourcefiles.js', 'resourcevalidation.js', 'spritepixels.js', 'previewviewport.js', 'resourcetypes.js', 'resourcestudio.js'])
 {
 	vm.runInContext(fs.readFileSync(path.join(__dirname, '../../media', file), 'utf8'), context);
 }

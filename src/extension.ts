@@ -14,6 +14,7 @@ import { WOWCubeBuildTaskProvider } from './WOWCubeBuildTaskProvider';
 import { WOWCubeProjectProvider } from './WOWCubeProjectProvider';
 import { ExternalToolsPanel } from './ExternalToolsPanel';
 import { ResourceStudioProvider } from './ResourceStudioProvider';
+import { ResourceBuilder } from './ResourceBuilder';
 
 import {Configuration, InstallationProblem} from './Configuration';
 import {Providers} from './Providers';
@@ -33,6 +34,7 @@ export async function activate(context: vscode.ExtensionContext)
 	
 	await Configuration.init();
 	Configuration.context = context;
+	ResourceBuilder.register(context);
 	
 	//initialize providers
 	Providers.init(context.extensionUri);

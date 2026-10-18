@@ -16,6 +16,7 @@ const WOWCubeBuildTaskProvider_1 = require("./WOWCubeBuildTaskProvider");
 const WOWCubeProjectProvider_1 = require("./WOWCubeProjectProvider");
 const ExternalToolsPanel_1 = require("./ExternalToolsPanel");
 const ResourceStudioProvider_1 = require("./ResourceStudioProvider");
+const ResourceBuilder_1 = require("./ResourceBuilder");
 const Configuration_1 = require("./Configuration");
 const Providers_1 = require("./Providers");
 const fs = require("fs");
@@ -28,6 +29,7 @@ async function activate(context) {
     ResourceStudioProvider_1.ResourceStudioProvider.register(context);
     await Configuration_1.Configuration.init();
     Configuration_1.Configuration.context = context;
+    ResourceBuilder_1.ResourceBuilder.register(context);
     //initialize providers
     Providers_1.Providers.init(context.extensionUri);
     //register build task

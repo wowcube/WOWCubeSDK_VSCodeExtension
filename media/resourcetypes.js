@@ -2,7 +2,7 @@
 (function ()
 {
 	const types = new Map();
-	const zoomLevels = [0.5, 1, 2, 4, 8, 16, 32, 64, 128];
+	const zoomLevels = window.ResourceStudioViewport.zoomLevels;
 	const hiddenColorModes = ['rgb6666'];
 	const hiddenBlendModes = ['bump', 'dudv', 'refl'];
 	const validation = window.ResourceStudioValidation;
@@ -10,49 +10,7 @@
 	{
 		return resource.pivot === null ? {x:width/2, y:height/2} : {...resource.pivot};
 	}
-	function rgb565Preview(data, width, dither, softkey)
-	{
-		const errors = dither ? new Float32Array(data.length) : null;
-		const key = softkey ? [0, 1, 2].map(channel => Math.floor((parseInt(softkey.key.slice(1 + channel*2, 3 + channel*2), 16)*(channel === 1 ? 63 : 31) + 127)/255)) : null;
-		for(let i = 0; i < data.length; i += 4)
-		{
-			let keyedOut = Boolean(key);
-			for(let channel = 0; channel < 3; channel++)
-			{
-				const value = Math.max(0, Math.min(255, data[i + channel] + (errors?.[i + channel] || 0)));
-				const levels = channel === 1 ? 63 : 31;
-				const quantized = Math.floor((value*levels + 127)/255);
-				if(key && Math.abs(quantized - key[channel]) > softkey.threshold*(channel === 1 ? 2 : 1)) { keyedOut = false; }
-				const expanded = channel === 1 ? (quantized << 2) | (quantized >> 4) : (quantized << 3) | (quantized >> 2);
-				data[i + channel] = expanded;
-				if(errors)
-				{
-					const error = value - expanded;
-					const x = (i/4)%width;
-					if(x + 1 < width) { errors[i + 4 + channel] += error*7/16; }
-					if(i + width*4 < data.length)
-					{
-						if(x > 0) { errors[i + (width - 1)*4 + channel] += error*3/16; }
-						errors[i + width*4 + channel] += error*5/16;
-						if(x + 1 < width) { errors[i + (width + 1)*4 + channel] += error/16; }
-					}
-				}
-			}
-			// Plain RGB565 has no alpha channel or transparent palette index.
-			data[i + 3] = keyedOut ? 0 : 255;
-		}
-	}
-	function colorChannels(color)
-	{
-		return [parseInt(color.slice(1, 3), 16), parseInt(color.slice(3, 5), 16), parseInt(color.slice(5, 7), 16),
-			color.length === 9 ? parseInt(color.slice(7, 9), 16) : 255];
-	}
-	function paletteChannels(resource, index)
-	{
-		const channels = colorChannels(resource.colors[index]);
-		if(resource.transparentIndex === index) { channels[3] = 0; }
-		return channels;
-	}
+	const {paletteChannels} = window.ResourceStudioPixels;
 	function paletteColor(resource, index)
 	{
 		return '#'+paletteChannels(resource, index).map(value => value.toString(16).padStart(2, '0')).join('');
@@ -184,7 +142,7 @@
 		type:'sprite',
 		label:'Sprite',
 		ownsName:true,
-		section:'Resources',
+		section:'Sprites',
 		icon:'▧',
 		renderCreateSource:function (dialog, helpers)
 		{
@@ -296,7 +254,8 @@
 				'<div class="preview" id="sprite-preview"><span class="minor" id="preview-message">Loading image…</span>'+ 
 				'<div class="sprite-surface"><canvas id="sprite-canvas" hidden tabindex="0" aria-label="Sprite preview. Click or drag to place the pivot.'+(palette ? ' Space plus click an indexed pixel to select its palette color.' : '')+'"></canvas>'+
 				'<svg id="sprite-overlay" aria-label="Collider corners and pivot"></svg></div></div>'+
-				'<div class="preview-caption">Click or drag to place the pivot. '+(palette ? 'Space + click an indexed pixel to select its palette color. ' : '')+'Shift + scroll to zoom. Drag the blue corner handles to resize the collider. Drag the bottom-right corner to resize the preview vertically.</div>'+
+				'<div class="view-resize-handle preview-resize-handle" role="separator" tabindex="0" aria-label="Resize sprite view height" aria-orientation="horizontal" aria-controls="sprite-preview"></div>'+
+				'<div class="preview-caption">Click or drag to place the pivot. '+(palette ? 'Space + click an indexed pixel to select its palette color. ' : '')+'Shift + scroll to zoom. Drag the blue corner handles to resize the collider. Drag the handle below the preview up or down to resize its height.</div>'+
 				(palette ? '<section class="usage palette-editor" data-palette-editor="'+helpers.escape(palette.id)+'" aria-label="Shared palette editor">'+
 				'<div class="palette-current"><div class="preview-head"><span>'+helpers.escape(palette.name)+'</span><span>'+palette.colors.length+' colors</span></div>'+
 				window.ResourceStudioTypes.get('palette').renderGrid(palette, helpers)+'</div><div class="palette-controls inspector">'+
@@ -419,9 +378,6 @@
 				return;
 			}
 			const palette = resource.colorMode === 'palette' ? helpers.bundle.resources.find(item => item.id === resource.paletteId) : undefined;
-			// Quantization uses the generated palette, never the user's edited display colors.
-			const mappingColors = (palette?.mappingColors || []).map(colorChannels);
-			const paletteAlpha = ['alpha', 'additive'].includes(resource.blend);
 			function colliderCorners(collider)
 			{
 				const left = Math.min(collider.x, collider.x + collider.width);
@@ -444,7 +400,7 @@
 				}
 				const width = image.naturalWidth;
 				const height = image.naturalHeight;
-				scale = helpers.state.zoom === 'fit' ? Math.min(128, Math.max(0.05, Math.min((stage.clientWidth - 40)/width, (stage.clientHeight - 40)/height))) : Math.max(zoomLevels[0], Math.min(128, Number(helpers.state.zoom) || 1));
+				scale = window.ResourceStudioViewport.scale(helpers.state, width, height, stage);
 				// Scale the display instead of allocating a canvas 128 times larger in each dimension.
 				canvas.width = width;
 				canvas.height = height;
@@ -546,57 +502,10 @@
 						}
 					}
 					pixelIndices = undefined;
-					if(helpers.state.previewMode === 'indexed' && resource.colorMode === 'rgb565')
+					if(helpers.state.previewMode === 'indexed')
 					{
 						const data = context.getImageData(0, 0, pixels.width, pixels.height);
-						rgb565Preview(data.data, pixels.width, resource.dither, resource.compression === 'softkey' ? resource.softkey : null);
-						context.putImageData(data, 0, 0);
-					}
-					if(helpers.state.previewMode === 'indexed' && palette)
-					{
-						const data = context.getImageData(0, 0, pixels.width, pixels.height);
-						const colors = palette.colors.map((color, index) => paletteChannels(palette, index));
-						pixelIndices = new Int16Array(pixels.width*pixels.height).fill(-1);
-						const cache = new Map();
-						for(let i = 0; i < data.data.length; i += 4)
-						{
-							if(data.data[i + 3] === 0)
-							{
-								pixelIndices[i/4] = palette.transparentIndex ?? mappingColors.findIndex(color => color[3] === 0);
-								continue;
-							}
-							const alpha = paletteAlpha ? data.data[i + 3] : 255;
-							const key = (data.data[i]*65536 + data.data[i + 1]*256 + data.data[i + 2])*256 + alpha;
-							let index = cache.get(key);
-							if(index === undefined)
-							{
-								let distance = Infinity;
-								index = 0;
-								mappingColors.forEach((color, j) =>
-								{
-									if(j === palette.transparentIndex || (paletteAlpha && color[3] === 0)) { return; }
-									const current = (data.data[i] - color[0])**2 + (data.data[i + 1] - color[1])**2 + (data.data[i + 2] - color[2])**2 + (paletteAlpha ? (alpha - color[3])**2 : 0);
-									if(current < distance)
-									{
-										distance = current;
-										index = j;
-									}
-								});
-								cache.set(key, index);
-							}
-							pixelIndices[i/4] = index;
-							data.data[i] = colors[index][0];
-							data.data[i + 1] = colors[index][1];
-							data.data[i + 2] = colors[index][2];
-							if(index === palette.transparentIndex)
-							{
-								data.data[i + 3] = 0;
-							}
-							else
-							{
-								data.data[i + 3] = paletteAlpha ? colors[index][3] : 255;
-							}
-						}
+						pixelIndices = window.ResourceStudioPixels.convert(data.data, pixels.width, resource, palette);
 						context.putImageData(data, 0, 0);
 					}
 					message.hidden = true;
@@ -761,61 +670,13 @@
 				if(event.key === 'ArrowDown') { pivot.y += delta; }
 				helpers.updateResource({...resource, pivot:pivot});
 			};
-			let wheelDelta = 0;
-			function zoomWheel(event)
-			{
-				if(!event.shiftKey)
-				{
-					wheelDelta = 0;
-					return;
-				}
-				// Shift-wheel is reported as horizontal scrolling on some platforms.
-				const deltaX = event.deltaX || 0;
-				const deltaY = event.deltaY || 0;
-				const delta = Math.abs(deltaX) > Math.abs(deltaY) ? deltaX : deltaY;
-				if(!pixels || dragging || colliderDrag || delta === 0)
-				{
-					return;
-				}
-				event.preventDefault();
-				wheelDelta += delta*(event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? stage.clientHeight : 1);
-				if(Math.abs(wheelDelta) < 40) { return; }
-				const next = wheelDelta < 0 ? zoomLevels.find(value => value > scale + 0.0001) : zoomLevels.slice().reverse().find(value => value < scale - 0.0001);
-				wheelDelta = 0;
-				if(next === undefined) { return; }
-				const before = canvas.getBoundingClientRect();
-				const x = Math.max(0, Math.min(1, (event.clientX - before.left)/before.width));
-				const y = Math.max(0, Math.min(1, (event.clientY - before.top)/before.height));
-				helpers.state.zoom = String(next);
-				helpers.main.querySelector('#preview-zoom').value = String(next);
-				helpers.saveState();
-				draw();
-				const after = canvas.getBoundingClientRect();
-				stage.scrollLeft += after.left + x*after.width - event.clientX;
-				stage.scrollTop += after.top + y*after.height - event.clientY;
-			}
-			stage.addEventListener('wheel', zoomWheel, {passive:false});
-			if(Number.isFinite(helpers.state.previewHeight))
-			{
-				stage.style.height = Math.max(140, helpers.state.previewHeight)+'px';
-			}
-			const observer = new ResizeObserver(function ()
-			{
-				const height = stage.getBoundingClientRect().height;
-				if(height >= 140 && height !== helpers.state.previewHeight)
-				{
-					helpers.state.previewHeight = height;
-					helpers.saveState();
-				}
-				draw();
-			});
-			observer.observe(stage);
+			const disposeViewport = window.ResourceStudioViewport.mount({stage, canvas, state:helpers.state, draw, saveState:helpers.saveState,
+				select:helpers.main.querySelector('#preview-zoom'), getScale:() => scale, ready:() => Boolean(pixels), interacting:() => dragging || colliderDrag});
 			image.src = source.uri;
 			const dispose = function ()
 			{
 				disposed = true;
-				stage.removeEventListener('wheel', zoomWheel);
-				observer.disconnect();
+				disposeViewport();
 				image.onload = null;
 				image.onerror = null;
 			};

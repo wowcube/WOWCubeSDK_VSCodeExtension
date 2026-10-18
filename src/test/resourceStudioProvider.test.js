@@ -38,6 +38,7 @@ const commands = [];
 const dispose = () => ({dispose:function () {}});
 let changeDocument;
 let paletteNameAnswer;
+let backgroundChoice = '/project/background.png';
 let deleteAnswer = 'Delete';
 const confirmations = [];
 let text = JSON.stringify({schemaVersion:2, sourceFolders:[], resources:[], registries:{groups:[], types:[], tags:[]}});
@@ -107,7 +108,7 @@ const vscode = {
 		showInformationMessage:function () {}, showErrorMessage:function (message) { throw new Error(message); },
 		showWarningMessage:async function (message) { confirmations.push(message); return deleteAnswer; },
 		showInputBox:async function () { return paletteNameAnswer; },
-		showOpenDialog:async function () { return [new TestUri('/project/characters'), new TestUri('/project/effects')]; }},
+		showOpenDialog:async function (options) { return options?.filters ? backgroundChoice ? [new TestUri(backgroundChoice)] : [] : [new TestUri('/project/characters'), new TestUri('/project/effects')]; }},
 	commands:{executeCommand:async function (...args) { commands.push(args); }}
 };
 
@@ -189,6 +190,47 @@ async function run()
 		}
 		await receive({type:'change', action:'update', version:document.version, resource:{...firstRgb, collider:{enabled:true, x:0, y:0, width:64, height:64}}});
 		assert.strictEqual(JSON.parse(text).resources[0].collider.width, 64);
+		await receive({type:'change', action:'create', version:document.version, resourceType:'map', name:'level_map', options:{}});
+		let map = JSON.parse(text).resources.find(item => item.type === 'map');
+		assert.strictEqual(map.sideMarkers.length, 6);
+		assert.strictEqual(map.net.screenSize, 120);
+		map.placements = [{id:'a', spriteId:firstRgb.id, side:1, x:138, y:138}, {id:'b', spriteId:firstRgb.id, side:4, x:-600, y:12}];
+		await receive({type:'change', action:'update', version:document.version, resource:map});
+		let flushed = false;
+		const pendingFlush = ResourceStudioProvider.flushEdits(document.uri.fsPath).then(() => { flushed = true; });
+		await new Promise(resolve => setImmediate(resolve));
+		const flushRequest = messages.at(-1);
+		assert.strictEqual(flushRequest.type, 'flushEdits');
+		assert.strictEqual(flushed, false, 'Build must wait for the focused field to commit.');
+		map.name = 'renamed_map';
+		await receive({type:'change', action:'update', version:document.version, resource:map});
+		assert.strictEqual(document.isDirty, true);
+		assert.strictEqual(JSON.parse(text).resources.find(item => item.id === map.id).name, 'renamed_map');
+		await receive({type:'flushedEdits', requestId:flushRequest.requestId});
+		await pendingFlush;
+		assert.strictEqual(flushed, true);
+		const beforeMapDeletion = text;
+		await receive({type:'change', action:'remove', version:document.version, id:firstRgb.id});
+		assert.strictEqual(text, beforeMapDeletion);
+		assert.match(messages.at(-1).message, /Reassign references first/);
+		await receive({type:'change', action:'update', version:document.version, resource:{...map, net:{...map.net, innerGap:9}}});
+		assert.strictEqual(text, beforeMapDeletion);
+		files.set('/project/background.png', 'image');
+		await receive({type:'change', action:'chooseMapBackground', version:document.version, id:map.id});
+		map = JSON.parse(text).resources.find(item => item.type === 'map');
+		assert.strictEqual(map.net.backgroundImage, 'background.png');
+		assert.ok(messages.at(-1).sources.some(source => source.path === 'background.png'));
+		const beforeBackgroundCancel = text, beforeBackgroundVersion = document.version;
+		backgroundChoice = undefined;
+		await receive({type:'change', action:'chooseMapBackground', version:document.version, id:map.id});
+		assert.strictEqual(text, beforeBackgroundCancel);
+		assert.strictEqual(document.version, beforeBackgroundVersion);
+		backgroundChoice = '/outside/background.png';
+		await receive({type:'change', action:'chooseMapBackground', version:document.version, id:map.id});
+		assert.strictEqual(text, beforeBackgroundCancel);
+		assert.match(messages.at(-1).message, /inside this project/);
+		backgroundChoice = '/project/background.png';
+		await receive({type:'change', action:'remove', version:document.version, id:map.id});
 		await receive({type:'change', action:'remove', version:document.version, id:firstRgb.id});
 		failGeneration = false;
 

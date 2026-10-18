@@ -1,4 +1,5 @@
 import * as ResourceValidation from '../media/resourcevalidation';
+import { mapResourceType } from './MapResource';
 
 export interface Resource
 {
@@ -217,6 +218,8 @@ ResourceTypes.register({
 		return errors;
 	}
 });
+
+ResourceTypes.register(mapResourceType);
 
 export class ResourceBundles
 {

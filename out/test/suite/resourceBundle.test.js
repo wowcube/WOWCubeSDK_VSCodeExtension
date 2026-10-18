@@ -94,7 +94,7 @@ suite('Resource bundle', () => {
     test('preserves future resource types and extension fields', () => {
         const { bundle } = createBundle();
         bundle.customSettings = { future: true };
-        bundle.resources.push({ id: 'map-1', name: 'level', type: 'map', layers: [{ tiles: [1, 2] }] });
+        bundle.resources.push({ id: 'map-1', name: 'level', type: 'future-map', layers: [{ tiles: [1, 2] }] });
         assert.deepStrictEqual(ResourceBundle_1.ResourceBundles.parse(JSON.stringify(bundle)), bundle);
     });
     test('supports registering new types and their reference validation', () => {

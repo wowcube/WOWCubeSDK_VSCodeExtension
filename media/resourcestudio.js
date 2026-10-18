@@ -4,8 +4,8 @@
 	const root = document.getElementById('resource-studio');
 	const validation = window.ResourceStudioValidation;
 	const saved = vscode.getState() || {};
-	const state = {tab:saved.tab || 'Resources', selected:saved.selected || '', colorIndex:saved.colorIndex || 0,
-		previewMode:saved.previewMode || 'indexed', zoom:!saved.zoom || saved.zoom === 'fit' ? 'fit' : String(Math.max(0.5, Math.min(128, Number(saved.zoom) || 1))), previewHeight:saved.previewHeight, filter:'', busy:false, dialog:null, spacePressed:false, advancedBlend:!!saved.advancedBlend};
+	const state = {tab:saved.tab || 'Sprites', selected:saved.selected || '', colorIndex:saved.colorIndex || 0,
+		previewMode:saved.previewMode || 'indexed', zoom:!saved.zoom || saved.zoom === 'fit' ? 'fit' : String(Math.max(0.5, Math.min(128, Number(saved.zoom) || 1))), previewHeight:saved.previewHeight, filter:'', busy:false, dialog:null, spacePressed:false, advancedBlend:!!saved.advancedBlend, mapViews:saved.mapViews || {}, sourceGroupsOpen:[]};
 	let bundle;
 	let sources = [];
 	let resourceTypes = [];
@@ -16,11 +16,18 @@
 	let sourceWarning = '';
 	let warnings = [];
 	let disposePreview;
+	let sourceFilesView;
 	let previewScroll = {top:0, left:0};
 	let pendingName = '';
 	let selectedSource = '';
 	let selectedFolder;
 	let saveRequested = false;
+	const flushRequests = [];
+	function finishFlush()
+	{
+		if(state.busy) { return; }
+		for(const requestId of flushRequests.splice(0)) { vscode.postMessage({type:'flushedEdits', requestId, error:error || (!bundle ? 'Unable to build an invalid resource bundle.' : undefined)}); }
+	}
 	let pendingFocusKey;
 	const displayMessage = value => /\bV-020:/.test(String(value)) ? String(value).replace(/\bSoftkey\b/g, 'Color Key') : String(value);
 	const escape = value => String(value).replace(/[&<>"']/g, character => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[character]));
@@ -31,7 +38,8 @@
 
 	function helpers()
 	{
-		return {state, bundle, sources, main:root.querySelector('main'), previewScroll, escape, field, input, select, updateResource, saveState, selectPaletteColor};
+		return {state, bundle, sources, root, main:root.querySelector('main'), previewScroll, escape, field, input, select, updateResource, saveState, selectPaletteColor,
+			chooseMapBackground:id => sendChange({action:'chooseMapBackground', id})};
 	}
 	function selectPaletteColor(index, reveal = false)
 	{
@@ -41,7 +49,7 @@
 
 	function saveState()
 	{
-		vscode.setState({tab:state.tab, selected:state.selected, colorIndex:state.colorIndex, previewMode:state.previewMode, zoom:state.zoom, previewHeight:state.previewHeight, advancedBlend:state.advancedBlend});
+		vscode.setState({tab:state.tab, selected:state.selected, colorIndex:state.colorIndex, previewMode:state.previewMode, zoom:state.zoom, previewHeight:state.previewHeight, advancedBlend:state.advancedBlend, mapViews:state.mapViews});
 	}
 
 	function getResource()
@@ -55,9 +63,32 @@
 
 	function getSection(resource)
 	{
-		return window.ResourceStudioTypes.get(resource.type)?.section || 'Resources';
+		return window.ResourceStudioTypes.get(resource.type)?.section || 'Sprites';
 	}
 
+	function disableBusyControls()
+	{
+		root.querySelectorAll('input, select, button').forEach(element =>
+		{
+			if(element.dataset.action === 'save') { return; }
+			if(element.dataset.busyDisabled === undefined) { element.dataset.busyDisabled = String(element.disabled); }
+			element.disabled = true;
+		});
+	}
+	function restoreBusyControls()
+	{
+		root.querySelectorAll('[data-busy-disabled]').forEach(element =>
+		{
+			element.disabled = element.dataset.busyDisabled === 'true'; delete element.dataset.busyDisabled;
+		});
+	}
+	function mapRefreshKey()
+	{
+		const resource = bundle && getResource();
+		if(state.dialog || error || state.tab !== 'Maps' || resource?.type !== 'map') { return; }
+		return JSON.stringify([{...bundle, resources:bundle.resources.map(item => item === resource ? {...item, placements:null} : item)},
+			sources, resourceTypes, project, sourceWarning, warnings]);
+	}
 	function sendChange(message)
 	{
 		if(state.busy)
@@ -67,13 +98,7 @@
 		state.busy = true;
 		error = '';
 		pendingFocusKey = root.contains(document.activeElement) ? document.activeElement.dataset.key : undefined;
-		root.querySelectorAll('input, select, button').forEach(element =>
-		{
-			if(element.dataset.action !== 'save')
-			{
-				element.disabled = true;
-			}
-		});
+		disableBusyControls();
 		root.querySelector('#save-state').textContent = message.action === 'resizePalette' || message.action === 'generatePalette' || message.action === 'create' && message.resourceType === 'sprite' ? 'Generating palette…' : 'Updating…';
 		vscode.postMessage({type:'change', version, ...message});
 	}
@@ -111,10 +136,11 @@
 		const selectionStart = active?.selectionStart;
 		const selectionEnd = active?.selectionEnd;
 		const draftValue = active?.value;
-		const sections = ['Resources', ...new Set(resourceTypes.map(type => window.ResourceStudioTypes.get(type.type)?.section).filter(section => section && section !== 'Resources')), 'Source files'];
+		const resourceSections = [...new Set(resourceTypes.map(type => window.ResourceStudioTypes.get(type.type)?.section).filter(section => section && section !== 'Sprites'))];
+		const sections = ['Sprites', ...resourceSections.filter(section => section === 'Maps'), ...resourceSections.filter(section => section !== 'Maps'), 'Source files'];
 		if(!sections.includes(state.tab))
 		{
-			state.tab = 'Resources';
+			state.tab = 'Sprites';
 		}
 		const entries = bundle.resources.filter(resource => getSection(resource) === state.tab);
 		if(state.tab !== 'Source files' && !entries.some(resource => resource.id === state.selected))
@@ -133,13 +159,13 @@
 			'<nav class="tabs" aria-label="Resource sections">'+sections.map(tab => '<button data-tab="'+escape(tab)+'" class="'+(state.tab === tab ? 'active' : '')+
 			'" aria-pressed="'+(state.tab === tab)+'">'+escape(tab)+(tab === 'Source files' ? ' · '+sources.filter(source => !bundle.resources.some(item => item.source === source.path)).length+' unused' : '')+'</button>').join('')+
 			'</nav><div id="studio-error" class="error-banner" role="alert" '+(!error ? 'hidden' : '')+'>'+escape(error)+'</div><div class="layout">'+
-			'<aside class="library"><div class="section-label">'+(state.tab === 'Resources' ? 'Registered resources' : escape(state.tab))+'</div>'+
+			'<aside class="library"><div class="section-label">'+escape(state.tab)+'</div>'+
 			(state.tab === 'Source files' ? renderFolders() : entries.map(item =>
 			{
 				const type = window.ResourceStudioTypes.get(item.type);
 				return '<button class="item '+(item.id === state.selected ? 'active' : '')+'" data-select="'+escape(item.id)+'" aria-pressed="'+(item.id === state.selected)+'">'+
 					'<span class="resource-icon" aria-hidden="true">'+(type?.icon || '◇')+'</span><span>'+escape(item.name)+'<small>'+escape(type?.getSummary(item) || item.type+' · unsupported')+'</small></span></button>';
-			}).join(''))+
+			}).join(''))+(resource ? window.ResourceStudioTypes.get(resource.type)?.renderLibrary?.(resource, helpers()) || '' : '')+
 			'<div class="library-footer">'+bundle.resources.filter(item => item.type !== 'palette').length+' resources<br>'+bundle.resources.filter(item => item.type === 'palette').length+
 			' shared palettes<br>'+bundle.sourceFolders.length+' source folders</div></aside><main class="content'+(state.tab !== 'Source files' && resource ? ' resource-view' : '')+'">'+
 			(warnings.length ? '<details class="notice"><summary>Resource diagnostics · '+warnings.length+'</summary>'+warnings.map(warning => '<p>'+escape(warning)+'</p>').join('')+'</details>' : '')+
@@ -199,13 +225,7 @@
 		}
 		if(state.busy)
 		{
-			root.querySelectorAll('input, select, button').forEach(element =>
-			{
-				if(element.dataset.action !== 'save')
-				{
-					element.disabled = true;
-				}
-			});
+			disableBusyControls();
 			root.querySelector('#save-state').textContent = 'Generating palette…';
 		}
 		if(focusKey)
@@ -236,13 +256,13 @@
 		{
 			return '<div class="heading"><strong>'+escape(state.tab)+'</strong><span class="spacer"></span>'+addButton+'</div>'+
 				'<div class="empty"><span class="empty-icon">'+(state.tab === 'Palettes' ? '▦' : '▧')+'</span><h2>No '+state.tab.toLowerCase()+' yet</h2>'+
-				'<p>'+(state.tab === 'Palettes' ? 'Add a sprite to generate its palette from the source image.' : 'Add source folders, then register a sprite from an image.')+'</p>'+
+				'<p>'+(state.tab === 'Palettes' ? 'Add a sprite to generate its palette from the source image.' : state.tab === 'Maps' ? 'Create a map, then place registered sprites on its cube net.' : 'Add source folders, then register a sprite from an image.')+'</p>'+
 				addButton+' <button data-tab="Source files">Browse source files</button></div>';
 		}
 		const type = window.ResourceStudioTypes.get(resource.type);
 		return '<div class="heading"><strong>'+escape(resource.name)+'</strong><span class="tag">'+escape(type?.label || resource.type)+
 			'</span><span class="spacer"></span>'+addButton+'<button data-action="remove">Remove</button></div>'+
-			(type ? '<div class="detail"><div class="visual-editor">'+type.renderPreview(resource, helpers())+'</div><div class="inspector resource-inspector" tabindex="0" aria-label="Resource properties">'+
+			(type?.renderWorkspace ? type.renderWorkspace(resource, helpers()) : type ? '<div class="detail"><div class="visual-editor">'+type.renderPreview(resource, helpers())+'</div><div class="inspector resource-inspector" tabindex="0" aria-label="Resource properties">'+
 			(type.ownsName ? '' : field('Unique resource name', input('name', resource.name)))+type.renderInspector(resource, helpers())+'<div class="rule"></div>'+
 			'<div class="minor resource-id">ID: '+escape(resource.id)+'</div></div></div>' :
 			'<div class="empty"><h2>Unsupported resource type</h2><p>This resource is preserved in the bundle. Use the JSON editor to edit its properties.</p><button data-action="editText">Edit JSON</button></div>');
@@ -257,6 +277,7 @@
 	function renderSources()
 	{
 		const source = sources.find(item => item.path === selectedSource);
+		sourceFilesView = window.ResourceStudioSourceFiles.create(sources, bundle, escape, state);
 		return '<div class="heading"><strong>Source files</strong><span class="spacer"></span><button data-action="refresh">Refresh</button><button class="primary" data-action="addFolder">+ Add source folders</button></div>'+
 			'<p class="minor">Choose any folders inside this project. Files become resources only when registered.</p>'+
 			(selectedFolder !== undefined && !bundle.sourceFolders.includes(selectedFolder) ? '<div class="dialog">Source folder: '+escape(selectedFolder)+
@@ -265,15 +286,7 @@
 			(source ? '<div class="source-selection"><div class="preview-head"><span>'+escape(source.path)+'</span><button data-action="clearSource">Close preview</button></div>'+
 				(source.image && !source.missing ? '<div class="preview"><img id="source-preview-image" class="source-image" alt="'+escape(source.path)+'"></div>' : '<p class="minor">'+(source.missing ? 'Source file is missing.' : 'No image preview for this file type.')+'</p>')+'</div>' : '')+
 			'<label class="search">Filter source files<input id="source-filter" type="search" value="'+escape(state.filter)+'" placeholder="Search by path"></label>'+
-			'<div class="source-list">'+sources.map(item =>
-			{
-				const users = bundle.resources.filter(resource => resource.source === item.path);
-				return '<div class="source-row" data-source-path="'+escape(item.path)+'" '+(!item.path.toLowerCase().includes(state.filter.toLowerCase()) ? 'hidden' : '')+'>'+
-					'<span aria-hidden="true">'+(item.image ? '▧' : '◇')+'</span><div class="source-title"><button class="link" data-source="'+escape(item.path)+'">'+escape(item.path)+'</button>'+ 
-					'<small>'+(item.missing ? 'Missing source file' : users.length ? 'Registered as '+escape(users.map(resource => resource.name).join(', ')) : 'Unregistered')+'</small></div>'+
-					'<button data-open-source="'+escape(item.path)+'" '+(item.missing ? 'disabled' : '')+'>Open file</button>'+
-					(item.image && !item.missing ? '<button data-register-source="'+escape(item.path)+'">+ Register sprite</button>' : '')+'</div>';
-			}).join('')+'</div>'+(!sources.length ? '<div class="empty"><h2>No source files</h2><p>Add a source folder to browse its files.</p></div>' : '');
+			sourceFilesView.html+(!sources.length ? '<div class="empty"><h2>No source files</h2><p>Add a source folder to browse its files.</p></div>' : '');
 	}
 
 	function renderDialog()
@@ -397,7 +410,8 @@
 		switch(button.dataset.action)
 		{
 			case 'newResource':
-				showDialog(resourceTypes.find(type => type.canCreate !== false && window.ResourceStudioTypes.get(type.type)?.canCreate !== false)?.type || 'sprite');
+				showDialog((resourceTypes.find(type => type.canCreate !== false && window.ResourceStudioTypes.get(type.type)?.section === state.tab) ||
+					resourceTypes.find(type => type.canCreate !== false && window.ResourceStudioTypes.get(type.type)?.canCreate !== false))?.type || 'sprite');
 				break;
 			case 'cancel':
 				state.dialog = null;
@@ -425,6 +439,11 @@
 		}
 	});
 
+	root.addEventListener('toggle', function (event)
+	{
+		if(root.contains(event.target) && event.target.dataset?.sourceFolder !== undefined) { sourceFilesView?.toggle(event.target); }
+	}, true);
+
 	root.addEventListener('input', function (event)
 	{
 		const element = event.target;
@@ -440,7 +459,7 @@
 		if(element.id === 'source-filter')
 		{
 			state.filter = element.value;
-			root.querySelectorAll('[data-source-path]').forEach(row => { row.hidden = !row.dataset.sourcePath.toLowerCase().includes(state.filter.toLowerCase()); });
+			sourceFilesView?.filter(root);
 		}
 		if(bundle && !state.busy && (element.dataset.key === 'colorHex' || element.dataset.key?.startsWith('channel')))
 		{
@@ -586,7 +605,7 @@
 		{
 			state.spacePressed = true;
 			const target = event.target || document.activeElement;
-			if(target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName))
+			if(target?.closest?.('[data-map-lock]') || target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName))
 			{
 				return;
 			}
@@ -626,9 +645,17 @@
 	window.addEventListener('message', function (event)
 	{
 		const message = event.data;
-		if(message.type === 'update')
+		if(message.type === 'flushEdits')
+		{
+			flushRequests.push(message.requestId);
+			const active = document.activeElement;
+			if(!state.busy && root.contains(active) && (active.dataset.key || active.dataset.mapKey)) { active.blur(); }
+			finishFlush();
+		}
+		else if(message.type === 'update')
 		{
 			const initialLoad = !bundle;
+			const refreshKey = mapRefreshKey();
 			const preserveInput = version === message.version && !state.busy;
 			const sprite = bundle && getResource();
 			if(sprite?.type === 'sprite')
@@ -675,7 +702,14 @@
 					selectedSource = message.selectedSource;
 				}
 			}
-			render(preserveInput);
+			if(!state.busy && refreshKey && refreshKey === mapRefreshKey() && disposePreview?.refreshResource)
+			{
+				restoreBusyControls();
+				disposePreview.refreshResource(getResource(), helpers(), preserveInput);
+				root.querySelector('#save-state').textContent = dirty ? 'Unsaved •' : 'Saved';
+				saveState();
+			}
+			else { render(preserveInput); }
 			if(initialLoad)
 			{
 				root.tabIndex = -1;
@@ -708,6 +742,7 @@
 			root.innerHTML = '<div class="invalid"><h2>Unable to open resource bundle</h2><p class="error-banner">'+escape(displayMessage(message.message))+
 				'</p><button data-action="editText">Edit JSON to correct it</button><button data-action="refresh">Retry</button></div>';
 		}
+		finishFlush();
 	});
 
 	vscode.postMessage({type:'ready'});
