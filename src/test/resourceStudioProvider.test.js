@@ -38,6 +38,8 @@ const commands = [];
 const dispose = () => ({dispose:function () {}});
 let changeDocument;
 let paletteNameAnswer;
+const fontAnswers = [];
+const fontChoices = [];
 let backgroundChoice = '/project/background.png';
 let deleteAnswer = 'Delete';
 const confirmations = [];
@@ -107,7 +109,8 @@ const vscode = {
 	window:{createOutputChannel:function () { return {append:function () {}, appendLine:function () {}, show:function () {}}; },
 		showInformationMessage:function () {}, showErrorMessage:function (message) { throw new Error(message); },
 		showWarningMessage:async function (message) { confirmations.push(message); return deleteAnswer; },
-		showInputBox:async function () { return paletteNameAnswer; },
+		showInputBox:async function () { return fontAnswers.length ? fontAnswers.shift() : paletteNameAnswer; },
+		showQuickPick:async function (choices) { return choices[fontChoices.shift()]; },
 		showOpenDialog:async function (options) { return options?.filters ? backgroundChoice ? [new TestUri(backgroundChoice)] : [] : [new TestUri('/project/characters'), new TestUri('/project/effects')]; }},
 	commands:{executeCommand:async function (...args) { commands.push(args); }}
 };
@@ -478,6 +481,36 @@ async function run()
 		assert.strictEqual(text, beforePaletteLimit);
 		assert.strictEqual(generations.length, generationsAtLimit);
 		assert.match(messages.at(-1).message, /V-016.*64/);
+
+		// Fonts use their atlas as the palette source without the sprite's 240px atlas restriction.
+		const {fontFixture, pngHeader} = require('./fontFixture');
+		text = JSON.stringify({schemaVersion:2, sourceFolders:[], resources:[], registries:{groups:[],types:[],tags:[]}}); document.version++;
+		files.set('/project/font.fnt', fontFixture()); files.set('/project/atlas.png', pngHeader()); backgroundChoice = '/project/font.fnt';
+		fontAnswers.push('font_1', 'font_1_palette', '32'); fontChoices.push(0);
+		const beforeFont = generations.length;
+		await receive({type:'change',action:'fontImport',version:document.version});
+		const font = JSON.parse(text).resources.find(resource => resource.type === 'font'); assert(font);
+		assert.strictEqual(font.atlas,'atlas.png'); assert.strictEqual(generations.length,beforeFont+1);
+		assert.deepStrictEqual(generations.at(-1).sources,['/project/atlas.png']); assert.strictEqual(generations.at(-1).size,32);
+		assert.strictEqual(messages.at(-1).fontData[font.id].glyphs.length,4);
+		assert(messages.at(-1).sources.some(source => source.path === 'atlas.png'));
+		const beforeCanceledFont = text;
+		fontAnswers.push('font_2'); fontChoices.push(undefined);
+		await receive({type:'change',action:'fontImport',version:document.version});
+		assert.strictEqual(text,beforeCanceledFont,'Cancel after font name must discard every provisional resource.');
+		failGeneration = true; fontAnswers.push('font_2','font_2_palette','32'); fontChoices.push(0);
+		await receive({type:'change',action:'fontImport',version:document.version});
+		assert.strictEqual(text,beforeCanceledFont,'A failed palette generation must not leave a font or palette.'); failGeneration = false;
+		assert.match(messages.at(-1).message,/Test palette builder failure/);
+		const beforeRename = generations.length;
+		await receive({type:'change',action:'update',version:document.version,resource:{...font,name:'ui_font'}});
+		assert.strictEqual(JSON.parse(text).resources.find(resource => resource.id === font.id).name,'ui_font');
+		assert.strictEqual(generations.length,beforeRename);
+		await receive({type:'change',action:'resizePalette',version:document.version,id:font.paletteId,colorCount:16});
+		assert.deepStrictEqual(generations.at(-1).sources,['/project/atlas.png']); assert.strictEqual(generations.at(-1).size,16);
+		const beforeFontDelete = text;
+		await receive({type:'change',action:'remove',version:document.version,id:font.paletteId});
+		assert.strictEqual(text,beforeFontDelete,'An assigned font palette cannot be deleted.');
 
 		text = '{broken';
 		await receive({type:'refresh'});

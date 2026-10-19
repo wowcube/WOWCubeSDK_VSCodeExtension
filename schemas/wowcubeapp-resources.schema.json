@@ -605,6 +605,54 @@
                 }
               }
             }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "font"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "source",
+                "atlas",
+                "slot",
+                "paletteId",
+                "fullsize",
+                "blend"
+              ],
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^(?!/)(?!.*[\\\\:])(?!(?:.*\\/)?\\.{1,2}(?:\\/|$))(?!.*//)(?!.*\\/$).+$",
+                  "description": "Binary BMFont v3 file, relative to the project."
+                },
+                "atlas": {
+                  "type": "string",
+                  "minLength": 1,
+                  "pattern": "^(?!/)(?!.*[\\\\:])(?!(?:.*\\/)?\\.{1,2}(?:\\/|$))(?!.*//)(?!.*\\/$).+$",
+                  "description": "PNG page resolved from the .fnt reference, or explicitly overridden."
+                },
+                "slot": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 3
+                },
+                "paletteId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "fullsize": {
+                  "type": "boolean"
+                },
+                "blend": {
+                  "const": "alpha"
+                }
+              }
+            }
           }
         ]
       }

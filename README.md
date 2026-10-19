@@ -177,6 +177,37 @@ Map authoring is implemented here. The currently installed `resource-builder` ex
 sprites and palettes only and reports maps as skipped; exporting map records requires
 a map-capable compiler using the contract in `resource-json-model.txt`.
 
+### Fonts
+
+Open **Fonts** and choose **+ Add new font**. Select a binary BMFont v3 `.fnt`
+file inside the project. The PNG atlas is resolved from the page reference stored
+in that file, which can differ from its basename. Missing or mismatched atlases
+can be replaced explicitly; **Choose PNG atlas…** also allows correcting a valid
+but incorrectly referenced image. The editor never rewrites the source files.
+Only one unpacked PNG page is supported. Atlas dimensions must match the `.fnt`;
+the atlas may exceed the static sprite limit, while each glyph is limited to
+240×240 pixels. Characters 32–127 are supported and `n` (110) is required.
+Unsupported characters are reported and excluded from the supported glyph set.
+
+Each font occupies one unique engine slot (1–3), with a uniform FULLSIZE setting
+and alpha blend. FULLSIZE is enabled by default when importing a font. Choose an existing alpha-compatible palette or generate one
+(default: 32 colors, adjustable from 2 to 256). Sharing with opaque artwork is
+blocked. Generated glyph names `font_<slot>_<five-digit-character-code>` are
+reserved against resource and animation names.
+
+Text preview, Glyph grid and Atlas modes use the current indexed palette.
+Click a glyph to inspect its bounds, offsets and advance. Sample text, alignment,
+guides, background and multiplicative RGB565 tint affect only the preview.
+Text layout uses BMFont offsets/advances and line height without kerning; spaces and missing
+characters advance by the width of `n`. Runtime layout conversion remains part
+of the font exporter. The preview has the shared Fit / 0.5×–128× zoom,
+Shift-wheel zoom, ordinary wheel scrolling and vertical resize handle.
+
+Font authoring is implemented, but font export is not yet supported by the
+installed `resource-builder`. Saving still saves the JSON; resource compilation
+and app builds report this missing integration instead of silently omitting fonts.
+Bundles containing no fonts retain their existing build behavior.
+
 ### Adding resource types
 
 Register a model descriptor in `src/ResourceBundle.ts` using `ResourceTypes.register`.
@@ -193,6 +224,7 @@ participate in automatic palette generation.
 
 Run `npm run test:resources` for model, webview handler, and provider tests without
 starting an Extension Host. Press F5 to launch the extension for a full UI check.
+`src/test/fontBrowser.test.js`, `src/test/sequenceBrowser.test.js` and
 `src/test/mapBrowser.test.js` additionally exercises the real editor in Chromium when
 Playwright is available; set `WOWCUBE_BROWSER` to a Chromium executable if necessary.
 

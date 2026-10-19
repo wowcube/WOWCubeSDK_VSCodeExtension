@@ -5,9 +5,10 @@
 	const validation = window.ResourceStudioValidation;
 	const saved = vscode.getState() || {};
 	const state = {tab:saved.tab || 'Sprites', selected:saved.selected || '', colorIndex:saved.colorIndex || 0,
-		previewMode:saved.previewMode || 'indexed', zoom:!saved.zoom || saved.zoom === 'fit' ? 'fit' : String(Math.max(0.5, Math.min(128, Number(saved.zoom) || 1))), previewHeight:saved.previewHeight, filter:'', busy:false, dialog:null, spacePressed:false, advancedBlend:!!saved.advancedBlend, mapViews:saved.mapViews || {}, sequenceViews:saved.sequenceViews || {}, spriteGroupsOpen:saved.spriteGroupsOpen || {}, sourceGroupsOpen:[]};
+		previewMode:saved.previewMode || 'indexed', zoom:!saved.zoom || saved.zoom === 'fit' ? 'fit' : String(Math.max(0.5, Math.min(128, Number(saved.zoom) || 1))), previewHeight:saved.previewHeight, filter:'', busy:false, dialog:null, spacePressed:false, advancedBlend:!!saved.advancedBlend, mapViews:saved.mapViews || {}, sequenceViews:saved.sequenceViews || {}, fontViews:saved.fontViews || {}, spriteGroupsOpen:saved.spriteGroupsOpen || {}, sourceGroupsOpen:[]};
 	let bundle;
 	let sources = [];
+	let fontData = {};
 	let resourceTypes = [];
 	let version = 0;
 	let dirty = false;
@@ -20,6 +21,7 @@
 	let previewScroll = {top:0, left:0};
 	let pendingName = '';
 	let pendingSequenceIds;
+	let pendingFontIds;
 	let selectedSource = '';
 	let selectedFolder;
 	let saveRequested = false;
@@ -39,7 +41,7 @@
 
 	function helpers()
 	{
-		return {state, bundle, sources, root, main:root.querySelector('main'), previewScroll, escape, field, input, select, updateResource, saveState, selectPaletteColor,
+		return {state, bundle, sources, fontData, root, main:root.querySelector('main'), previewScroll, escape, field, input, select, updateResource, saveState, selectPaletteColor,
 			sendChange, renderSpriteList:(items, renderItem, scope) => window.ResourceStudioSpriteList.render(items, renderItem, scope, state, escape),
 			chooseMapBackground:id => sendChange({action:'chooseMapBackground', id})};
 	}
@@ -51,7 +53,7 @@
 
 	function saveState()
 	{
-		vscode.setState({tab:state.tab, selected:state.selected, colorIndex:state.colorIndex, previewMode:state.previewMode, zoom:state.zoom, previewHeight:state.previewHeight, advancedBlend:state.advancedBlend, mapViews:state.mapViews, sequenceViews:state.sequenceViews, spriteGroupsOpen:state.spriteGroupsOpen});
+		vscode.setState({tab:state.tab, selected:state.selected, colorIndex:state.colorIndex, previewMode:state.previewMode, zoom:state.zoom, previewHeight:state.previewHeight, advancedBlend:state.advancedBlend, mapViews:state.mapViews, sequenceViews:state.sequenceViews, fontViews:state.fontViews, spriteGroupsOpen:state.spriteGroupsOpen});
 	}
 
 	function getResource()
@@ -99,6 +101,7 @@
 		{
 			return;
 		}
+		if(message.action === 'fontImport') { pendingFontIds = new Set(bundle.resources.filter(item => item.type === 'font').map(item => item.id)); }
 		if(message.action === 'sequenceImport') { pendingSequenceIds = new Set(bundle.resources.filter(item => item.sequence).map(item => item.sequence.id)); }
 		state.busy = true;
 		error = '';
@@ -142,7 +145,7 @@
 		const selectionEnd = active?.selectionEnd;
 		const draftValue = active?.value;
 		const resourceSections = [...new Set(resourceTypes.map(type => window.ResourceStudioTypes.get(type.type)?.section).filter(section => section && section !== 'Sprites'))];
-		const sections = ['Sprites', ...resourceSections.filter(section => section === 'Maps'), ...(window.ResourceStudioSequences ? ['Animations'] : []), ...resourceSections.filter(section => section !== 'Maps'), 'Source files'];
+		const sections = ['Sprites', ...resourceSections.filter(section => section === 'Maps'), ...(window.ResourceStudioSequences ? ['Animations'] : []), ...resourceSections.filter(section => section === 'Fonts'), ...resourceSections.filter(section => section !== 'Maps' && section !== 'Fonts'), 'Source files'];
 		if(!sections.includes(state.tab))
 		{
 			state.tab = 'Sprites';
@@ -162,7 +165,7 @@
 			' / wowcubeapp-resources.json</span><span class="spacer"></span><span class="minor" id="save-state">'+(dirty ? 'Unsaved •' : 'Saved')+
 			'</span><button data-action="editText">Edit JSON</button><button class="primary" data-action="save">SAVE CHANGES</button></header>'+
 			'<nav class="tabs" aria-label="Resource sections">'+sections.map(tab => '<button data-tab="'+escape(tab)+'" class="'+(state.tab === tab ? 'active' : '')+
-			'" aria-pressed="'+(state.tab === tab)+'">'+escape(tab)+(tab === 'Source files' ? ' · '+sources.filter(source => !bundle.resources.some(item => item.source === source.path)).length+' unused' : '')+'</button>').join('')+
+			'" aria-pressed="'+(state.tab === tab)+'">'+escape(tab)+(tab === 'Source files' ? ' · '+sources.filter(source => !bundle.resources.some(item => (item.source === source.path || item.type === 'font' && item.atlas === source.path))).length+' unused' : '')+'</button>').join('')+
 			'</nav><div id="studio-error" class="error-banner" role="alert" '+(!error ? 'hidden' : '')+'>'+escape(error)+'</div><div class="layout">'+
 			'<aside class="library"><div class="section-label">'+escape(state.tab)+'</div>'+
 			(state.tab === 'Source files' ? renderFolders() : state.tab === 'Sprites' ? window.ResourceStudioSpriteList.render(entries, renderLibraryItem, 'Sprites', state, escape) : entries.map(renderLibraryItem).join(''))+(resource ? window.ResourceStudioTypes.get(resource.type)?.renderLibrary?.(resource, helpers()) || '' : '')+
@@ -260,12 +263,12 @@
 	function renderResource(resource)
 	{
 		if(state.tab === 'Animations') { return window.ResourceStudioSequences.render(resource, helpers()); }
-		const addButton = '<button class="primary" data-action="newResource">'+(state.tab === 'Sprites' ? '+ Add new sprite' : state.tab === 'Maps' ? '+ Add new map' : '+ Add resource')+'</button>';
+		const addButton = '<button class="primary" data-action="newResource">'+(state.tab === 'Sprites' ? '+ Add new sprite' : state.tab === 'Maps' ? '+ Add new map' : state.tab === 'Fonts' ? '+ Add new font' : '+ Add resource')+'</button>';
 		if(!resource)
 		{
 			return '<div class="heading"><strong>'+escape(state.tab)+'</strong><span class="spacer"></span>'+addButton+'</div>'+
 				'<div class="empty"><span class="empty-icon">'+(state.tab === 'Palettes' ? '▦' : '▧')+'</span><h2>No '+state.tab.toLowerCase()+' yet</h2>'+
-				'<p>'+(state.tab === 'Palettes' ? 'Add a sprite to generate its palette from the source image.' : state.tab === 'Maps' ? 'Create a map, then place registered sprites on its cube net.' : 'Add source folders, then register a sprite from an image.')+'</p>'+
+				'<p>'+(state.tab === 'Palettes' ? 'Add a sprite to generate its palette from the source image.' : state.tab === 'Maps' ? 'Create a map, then place registered sprites on its cube net.' : state.tab === 'Fonts' ? 'Choose a binary BMFont .fnt file and its PNG atlas.' : 'Add source folders, then register a sprite from an image.')+'</p>'+
 				addButton+' <button data-tab="Source files">Browse source files</button></div>';
 		}
 		const type = window.ResourceStudioTypes.get(resource.type);
@@ -325,10 +328,11 @@
 
 	function showDialog(type, source = '')
 	{
+		if(type === 'font') { sendChange({action:'fontImport'}); return; }
 		state.dialog = {type, source, name:source ? validation.deriveName(source, validation.usedNames(bundle.resources)) : '', paletteId:bundle.resources.find(item => item.type === 'palette')?.id || '', colorCount:256};
 		error = '';
 		render();
-		root.querySelector('[data-dialog="name"]').focus();
+		root.querySelector('[data-dialog="name"]')?.focus();
 	}
 
 	root.addEventListener('click', function (event)
@@ -467,6 +471,7 @@
 		const element = event.target;
 		if(element.dataset.dialog)
 		{
+			if(element.dataset.dialog === 'type' && element.value === 'font') { state.dialog = null; sendChange({action:'fontImport'}); return; }
 			state.dialog[element.dataset.dialog] = element.value;
 			if(element.dataset.dialog === 'source' && !state.dialog.name)
 			{
@@ -509,6 +514,7 @@
 		const element = event.target;
 		if(element.dataset.dialog)
 		{
+			if(element.dataset.dialog === 'type' && element.value === 'font') { state.dialog = null; sendChange({action:'fontImport'}); return; }
 			state.dialog[element.dataset.dialog] = element.value;
 			if(element.dataset.dialog === 'name' && state.dialog.paletteName === undefined)
 			{
@@ -690,12 +696,19 @@
 			sources = message.sources;
 			resourceTypes = message.resourceTypes;
 			version = message.version;
+			fontData = message.fontData || {};
 			dirty = message.dirty;
 			project = message.project;
 			sourceWarning = message.sourceWarning;
 			warnings = (message.warnings || []).map(displayMessage);
 			selectedFolder = message.selectedFolder;
 			state.busy = Boolean(message.busy);
+			if(pendingFontIds && !state.busy)
+			{
+				const created = bundle.resources.find(item => item.type === 'font' && !pendingFontIds.has(item.id));
+				if(created) { state.selected = created.id; state.tab = 'Fonts'; }
+				pendingFontIds = undefined;
+			}
 			if(pendingSequenceIds && !state.busy)
 			{
 				const created = bundle.resources.find(item => item.sequence?.index === 0 && !pendingSequenceIds.has(item.sequence.id));
@@ -715,7 +728,7 @@
 			}
 			if(message.selectedSource)
 			{
-				const resource = bundle.resources.find(item => item.source === message.selectedSource);
+				const resource = bundle.resources.find(item => (item.source === message.selectedSource || item.type === 'font' && item.atlas === message.selectedSource));
 				if(resource)
 				{
 					state.selected = resource.id;

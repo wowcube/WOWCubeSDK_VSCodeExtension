@@ -1,6 +1,7 @@
 import * as PaletteCompatibility from '../media/palettecompatibility';
 import * as ResourceValidation from '../media/resourcevalidation';
 import { SpriteSequences, SequenceMembership } from './SpriteSequence';
+import { fontResourceType } from './FontResource';
 import { mapResourceType } from './MapResource';
 
 export interface Resource
@@ -223,6 +224,7 @@ ResourceTypes.register({
 });
 
 ResourceTypes.register(mapResourceType);
+ResourceTypes.register(fontResourceType);
 
 export class ResourceBundles
 {
@@ -288,7 +290,7 @@ export class ResourceBundles
 			{
 				errors.push('V-004: Resource names must be nonempty, trimmed, and unique.');
 			}
-			if(['sprite', 'palette', 'map', 'sound'].includes(resource.type))
+			if(['sprite', 'palette', 'map', 'sound', 'font'].includes(resource.type))
 			{
 				const error = ResourceValidation.name(resource.name);
 				if(error) { errors.push(error); }
@@ -314,6 +316,8 @@ export class ResourceBundles
 			}
 		}
 		errors.push(...SpriteSequences.validate(bundle));
+		const fonts = bundle.resources.filter(resource => resource.type === 'font');
+		if(fonts.length > 3) { errors.push('Only three fonts are supported (slots 1–3).'); }
 		const palettes = bundle.resources.filter(resource => resource.type === 'palette');
 		if(palettes.length > ResourceValidation.maxPalettes) { errors.push('V-016: At most '+ResourceValidation.maxPalettes+' palettes are allowed.'); }
 		if(1 + bundle.resources.filter(resource => ['sprite', 'palette', 'map', 'sound'].includes(resource.type)).length > 5120)
@@ -322,7 +326,7 @@ export class ResourceBundles
 		}
 		for(const palette of palettes)
 		{
-			const members = bundle.resources.filter(resource => resource.type === 'sprite' && resource.colorMode === 'palette' && resource.paletteId === palette.id);
+			const members = bundle.resources.filter(resource => (resource.type === 'font' || resource.type === 'sprite' && resource.colorMode === 'palette') && resource.paletteId === palette.id);
 			if(members.some(resource => ['alpha', 'additive'].includes(resource.blend as string)) && members.some(resource => ['opaque', 'bg'].includes(resource.blend as string)))
 			{
 				errors.push('V-017: Palette '+palette.name+' mixes alpha and opaque sprites.');
@@ -333,7 +337,7 @@ export class ResourceBundles
 
 	public static getBuildErrors(bundle:ResourceBundle):string[]
 	{
-		return [...SpriteSequences.buildErrors(bundle), ...bundle.resources.filter(resource => resource.type === 'palette').map(resource => PaletteCompatibility.issue(resource as PaletteResource)).filter((error):error is string => !!error)];
+		return [...(bundle.resources.some(resource => resource.type === 'font') ? ['Font export requires resource-builder support for font resources. This builder integration is not implemented yet; fonts have not been compiled.'] : []), ...SpriteSequences.buildErrors(bundle), ...bundle.resources.filter(resource => resource.type === 'palette').map(resource => PaletteCompatibility.issue(resource as PaletteResource)).filter((error):error is string => !!error)];
 	}
 
 	public static getWarnings(bundle:ResourceBundle):string[]

@@ -6,6 +6,8 @@ import { ResourceBundles, ResourceTypes, isResourcePath, ResourceBundle, Palette
 import { PaletteBuilder } from './PaletteBuilder';
 import * as PaletteCompatibility from '../media/palettecompatibility';
 import { SpriteSequences } from './SpriteSequence';
+import { FontEditor } from './FontEditor';
+import { FontResource } from './FontResource';
 import { SequenceEditor } from './SequenceEditor';
 import { MapResource } from './MapResource';
 import * as ResourceValidation from '../media/resourcevalidation';
@@ -169,14 +171,20 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 					}
 				}
 				const sources = await this.getSources(projectUri, bundle.sourceFolders,
-					[...bundle.resources.map(resource => resource.source), ...bundle.resources.filter(resource => resource.type === 'map').map(resource => (resource as MapResource).net.backgroundImage), selectedFolder === undefined ? browseSource : undefined]
+					[...bundle.resources.map(resource => resource.source), ...bundle.resources.filter(resource => resource.type === 'font').map(resource => resource.atlas), ...bundle.resources.filter(resource => resource.type === 'map').map(resource => (resource as MapResource).net.backgroundImage), selectedFolder === undefined ? browseSource : undefined]
 						.filter((source):source is string => typeof source === 'string'), panel.webview);
+				const fontData:Record<string,unknown> = {};
+				for(const resource of bundle.resources.filter(resource => resource.type === 'font'))
+				{
+					try { fontData[resource.id] = await FontEditor.read(projectUri, resource as FontResource); }
+					catch(error) { fontData[resource.id] = {error:this.getError(error)}; }
+				}
 				if(disposed || number !== updateNumber || version !== document.version)
 				{
 					return;
 				}
 				await panel.webview.postMessage({
-					type:'update', bundle, version, dirty:document.isDirty, busy:working,
+					type:'update', bundle, fontData, version, dirty:document.isDirty, busy:working,
 					project:path.posix.basename(projectUri.path), sources:sources.files, sourceWarning:sources.warning, warnings:ResourceBundles.getWarnings(bundle),
 					resourceTypes:ResourceTypes.getAll().map(resourceType => ({type:resourceType.type, label:resourceType.label, canCreate:resourceType.canCreate !== false})),
 					selectedSource, selectedFolder
@@ -288,6 +296,10 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 							{
 								await this.edit(document, message.version, async bundle =>
 								{
+									if(typeof message.action === 'string' && message.action.startsWith('font'))
+									{
+										return FontEditor.change(bundle, message, projectUri, uri => this.getRelativePath(projectUri, uri), palette => this.generatePalette(projectUri, bundle, palette, palette.colorCount));
+									}
 									if(typeof message.action === 'string' && message.action.startsWith('sequence'))
 									{
 										return SequenceEditor.change(bundle, message, projectUri, {relative:uri => this.getRelativePath(projectUri, uri), size:source => this.validateSpriteSource(projectUri, source), palette:palette => this.generatePalette(projectUri, bundle, palette, palette.colorCount)});
@@ -379,6 +391,7 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 												message.resource.mappingColors = palette.mappingColors.slice();
 												message.resource.colors = (message.resource.colors as string[]).map(ResourceValidation.quantizePaletteColor);
 											}
+											if(previous.type === 'font') { await FontEditor.read(projectUri, message.resource); }
 											bundle.resources[index] = message.resource;
 											const getPaletteSource = ResourceTypes.get(previous.type)?.getPaletteSource;
 											if(getPaletteSource?.(message.resource) && (previous.paletteId !== message.resource.paletteId ||
@@ -592,7 +605,8 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 				throw new Error('Cannot find a palette source for '+resource.name+'.');
 			}
 			const uri = vscode.Uri.joinPath(projectUri, source);
-			await this.validateSpriteSource(projectUri, source);
+			if(resource.type === 'font') { await FontEditor.read(projectUri, resource as FontResource); }
+			else { await this.validateSpriteSource(projectUri, source); }
 			try
 			{
 				const stat = await vscode.workspace.fs.stat(uri);
@@ -744,7 +758,7 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 		const sequenceCssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'sequenceeditor.css'));
 		const mapCssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'mapeditor.css'));
 		const sharedScripts = ['spritepixels.js', 'previewviewport.js', 'mapgeometry.js', 'sourcefiles.js', 'spritelist.js', 'palettecompatibility.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
-		const mapScripts = ['maptextures.js', 'maprenderer.js', 'mapeditor.js', 'mapresource.js', 'sequenceeditor.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
+		const mapScripts = ['maptextures.js', 'maprenderer.js', 'mapeditor.js', 'mapresource.js', 'sequenceeditor.js', 'fonteditor.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
 		return `<!DOCTYPE html>
 		<html lang="en">
 		<head>
@@ -754,6 +768,7 @@ export class ResourceStudioProvider implements vscode.CustomTextEditorProvider
 			<link href="${cssUri}" rel="stylesheet">
 			<link href="${mapCssUri}" rel="stylesheet">
 			<link href="${sequenceCssUri}" rel="stylesheet">
+			<link href="${webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'fonteditor.css'))}" rel="stylesheet">
 			<title>Resource Studio</title>
 		</head>
 		<body>

@@ -6,9 +6,12 @@
 		const groups = new Map(), sprites = new Map();
 		for(const resource of bundle.resources)
 		{
-			if(resource.type !== 'sprite') { continue; }
-			if(!sprites.has(resource.source)) { sprites.set(resource.source, []); }
-			sprites.get(resource.source).push(resource);
+			if(!['sprite', 'font'].includes(resource.type)) { continue; }
+			for(const source of new Set([resource.source, ...(resource.type === 'font' ? [resource.atlas] : [])]))
+			{
+				if(!sprites.has(source)) { sprites.set(source, []); }
+				sprites.get(source).push(resource);
+			}
 		}
 		for(const source of sources)
 		{

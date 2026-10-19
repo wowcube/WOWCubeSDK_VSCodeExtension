@@ -9,13 +9,13 @@ const bundle = ResourceBundles.create();
 const items = SpriteSequences.createFrames(bundle,'jump',[{source:'a.png',width:40,height:50},{source:'b.png',width:80,height:90}],1);
 items.forEach(frame => { frame.colorMode='rgb565';frame.blend='opaque';frame.compression='plain'; }); bundle.resources.push(...items);
 const media = path.join(__dirname,'../../media');
-const scripts=['resourcevalidation.js','spritepixels.js','previewviewport.js','mapgeometry.js','sourcefiles.js','spritelist.js','palettecompatibility.js','resourcetypes.js','maptextures.js','maprenderer.js','mapeditor.js','mapresource.js','sequenceeditor.js','resourcestudio.js'];
+const scripts=['resourcevalidation.js','spritepixels.js','previewviewport.js','mapgeometry.js','sourcefiles.js','spritelist.js','palettecompatibility.js','resourcetypes.js','maptextures.js','maprenderer.js','mapeditor.js','mapresource.js','sequenceeditor.js','fonteditor.js','resourcestudio.js'];
 const setup=`
 window.bundle=${JSON.stringify(bundle)};window.version=1;window.messages=[];window.metrics={images:0,conversions:0};
 const ImageType=window.Image;window.Image=class extends ImageType{constructor(){super();window.metrics.images++;}};
 window.sources=window.bundle.resources.map((frame,index)=>{const c=document.createElement('canvas');c.width=index?80:40;c.height=index?90:50;const ctx=c.getContext('2d');ctx.fillStyle=index?'#00ff00':'#ff0000';ctx.fillRect(0,0,c.width,c.height);return{path:frame.source,uri:c.toDataURL(),image:true,missing:false};});
 window.saved={tab:'Animations',selected:window.bundle.resources[0].id};
-window.sendUpdate=()=>window.dispatchEvent(new MessageEvent('message',{data:{type:'update',bundle:structuredClone(window.bundle),sources:window.sources,resourceTypes:[{type:'sprite',label:'Sprite',canCreate:true},{type:'palette',label:'Palette',canCreate:false},{type:'map',label:'Map',canCreate:true}],version:window.version,dirty:true,project:'Sequence test'}}));
+window.sendUpdate=()=>window.dispatchEvent(new MessageEvent('message',{data:{type:'update',bundle:structuredClone(window.bundle),sources:window.sources,resourceTypes:[{type:'sprite',label:'Sprite',canCreate:true},{type:'palette',label:'Palette',canCreate:false},{type:'map',label:'Map',canCreate:true},{type:'font',label:'Font',canCreate:true}],version:window.version,dirty:true,project:'Sequence test'}}));
 window.acquireVsCodeApi=()=>({getState:()=>window.saved,setState:value=>window.saved=value,postMessage:message=>{window.messages.push(message);if(message.type==='ready')setTimeout(window.sendUpdate,0);if(message.type==='change'){setTimeout(()=>{if(message.action==='sequenceUpdate'){message.frames.forEach((edit,index)=>{const frame=window.bundle.resources.find(f=>f.id===edit.id);Object.assign(frame,edit);frame.sequence={...frame.sequence,name:message.name,index};});}window.version++;window.sendUpdate();},20);}}});
 `;
 async function run()
@@ -84,7 +84,9 @@ async function run()
 		await page.locator('[data-sequence-action="play"]').click();
 		assert.strictEqual(await page.evaluate(()=>window.metrics.images),2,'Editing and playback reuse decoded images.');
 		assert.strictEqual(await page.evaluate(()=>window.canvasBefore===document.querySelector('#sequence-canvas')),false,'Reordering remounts only structural UI.');
-		// Ctrl/Cmd+S commits a focused offset before saving.
+		// Playback can stop on either frame; explicitly select the first ordered frame.
+			await page.locator('[data-sequence-frame="0"]').click();
+			// Ctrl/Cmd+S commits a focused offset before saving.
 		await page.locator('[data-sequence-key="y"]').fill('-100.5');
 		await page.locator('[data-sequence-key="y"]').press('Control+s');
 		await page.waitForFunction(()=>window.bundle.resources.find(frame=>frame.sequence.index===0).pivot.y===100.5);

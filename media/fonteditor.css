@@ -1,0 +1,20 @@
+.font-detail { display:grid; grid-template-columns:minmax(0,1fr) 280px; gap:16px; flex:1; min-height:0; overflow:hidden; }
+.font-center { min-width:0; overflow:auto; padding:2px; overflow-anchor:none; }
+.font-inspector { overflow:auto; padding:0 12px; border-left:1px solid var(--s-border); min-width:0; overflow-anchor:none; }
+.font-toolbar, .font-options { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:8px 0; }
+.font-toolbar label, .font-options label { display:inline-flex; align-items:center; gap:6px; }
+.font-toolbar .font-zoom { margin-left:auto; color:var(--s-muted); }
+.font-toolbar select { width:auto; margin:0; }
+.font-toolbar button[aria-pressed=true] { background:var(--s-selected); color:var(--s-selected-text); border-color:var(--s-focus); }
+.font-options input[type=color] { width:40px; padding:2px; }
+.font-center textarea { display:block; width:100%; box-sizing:border-box; resize:vertical; background:var(--s-field); color:var(--s-text); border:1px solid var(--s-border); border-radius:3px; padding:7px; font:inherit; }
+.font-center textarea:focus-visible { outline:1px solid var(--s-focus); outline-offset:2px; }
+.font-options select { width:auto; margin:0; }
+[data-font-glyph] { display:block; width:180px; max-width:100%; background:var(--s-stage); border:1px solid var(--s-border); margin:8px 0; image-rendering:pixelated; }
+#font-preview { height:440px; min-height:140px; overflow:auto; border:1px solid var(--s-border); display:flex; align-items:safe center; justify-content:safe center; padding:20px; }
+#font-canvas { display:block; flex-shrink:0; image-rendering:pixelated; }
+#font-preview.font-checker { background-image:linear-gradient(45deg,#8883 25%,transparent 25%),linear-gradient(-45deg,#8883 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#8883 75%),linear-gradient(-45deg,transparent 75%,#8883 75%); background-size:16px 16px; background-position:0 0,0 8px,8px -8px,-8px 0; }
+.font-path { overflow-wrap:anywhere; }
+[data-font-metrics] { white-space:pre-line; line-height:1.7; }
+@media(max-width:850px) { .font-detail { grid-template-columns:minmax(0,1fr) 220px; } }
+@media(max-width:650px) { .font-detail { display:block; overflow:auto; } .font-center,.font-inspector { overflow:visible; } }

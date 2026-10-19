@@ -5,6 +5,7 @@ exports.isResourcePath = isResourcePath;
 const PaletteCompatibility = require("../media/palettecompatibility");
 const ResourceValidation = require("../media/resourcevalidation");
 const SpriteSequence_1 = require("./SpriteSequence");
+const FontResource_1 = require("./FontResource");
 const MapResource_1 = require("./MapResource");
 // These modes are preserved for future support but never offered by the editor.
 exports.hiddenSpriteModes = { color: ['rgb6666'], blend: ['bump', 'dudv', 'refl'] };
@@ -139,6 +140,7 @@ ResourceTypes.register({
     }
 });
 ResourceTypes.register(MapResource_1.mapResourceType);
+ResourceTypes.register(FontResource_1.fontResourceType);
 class ResourceBundles {
     static create() {
         return { schemaVersion: 2, sourceFolders: [], resources: [], registries: { groups: [], types: [], tags: [] } };
@@ -188,7 +190,7 @@ class ResourceBundles {
             if (typeof resource.name !== 'string' || !resource.name.trim() || resource.name !== resource.name.trim() || names.has(resource.name)) {
                 errors.push('V-004: Resource names must be nonempty, trimmed, and unique.');
             }
-            if (['sprite', 'palette', 'map', 'sound'].includes(resource.type)) {
+            if (['sprite', 'palette', 'map', 'sound', 'font'].includes(resource.type)) {
                 const error = ResourceValidation.name(resource.name);
                 if (error) {
                     errors.push(error);
@@ -211,6 +213,10 @@ class ResourceBundles {
             }
         }
         errors.push(...SpriteSequence_1.SpriteSequences.validate(bundle));
+        const fonts = bundle.resources.filter(resource => resource.type === 'font');
+        if (fonts.length > 3) {
+            errors.push('Only three fonts are supported (slots 1–3).');
+        }
         const palettes = bundle.resources.filter(resource => resource.type === 'palette');
         if (palettes.length > ResourceValidation.maxPalettes) {
             errors.push('V-016: At most ' + ResourceValidation.maxPalettes + ' palettes are allowed.');
@@ -219,7 +225,7 @@ class ResourceBundles {
             errors.push('V-025: At most 5120 runtime assets are allowed.');
         }
         for (const palette of palettes) {
-            const members = bundle.resources.filter(resource => resource.type === 'sprite' && resource.colorMode === 'palette' && resource.paletteId === palette.id);
+            const members = bundle.resources.filter(resource => (resource.type === 'font' || resource.type === 'sprite' && resource.colorMode === 'palette') && resource.paletteId === palette.id);
             if (members.some(resource => ['alpha', 'additive'].includes(resource.blend)) && members.some(resource => ['opaque', 'bg'].includes(resource.blend))) {
                 errors.push('V-017: Palette ' + palette.name + ' mixes alpha and opaque sprites.');
             }
@@ -227,7 +233,7 @@ class ResourceBundles {
         return errors;
     }
     static getBuildErrors(bundle) {
-        return [...SpriteSequence_1.SpriteSequences.buildErrors(bundle), ...bundle.resources.filter(resource => resource.type === 'palette').map(resource => PaletteCompatibility.issue(resource)).filter((error) => !!error)];
+        return [...(bundle.resources.some(resource => resource.type === 'font') ? ['Font export requires resource-builder support for font resources. This builder integration is not implemented yet; fonts have not been compiled.'] : []), ...SpriteSequence_1.SpriteSequences.buildErrors(bundle), ...bundle.resources.filter(resource => resource.type === 'palette').map(resource => PaletteCompatibility.issue(resource)).filter((error) => !!error)];
     }
     static getWarnings(bundle) {
         const warnings = this.getBuildErrors(bundle);

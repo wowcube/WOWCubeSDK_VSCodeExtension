@@ -6,7 +6,7 @@ Schema version: 2
 The file stores one resource bundle. It contains resource records, source folder
 paths, and shared classification definitions. Image files remain separate; the
 JSON references them by path. The implemented resource types are palette,
-sprite, and map. Exported device data is not part of this model.
+sprite, map, and font. Exported device data is not part of this model.
 
 Bundle fields
 
@@ -32,7 +32,7 @@ id: string
 name: string
     Resource name, independent of its source file name and ID.
 type: string
-    Resource kind: "palette", "sprite", or "map" for the implemented types.
+    Resource kind: "palette", "sprite", "map", or "font" for the implemented types.
 
 Palette fields
 
@@ -370,3 +370,45 @@ Implementation references
 src/ResourceBundle.ts — model definitions.
 src/MapResource.ts — map and placement definitions.
 schemas/wowcubeapp-resources.schema.json — machine-readable JSON Schema.
+
+Font fields
+
+type: "font"
+source: string
+    Project-relative binary BMFont v3 .fnt file. The file is the authority for
+    glyph rectangles, offsets, advances, line height and baseline. These values
+    are not duplicated in the JSON.
+atlas: string
+    Project-relative PNG atlas. Initially resolved relative to source from its
+    embedded page filename; may explicitly override that reference. One page.
+slot: 1 | 2 | 3
+    Unique engine font slot. Slot zero is not a usable font.
+paletteId: string
+    ID of a palette resource shared by every glyph. May be shared with other
+    alpha fonts and sprites, but not opaque sprites.
+fullsize: boolean
+    Uniform glyph scale: true means source pixels draw 1:1; false means 2x.
+    Newly imported fonts default to true.
+blend: "alpha"
+    All glyphs use alpha blending.
+
+The font record is an editor-level definition, not a dedicated engine resource.
+Its supported characters are codes 32–127; character 110 (n) is required.
+Glyph identities are font_<slot>_<five-digit-decimal-character-code>, for example
+font_1_00065. These identifiers are reserved. They are derived from the slot and
+character, not from the font resource's user-facing name. Glyph sprite records
+are not stored alongside the font record. PNG and .fnt files remain external
+source assets. Preview text, tint and other view settings are not JSON fields.
+
+Example font record (the referenced palette must also exist):
+{
+  "id": "f1",
+  "name": "ui_font",
+  "type": "font",
+  "source": "assets/fonts/font_1.fnt",
+  "atlas": "assets/fonts/font_3_0.png",
+  "slot": 1,
+  "paletteId": "p1",
+  "fullsize": true,
+  "blend": "alpha"
+}

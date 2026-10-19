@@ -9,6 +9,7 @@ const ResourceBundle_1 = require("./ResourceBundle");
 const PaletteBuilder_1 = require("./PaletteBuilder");
 const PaletteCompatibility = require("../media/palettecompatibility");
 const SpriteSequence_1 = require("./SpriteSequence");
+const FontEditor_1 = require("./FontEditor");
 const SequenceEditor_1 = require("./SequenceEditor");
 const ResourceValidation = require("../media/resourcevalidation");
 class ResourceStudioProvider {
@@ -131,13 +132,22 @@ class ResourceStudioProvider {
                         // Keep missing source files visible without changing the bundle.
                     }
                 }
-                const sources = await this.getSources(projectUri, bundle.sourceFolders, [...bundle.resources.map(resource => resource.source), ...bundle.resources.filter(resource => resource.type === 'map').map(resource => resource.net.backgroundImage), selectedFolder === undefined ? browseSource : undefined]
+                const sources = await this.getSources(projectUri, bundle.sourceFolders, [...bundle.resources.map(resource => resource.source), ...bundle.resources.filter(resource => resource.type === 'font').map(resource => resource.atlas), ...bundle.resources.filter(resource => resource.type === 'map').map(resource => resource.net.backgroundImage), selectedFolder === undefined ? browseSource : undefined]
                     .filter((source) => typeof source === 'string'), panel.webview);
+                const fontData = {};
+                for (const resource of bundle.resources.filter(resource => resource.type === 'font')) {
+                    try {
+                        fontData[resource.id] = await FontEditor_1.FontEditor.read(projectUri, resource);
+                    }
+                    catch (error) {
+                        fontData[resource.id] = { error: this.getError(error) };
+                    }
+                }
                 if (disposed || number !== updateNumber || version !== document.version) {
                     return;
                 }
                 await panel.webview.postMessage({
-                    type: 'update', bundle, version, dirty: document.isDirty, busy: working,
+                    type: 'update', bundle, fontData, version, dirty: document.isDirty, busy: working,
                     project: path.posix.basename(projectUri.path), sources: sources.files, sourceWarning: sources.warning, warnings: ResourceBundle_1.ResourceBundles.getWarnings(bundle),
                     resourceTypes: ResourceBundle_1.ResourceTypes.getAll().map(resourceType => ({ type: resourceType.type, label: resourceType.label, canCreate: resourceType.canCreate !== false })),
                     selectedSource, selectedFolder
@@ -229,6 +239,9 @@ class ResourceStudioProvider {
                             working = true;
                             try {
                                 await this.edit(document, message.version, async (bundle) => {
+                                    if (typeof message.action === 'string' && message.action.startsWith('font')) {
+                                        return FontEditor_1.FontEditor.change(bundle, message, projectUri, uri => this.getRelativePath(projectUri, uri), palette => this.generatePalette(projectUri, bundle, palette, palette.colorCount));
+                                    }
                                     if (typeof message.action === 'string' && message.action.startsWith('sequence')) {
                                         return SequenceEditor_1.SequenceEditor.change(bundle, message, projectUri, { relative: uri => this.getRelativePath(projectUri, uri), size: source => this.validateSpriteSource(projectUri, source), palette: palette => this.generatePalette(projectUri, bundle, palette, palette.colorCount) });
                                     }
@@ -313,6 +326,9 @@ class ResourceStudioProvider {
                                                 }
                                                 message.resource.mappingColors = palette.mappingColors.slice();
                                                 message.resource.colors = message.resource.colors.map(ResourceValidation.quantizePaletteColor);
+                                            }
+                                            if (previous.type === 'font') {
+                                                await FontEditor_1.FontEditor.read(projectUri, message.resource);
                                             }
                                             bundle.resources[index] = message.resource;
                                             const getPaletteSource = ResourceBundle_1.ResourceTypes.get(previous.type)?.getPaletteSource;
@@ -529,7 +545,12 @@ class ResourceStudioProvider {
                 throw new Error('Cannot find a palette source for ' + resource.name + '.');
             }
             const uri = vscode.Uri.joinPath(projectUri, source);
-            await this.validateSpriteSource(projectUri, source);
+            if (resource.type === 'font') {
+                await FontEditor_1.FontEditor.read(projectUri, resource);
+            }
+            else {
+                await this.validateSpriteSource(projectUri, source);
+            }
             try {
                 const stat = await vscode.workspace.fs.stat(uri);
                 if (!(stat.type & vscode.FileType.File)) {
@@ -652,7 +673,7 @@ class ResourceStudioProvider {
         const sequenceCssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'sequenceeditor.css'));
         const mapCssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'mapeditor.css'));
         const sharedScripts = ['spritepixels.js', 'previewviewport.js', 'mapgeometry.js', 'sourcefiles.js', 'spritelist.js', 'palettecompatibility.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
-        const mapScripts = ['maptextures.js', 'maprenderer.js', 'mapeditor.js', 'mapresource.js', 'sequenceeditor.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
+        const mapScripts = ['maptextures.js', 'maprenderer.js', 'mapeditor.js', 'mapresource.js', 'sequenceeditor.js', 'fonteditor.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
         return `<!DOCTYPE html>
 		<html lang="en">
 		<head>
@@ -662,6 +683,7 @@ class ResourceStudioProvider {
 			<link href="${cssUri}" rel="stylesheet">
 			<link href="${mapCssUri}" rel="stylesheet">
 			<link href="${sequenceCssUri}" rel="stylesheet">
+			<link href="${webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'fonteditor.css'))}" rel="stylesheet">
 			<title>Resource Studio</title>
 		</head>
 		<body>
