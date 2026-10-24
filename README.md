@@ -130,6 +130,8 @@ Encoding-dependent compilation checks are handled by `resource-builder`.
 Saving `wowcubeapp-resources.json`, from Resource Studio or the text editor, compiles
 changed resources and refreshes the configured IDs header automatically.
 Simulator and device builds await resource compilation before compiling app source code.
+
+After a successful device build, the extension uploads the generated `.oct` package to the device selected in WOWCube Devices and, after upload succeeds, refreshes the installed application list and sends a separate launch command using the matching entry’s GUIDs. The entry is matched against `metadata.application.guid1` and `guid2` from the build manifest. Upload and launch progress appear in Output. If no device is selected, the device is busy, or deployment fails, the task reports that compilation succeeded but deployment failed. Simulator and resource-only builds do not upload.
 The **build resources** task runs the same step independently. It saves pending changes
 to `wowcubeapp-resources.json` and invokes `sdk/tools/resource-builder`
 (`resource-builder.exe` on Windows), passing the workspace's `wowcubeapp-build.json`.

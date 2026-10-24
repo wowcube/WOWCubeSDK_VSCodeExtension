@@ -125,7 +125,7 @@ input[type=color] { height: 36px; padding: 3px; }
 .folder button { border: 0; }
 .bottom { display: flex; gap: 12px; flex-wrap: wrap; padding: 6px 13px; background: var(--s-side); border-top: 1px solid var(--s-border); font-size: 11px; color: var(--s-muted); }
 .dialog { padding: 17px; background: var(--s-side); border: 1px solid var(--s-border); margin-bottom: 18px; border-radius: 4px; }
-.dialog .pair { margin-top: 12px; }
+.dialog .pair, .dialog .resource-create-source { margin-top: 12px; }
 .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .error-banner { background: var(--vscode-inputValidation-errorBackground, #442222); color: var(--vscode-errorForeground, #f48771); padding: 10px 15px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .empty { text-align: center; padding: 60px 15px; color: var(--s-muted); }

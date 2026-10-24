@@ -8,6 +8,7 @@ const cp = require("child_process");
 const Configuration_1 = require("./Configuration");
 const Providers_1 = require("./Providers");
 const Output_1 = require("./Output");
+const DeviceDeployment_1 = require("./DeviceDeployment");
 class DeviceDetailsPanel {
     static createOrShow(extensionUri) {
         const column = vscode.window.activeTextEditor
@@ -886,74 +887,14 @@ class DeviceDetailsPanel {
         });
     }
     async doUploadApp(mac, source) {
-        return new Promise((resolve) => {
-            var out = new Array();
-            var err = false;
-            var info = new Array();
-            var utilspath = Configuration_1.Configuration.getUtilsPath();
-            var command = '"' + utilspath + Configuration_1.Configuration.getLoader() + '"';
-            command += " up -p ";
-            command += '"' + source + '"';
-            command += " -a ";
-            command += mac;
-            //command+=" -r";   //run the app as its uploaded
-            // logging
-            var mn = +Configuration_1.Configuration.getLoggingMode() - 1;
-            if (mn != -1) {
-                var ext = source.substring(source.lastIndexOf('.') + 1, source.length) || source;
-                ext = ext.toUpperCase();
-                if (ext == "CUB") {
-                    this._channel.appendLine('Application logging is enabled for module ' + mn + '.\r\n');
-                    command += " -l -cid " + mn;
-                }
-                else {
-                    this._channel.appendLine('Application logging is enabled for module ' + mn + ', however the type of a file being uploaded does not recognize as cubelet file. Application logging will be disabled. \r\n');
-                }
-            }
-            else {
-                this._channel.appendLine('Application logging is disabled.\r\n');
-            }
-            this._channel.appendLine('Uploading ' + source);
-            Configuration_1.Configuration.setDeviceBusy(mac, true);
-            var child = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => {
-                Configuration_1.Configuration.setDeviceBusy(mac, false);
-                if (child.exitCode === 0) {
-                    out.forEach(line => {
-                        line = line.replace('\n', '');
-                        if (line.indexOf('Error:') !== -1) {
-                            err = true;
-                        }
-                    });
-                }
-                else {
-                    err = true;
-                }
-                if (err) {
-                    if (out.length > 0)
-                        vscode.window.showErrorMessage("Unable to upload this app: " + out[0]);
-                    else
-                        vscode.window.showErrorMessage("Unable to upload this app");
-                    this._channel.appendLine('File upload error');
-                    this._panel.webview.postMessage({ type: 'endRequest' });
-                }
-                else {
-                    this._panel.webview.postMessage({ type: 'endUpload' });
-                    this._channel.appendLine('File has been successfully uploaded, refreshing application list...');
-                }
-                Providers_1.Providers.btdevices.showWait(false);
-                this.closeEmitter.fire(0);
-                resolve();
-            });
-            var that = this;
-            child?.stdout?.on('data', function (data) {
-                that._channel.appendLine(data);
-                that._channel.show(true);
-            });
-            child?.stderr?.on('data', function (data) {
-                that._channel.appendLine(data);
-                that._channel.show(true);
-            });
-        });
+        try {
+            await DeviceDeployment_1.DeviceDeployment.upload(mac, source);
+            this._panel.webview.postMessage({ type: 'endUpload' });
+        }
+        catch (error) {
+            vscode.window.showErrorMessage('Unable to upload this app: ' + (error instanceof Error ? error.message : String(error)));
+            this._panel.webview.postMessage({ type: 'endRequest' });
+        }
     }
 }
 exports.DeviceDetailsPanel = DeviceDetailsPanel;

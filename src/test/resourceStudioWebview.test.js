@@ -131,11 +131,25 @@ function dialogChange(key, value)
 {
 	rootHandlers.change({target:{dataset:{dialog:key}, value}});
 }
+// The tab fixes the creation type; no selector is needed to submit a sprite.
+click({tab:'Sprites'});
+click({action:'newResource'});
+assert.ok(!root.innerHTML.includes('data-dialog="type"'));
+assert.ok(root.innerHTML.includes('<div class="resource-create-source"><div class="field"><label>Source file'));
+dialogChange('source', 'hero.png');
+dialogChange('name', 'tab_sprite');
+dialogChange('paletteId', '__rgb565__');
+rootHandlers.submit({preventDefault:function () {}});
+assert.strictEqual(sent.at(-1).resourceType, 'sprite');
+assert.strictEqual(sent.at(-1).source, 'hero.png');
+version++;
+update();
 click({registerSource:'hero.png'});
 assert.ok(root.innerHTML.includes('RGB565 — no palette'));
 dialogChange('paletteId', '__rgb565__');
 assert.ok(!root.innerHTML.includes('data-dialog="paletteName"'));
 rootHandlers.submit({preventDefault:function () {}});
+assert.strictEqual(sent.at(-1).resourceType, 'sprite');
 assert.strictEqual(sent.at(-1).options.paletteId, null);
 assert.strictEqual(sent.at(-1).options.colorMode, 'rgb565');
 version++;

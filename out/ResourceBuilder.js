@@ -35,7 +35,12 @@ class ResourceBuilder {
         const folder = path.resolve(workspace);
         const pending = this.builds.get(folder);
         if (pending) {
-            return pending;
+            if (reason !== 'pack') {
+                return pending;
+            }
+            // An explicit pack must run even if the pending request only checks the cache.
+            await pending.catch(() => { });
+            return this.build(folder, reason);
         }
         // Install the pending promise before saving a dirty document can fire a save event.
         const build = Promise.resolve().then(() => this.compile(folder, reason));
@@ -89,7 +94,7 @@ class ResourceBuilder {
         const key = 'resourceBuilder:' + vscode.Uri.file(resources).toString();
         const state = Configuration_1.Configuration.context.workspaceState;
         const channel = Output_1.Output.channel();
-        if (state.get(key) === hash) {
+        if (reason !== 'pack' && state.get(key) === hash) {
             channel.appendLine('[resource-builder] Resources are up to date.');
             return;
         }

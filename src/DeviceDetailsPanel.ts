@@ -5,6 +5,7 @@ import * as cp from 'child_process';
 import {Configuration} from './Configuration';
 import { Providers } from "./Providers";
 import {Output} from "./Output";
+import { DeviceDeployment } from "./DeviceDeployment";
 
 interface AppListEntry {
     appname: string;
@@ -1196,103 +1197,16 @@ export class DeviceDetailsPanel {
 
         private async doUploadApp(mac:string, source:string): Promise<void>
         {
-            return new Promise<void>((resolve) =>
+            try
             {
-                var out:Array<string> = new Array();
-                var err:boolean = false;
-                var info:Array<string> = new Array();
-                var utilspath = Configuration.getUtilsPath();
-                var command = '"'+utilspath+Configuration.getLoader()+'"';
-        
-                command+=" up -p ";
-                command+='"'+source+'"';
-                command+=" -a ";
-                command+=mac;
-                //command+=" -r";   //run the app as its uploaded
-
-                // logging
-                var mn:number = +Configuration.getLoggingMode()-1;
-
-                if(mn!=-1)
-                {
-                    var ext = source.substring(source.lastIndexOf('.')+1, source.length) || source;
-                    ext = ext.toUpperCase();
-                    
-                    if(ext=="CUB")
-                    {
-                        this._channel.appendLine('Application logging is enabled for module '+ mn+'.\r\n');
-                        command+=" -l -cid "+mn;
-                    }
-                    else
-                    {
-                        this._channel.appendLine('Application logging is enabled for module '+ mn+', however the type of a file being uploaded does not recognize as cubelet file. Application logging will be disabled. \r\n'); 
-                    }
-                }
-                else
-                {
-                    this._channel.appendLine('Application logging is disabled.\r\n');
-                }
-
-                this._channel.appendLine('Uploading '+source);
-
-                Configuration.setDeviceBusy(mac,true);
-                var child:cp.ChildProcess = cp.exec(command, { cwd: "" }, (error, stdout, stderr) => 
-                {    
-                    Configuration.setDeviceBusy(mac,false);
-    
-                    if(child.exitCode===0)
-                    {
-                        out.forEach(line=>{
-                            
-                            line = line.replace('\n','');
-    
-                            if(line.indexOf('Error:')!==-1)
-                            {
-                                err = true;
-                            }
-                        });
-                    }
-                    else
-                    {
-                        err = true;
-                    }
-    
-                    if(err)
-                        { 
-                            if(out.length>0)
-                                vscode.window.showErrorMessage("Unable to upload this app: "+out[0]);   
-                            else
-                                vscode.window.showErrorMessage("Unable to upload this app");
-
-                            this._channel.appendLine('File upload error');
-                            this._panel.webview.postMessage({ type: 'endRequest'});
-                        }
-                    else
-                        { 
-                            this._panel.webview.postMessage({ type: 'endUpload'});
-                            this._channel.appendLine('File has been successfully uploaded, refreshing application list...');
-                        }
-
-                        Providers.btdevices.showWait(false);
-
-                    this.closeEmitter.fire(0);
-                    resolve();
-                });	
-
-                var that = this;
-
-                child?.stdout?.on('data', function(data) 
-                {
-                    that._channel.appendLine(data);
-                    that._channel.show(true);
-                });
-    
-                child?.stderr?.on('data', function(data) 
-                {
-                    that._channel.appendLine(data);
-                    that._channel.show(true);
-                });
-            });
+                await DeviceDeployment.upload(mac, source);
+                this._panel.webview.postMessage({ type: 'endUpload'});
+            }
+            catch(error)
+            {
+                vscode.window.showErrorMessage('Unable to upload this app: '+(error instanceof Error ? error.message : String(error)));
+                this._panel.webview.postMessage({ type: 'endRequest'});
+            }
         }
 }
 function getWebviewOptions(extensionUri: vscode.Uri): 

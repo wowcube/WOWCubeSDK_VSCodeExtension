@@ -310,11 +310,9 @@
 	{
 		const dialog = state.dialog;
 		const type = window.ResourceStudioTypes.get(dialog.type);
-		return '<form id="resource-form" class="dialog"><strong>Register a resource</strong><div class="pair">'+
-			field('Type', '<select data-dialog="type">'+resourceTypes.filter(type => type.canCreate !== false && window.ResourceStudioTypes.get(type.type)?.canCreate !== false && window.ResourceStudioTypes.get(type.type)).map(type =>
-				'<option value="'+escape(type.type)+'" '+(dialog.type === type.type ? 'selected' : '')+'>'+escape(type.label)+'</option>').join('')+'</select>')+
+		return '<form id="resource-form" class="dialog"><strong>Register a resource</strong><div class="resource-create-source">'+
 			(type?.renderCreateSource?.(dialog, helpers()) || field('Unique name', '<input data-dialog="name" value="'+escape(dialog.name)+'" required>'))+'</div>'+
-			(window.ResourceStudioTypes.get(dialog.type)?.renderCreate?.(dialog, helpers()) || '')+
+			(type?.renderCreate?.(dialog, helpers()) || '')+
 			'<div class="actions"><button type="submit" class="primary">Add resource</button><button type="button" data-action="cancel">Cancel</button></div></form>';
 	}
 
@@ -433,7 +431,7 @@
 		switch(button.dataset.action)
 		{
 			case 'newResource':
-				showDialog((resourceTypes.find(type => type.canCreate !== false && window.ResourceStudioTypes.get(type.type)?.section === state.tab) ||
+				showDialog(state.tab === 'Sprites' ? 'sprite' : (resourceTypes.find(type => type.canCreate !== false && window.ResourceStudioTypes.get(type.type)?.section === state.tab) ||
 					resourceTypes.find(type => type.canCreate !== false && window.ResourceStudioTypes.get(type.type)?.canCreate !== false))?.type || 'sprite');
 				break;
 			case 'cancel':
@@ -477,8 +475,6 @@
 		const element = event.target;
 		if(element.dataset.dialog)
 		{
-			if(element.dataset.dialog === 'type' && element.value === 'sound') { state.dialog = null; vscode.postMessage({type:'soundImport'}); return; }
-			if(element.dataset.dialog === 'type' && element.value === 'font') { state.dialog = null; sendChange({action:'fontImport'}); return; }
 			state.dialog[element.dataset.dialog] = element.value;
 			if(element.dataset.dialog === 'source' && !state.dialog.name)
 			{
@@ -521,8 +517,6 @@
 		const element = event.target;
 		if(element.dataset.dialog)
 		{
-			if(element.dataset.dialog === 'type' && element.value === 'sound') { state.dialog = null; vscode.postMessage({type:'soundImport'}); return; }
-			if(element.dataset.dialog === 'type' && element.value === 'font') { state.dialog = null; sendChange({action:'fontImport'}); return; }
 			state.dialog[element.dataset.dialog] = element.value;
 			if(element.dataset.dialog === 'name' && state.dialog.paletteName === undefined)
 			{
@@ -532,7 +526,7 @@
 					paletteName.value = validation.paletteName(element.value.trim());
 				}
 			}
-			if(element.dataset.dialog === 'type' || element.dataset.dialog === 'paletteId')
+			if(element.dataset.dialog === 'paletteId')
 			{
 				render();
 			}

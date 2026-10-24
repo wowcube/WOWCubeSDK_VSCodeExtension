@@ -11,6 +11,7 @@ const Providers_1 = require("./Providers");
 const Output_1 = require("./Output");
 const Script_1 = require("./Script");
 const ResourceBuilder_1 = require("./ResourceBuilder");
+const DeviceDeployment_1 = require("./DeviceDeployment");
 class WOWCubeBuildTaskProvider {
     constructor(workspaceRoot) {
         this.workspaceRoot = workspaceRoot;
@@ -83,7 +84,7 @@ class WOWCubeBuildTaskTerminal {
         if (this.action == 'build') {
             // F5 may have just compiled resources on save; keep that output visible.
             this._channel.show(true);
-            const build = this.target === 'resources' ? this.doBuildResources() :
+            const build = this.target === 'resources' ? this.doBuildResources('pack') :
                 this.target === 'emulator' ? this.doBuildSimulator() :
                     this.target === 'device' ? this.doBuildARMModule() : undefined;
             build?.then(() => this.closeEmitter.fire(0), exception => {
@@ -168,9 +169,15 @@ class WOWCubeBuildTaskTerminal {
             });
         }
         this._channel.appendLine('Build completed.');
+        try {
+            await DeviceDeployment_1.DeviceDeployment.uploadAndRun(path.resolve(appFolder, build_json.appFolder + '.oct'), build_json.metadata?.application);
+        }
+        catch (exception) {
+            throw new Error('Compilation succeeded, but deployment failed: ' + (exception instanceof Error ? exception.message : String(exception)));
+        }
     }
-    async doBuildResources() {
-        await ResourceBuilder_1.ResourceBuilder.build(this.workspace);
+    async doBuildResources(reason = 'build') {
+        await ResourceBuilder_1.ResourceBuilder.build(this.workspace, reason);
     }
     doCompileRust(action) {
         return new Promise((resolve, reject) => {

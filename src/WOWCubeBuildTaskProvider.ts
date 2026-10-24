@@ -11,6 +11,7 @@ import {Output} from './Output';
 import { Script } from "./Script";
 import { NameBeautifier } from "./NameBeautifier";
 import { ResourceBuilder } from './ResourceBuilder';
+import { DeviceDeployment } from './DeviceDeployment';
 
 interface WOWCubeBuildTaskDefinition extends vscode.TaskDefinition 
 {
@@ -126,7 +127,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 		{
 			// F5 may have just compiled resources on save; keep that output visible.
 			this._channel.show(true);
-			const build = this.target === 'resources' ? this.doBuildResources() :
+			const build = this.target === 'resources' ? this.doBuildResources('pack') :
 				this.target === 'emulator' ? this.doBuildSimulator() :
 				this.target === 'device' ? this.doBuildARMModule() : undefined;
 			build?.then(() => this.closeEmitter.fire(0), exception =>
@@ -231,11 +232,19 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 			});
 		}
 		this._channel.appendLine('Build completed.');
+		try
+		{
+			await DeviceDeployment.uploadAndRun(path.resolve(appFolder, build_json.appFolder+'.oct'), build_json.metadata?.application);
+		}
+		catch(exception)
+		{
+			throw new Error('Compilation succeeded, but deployment failed: '+(exception instanceof Error ? exception.message : String(exception)));
+		}
 	}
 
-	private async doBuildResources():Promise<void>
+	private async doBuildResources(reason:'build' | 'pack' = 'build'):Promise<void>
 	{
-		await ResourceBuilder.build(this.workspace);
+		await ResourceBuilder.build(this.workspace, reason);
 	}
 
 	private doCompileRust(action:string): Promise<void>

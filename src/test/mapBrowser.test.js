@@ -230,11 +230,21 @@ async function run()
 		assert.ok((await page.locator('.map-outliner').boundingBox()).height<outlinerAfter.height-10,'Divider supports keyboard resizing.');
 		const settings=await page.locator('.map-settings').boundingBox();const view=await page.locator('.map-view').boundingBox();assert.ok(settings.y>=view.y+view.height-1);
 		await page.locator('[data-action="newResource"]').click();
-		assert.strictEqual(await page.locator('[data-dialog="type"]').inputValue(),'map');
+		assert.strictEqual(await page.locator('[data-dialog="type"]').count(),0);
 		await page.locator('[data-dialog="name"]').fill('second_map');await change(()=>page.locator('#resource-form button[type=submit]').click());
 		assert.strictEqual(await page.locator('.heading strong').innerText(),'second_map');
+		assert.strictEqual(await page.evaluate(()=>window.testMessages.filter(m=>m.action==='create').at(-1).resourceType),'map');
 		assert.strictEqual(await page.locator('.map-placement').count(),0);
 		await page.locator('[data-tab="Sprites"]').click();
+		await page.locator('[data-action="newResource"]').click();
+		assert.strictEqual(await page.locator('[data-dialog="type"]').count(),0);
+		const sourceWidth=await page.locator('[data-dialog="source"]').evaluate(node=>{
+			const form=node.closest('form'),style=getComputedStyle(form);
+			return {actual:node.getBoundingClientRect().width,expected:form.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight)};
+		});
+		assert.ok(Math.abs(sourceWidth.actual-sourceWidth.expected)<2,'Source file selector must span the form content width.');
+		await page.locator('#resource-form').screenshot({path:'/private/tmp/resource-registration-form.png'});
+		await page.locator('[data-action="cancel"]').click();
 		assert.strictEqual(await page.locator('.library>.section-label').innerText(),'SPRITES');
 		assert.ok(await page.locator('#sprite-canvas').count());
 		await page.locator('[data-select="hero"]').first().click();

@@ -8,6 +8,7 @@ const {EventEmitter} = require('events');
 const Module = require('module');
 
 let logged = '';
+const waits = [];
 const channel = {append:function (value) { logged += value; }, appendLine:function (value) { logged += value+'\n'; }, clear:function () { logged = ''; }, show:function () {}};
 class VSCodeEmitter
 {
@@ -30,6 +31,7 @@ const originalLoad = Module._load;
 Module._load = function (name, parent, isMain)
 {
 	if(name === 'vscode') { return vscode; }
+	if(parent?.filename.endsWith('/out/DeviceDeployment.js') && name === './Providers') { return {Providers:{btdevices:{showWait:value => waits.push(value)}}}; }
 	if(parent?.filename.endsWith('/out/WOWCubeBuildTaskProvider.js') && ['./Project', './Providers', './Script', './NameBeautifier'].includes(name)) { return {}; }
 	return originalLoad.call(this, name, parent, isMain);
 };
@@ -38,6 +40,7 @@ const {ResourceBuilder} = require('../../out/ResourceBuilder');
 const {ResourceStudioProvider} = require('../../out/ResourceStudioProvider');
 const {ResourceBundles, ResourceTypes} = require('../../out/ResourceBundle');
 const {WOWCubeBuildTaskProvider} = require('../../out/WOWCubeBuildTaskProvider');
+const {DeviceDeployment} = require('../../out/DeviceDeployment');
 Module._load = originalLoad;
 
 async function runTask(workspace, target)
@@ -70,12 +73,17 @@ async function run()
 	const buildPath = path.join(workspace, 'wowcubeapp-build.json');
 	const header = path.join(workspace, 'app', 'src', 'resource_ids.h');
 	const original = {flushEdits:ResourceStudioProvider.flushEdits, spawn:cp.spawn, exec:cp.exec, platform:os.platform, context:Configuration.context,
-		utils:Configuration.getUtilsPath, sdk:Configuration.getWOWSDKPath, version:Configuration.getCurrentVersion};
+		utils:Configuration.getUtilsPath, sdk:Configuration.getWOWSDKPath, version:Configuration.getCurrentVersion, device:Configuration.getCurrentDevice, logging:Configuration.getLoggingMode};
 	const calls = [];
 	const events = [];
 	let failTool;
 	let failLaunch = false;
 	let beforeResourceClose;
+	let packageMode = 'normal';
+	let loaderMode;
+	let failRun = false;
+	let catalogMode;
+	let device = {name:'Test cube', mac:'01:02:03:04:05:06'};
 	let revision = 0;
 	async function changeJson() { await fs.promises.writeFile(resources, JSON.stringify({...ResourceBundles.create(), revision:++revision})); }
 	try
@@ -83,12 +91,14 @@ async function run()
 		await fs.promises.mkdir(path.dirname(header), {recursive:true});
 		await fs.promises.mkdir(tools);
 		for(const name of ['resource-builder', 'resource-builder.exe']) { await fs.promises.writeFile(path.join(tools, name), 'test executable'); }
-		await fs.promises.writeFile(buildPath, JSON.stringify({appFolder:'app', idsFile:'resource_ids.h'}));
+		await fs.promises.writeFile(buildPath, JSON.stringify({appFolder:'app', idsFile:'resource_ids.h', metadata:{application:{guid1:'FEDCBA9876543210',guid2:'0000000000000000'}}}));
 		await changeJson();
 		Configuration.context = {workspaceState};
 		Configuration.getUtilsPath = () => tools;
 		Configuration.getWOWSDKPath = () => fixture;
 		Configuration.getCurrentVersion = () => 'test';
+		Configuration.getCurrentDevice = () => device;
+		Configuration.getLoggingMode = () => '0';
 		for(const [platform, expected] of [['darwin', 'resource-builder'], ['linux', 'resource-builder'], ['win32', 'resource-builder.exe'], ['unknown', 'resource-builder']])
 		{
 			os.platform = () => platform;
@@ -115,10 +125,28 @@ async function run()
 						if(failTool !== name) { await fs.promises.writeFile(header, 'generated resource IDs'); }
 					}
 					else { assert.strictEqual(await fs.promises.readFile(header, 'utf8'), 'generated resource IDs'); }
+					if(name === 'oct-builder' && failTool !== name)
+					{
+						const oct = path.join(workspace, 'app', 'app.oct');
+						if(packageMode === 'missing') { await fs.promises.rm(oct, {force:true}); }
+						else { await fs.promises.writeFile(oct, packageMode === 'empty' ? '' : 'OCT package'); }
+					}
+					if(name.startsWith('wowcube-loader'))
+					{
+						assert.strictEqual(Configuration.isDeviceBusy('01:02:03:04:05:06'), true);
+						if(loaderMode === 'spawn') { throw new Error('Loader launch failed'); }
+						if(loaderMode === 'reported') { child.stdout.emit('data', Buffer.from('Error: upload rejected')); }
+						if(args[0] === 'ci' && catalogMode !== 'missing')
+						{
+							child.stdout.emit('data', Buffer.from('Other (v1.0) guid1=1111111111111111 guid2=0000000000000000\r\nTest App (v1.0.0, 100 bytes) guid1=fedcba9876543210 guid2=0000000000000000\r\n'));
+						}
+
+					}
+
 					child.stdout.emit('data', Buffer.from('tool output\n'));
 					child.stderr.emit('data', Buffer.from('tool warning\n'));
 					events.push('close:'+name);
-					child.emit('close', failTool === name ? 1 : 0);
+					child.emit('close', failTool === name || (failRun && args[0] === 'ra') || (catalogMode === 'error' && args[0] === 'ci') ? 1 : 0);
 				}
 				catch(error) { child.emit('error', error); child.emit('close', 1); }
 			});
@@ -131,17 +159,17 @@ async function run()
 		assert.match(logged, /tool output/); assert.match(logged, /tool warning/);
 		assert.strictEqual(data.size, 1);
 		assert.strictEqual(await runTask(workspace, 'resources'), 0);
-		assert.strictEqual(calls.length, 1);
+		assert.strictEqual(calls.length, 2, 'Explicit packing must run again for unchanged resources.');
 		await fs.promises.utimes(resources, new Date(), new Date());
 		await fs.promises.writeFile(path.join(workspace, 'source.png'), 'changed image');
 		await ResourceBuilder.build(workspace);
-		assert.strictEqual(calls.length, 1, 'Timestamps and source-only edits must not rebuild resources.');
+		assert.strictEqual(calls.length, 2, 'Timestamps and source-only edits must not rebuild resources.');
 		delete require.cache[require.resolve('../../out/ResourceBuilder')];
 		Module._load = function (name, parent, isMain) { return name === 'vscode' ? vscode : originalLoad.call(this, name, parent, isMain); };
 		const reloaded = require('../../out/ResourceBuilder').ResourceBuilder;
 		Module._load = originalLoad;
 		await reloaded.build(workspace);
-		assert.strictEqual(calls.length, 1, 'The successful hash must survive a module reload.');
+		assert.strictEqual(calls.length, 2, 'The successful hash must survive a module reload.');
 
 		// Flush a focused map rename before hashing or saving the resource document.
 		let focusedRename = true;
@@ -171,11 +199,82 @@ async function run()
 		assert.match(logged, /resource-builder/);
 		calls.length = 0;
 		assert.strictEqual(await runTask(workspace, 'device'), 0);
-		assert.deepStrictEqual(calls.map(call => path.basename(call.file)), ['cmake', 'cmake', 'oct-builder']);
+		assert.deepStrictEqual(calls.map(call => path.basename(call.file)), ['cmake', 'cmake', 'oct-builder', 'wowcube-loader', 'wowcube-loader', 'wowcube-loader']);
 		assert.deepStrictEqual(calls[2].args, [path.join(workspace, 'app'), 'app', '--manifest', buildPath]);
 		await changeJson(); calls.length = 0; events.length = 0;
 		assert.strictEqual(await runTask(workspace, 'device'), 0);
-		assert.deepStrictEqual(events, ['start:resource-builder', 'close:resource-builder', 'start:cmake', 'close:cmake', 'start:cmake', 'close:cmake', 'start:oct-builder', 'close:oct-builder']);
+		assert.deepStrictEqual(events, ['start:resource-builder', 'close:resource-builder', 'start:cmake', 'close:cmake', 'start:cmake', 'close:cmake', 'start:oct-builder', 'close:oct-builder', 'start:wowcube-loader', 'close:wowcube-loader', 'start:wowcube-loader', 'close:wowcube-loader', 'start:wowcube-loader', 'close:wowcube-loader']);
+
+		assert.deepStrictEqual(calls.at(-3).args, ['up','-p',path.join(workspace,'app','app.oct'),'-a',device.mac]);
+		assert.deepStrictEqual(calls.at(-1).args, ['ra','-g1','fedcba9876543210','-g2','0000000000000000','-a',device.mac]);
+		assert.deepStrictEqual(calls.at(-2).args,['ci','-f','-c','-al','-a',device.mac]);
+		assert.match(logged, /Upload complete\.[\s\S]*Launch command sent\./);
+		assert.ok(logged.includes('Uploading app.oct to Test cube (01:02:03:04:05:06)...'));
+		assert.strictEqual(Configuration.isDeviceBusy(device.mac), false);
+		assert.deepStrictEqual(waits.slice(-2), [true,false]);
+		for(const mode of ['missing','empty'])
+		{
+			packageMode = mode; calls.length = 0;
+			assert.strictEqual(await runTask(workspace, 'device'), 1);
+			assert.strictEqual(calls.some(call => path.basename(call.file).startsWith('wowcube-loader')), false);
+			assert.match(logged, /Compilation succeeded, but deployment failed: Application package is missing or empty/);
+			assert.strictEqual(Configuration.isDeviceBusy(device.mac), false);
+		}
+		packageMode = 'normal';
+		const selected = device;
+		device = null; calls.length = 0;
+		assert.strictEqual(await runTask(workspace, 'device'), 1);
+		assert.match(logged, /No WOWCube device selected/);
+		assert.strictEqual(calls.length, 3);
+		device = selected;
+		Configuration.setDeviceBusy(device.mac, true); calls.length = 0;
+		assert.strictEqual(await runTask(workspace, 'device'), 1);
+		assert.strictEqual(calls.length, 3);
+		assert.strictEqual(Configuration.isDeviceBusy(device.mac), true, 'An existing operation retains its busy state.');
+		Configuration.setDeviceBusy(device.mac, false);
+		for(const mode of ['exit','spawn','reported'])
+		{
+			loaderMode = mode; failTool = mode === 'exit' ? 'wowcube-loader' : undefined;
+			calls.length = 0;
+			assert.strictEqual(await runTask(workspace, 'device'), 1);
+			assert.strictEqual(Configuration.isDeviceBusy(device.mac), false);
+			assert.strictEqual(waits.at(-1), false);
+			assert.strictEqual(calls.some(call => call.args[0] === 'ra'),false,'A failed upload must not launch.');
+		}
+		loaderMode = undefined; failTool = undefined;
+		failRun = true; logged = ''; calls.length = 0;
+		assert.strictEqual(await runTask(workspace, 'device'), 1);
+		assert.match(logged, /Upload complete/); assert.match(logged, /Device launch failed/);
+		assert.ok(!logged.includes('Launch command sent.'));
+		assert.strictEqual(calls.at(-1).args[0], 'ra');
+		assert.strictEqual(Configuration.isDeviceBusy(device.mac),false);
+		assert.strictEqual(waits.at(-1),false);
+		failRun = false;
+		for(const mode of ['missing','error'])
+		{
+			catalogMode = mode; calls.length = 0;
+			assert.strictEqual(await runTask(workspace,'device'),1);
+			assert.strictEqual(calls.some(call => call.args[0] === 'ra'),false);
+			assert.strictEqual(Configuration.isDeviceBusy(device.mac),false);
+			assert.strictEqual(waits.at(-1),false);
+		}
+		catalogMode = undefined;
+		for(const application of [undefined,{}, {guid1:'123',guid2:0},{guid1:'not_hex',guid2:'0'}, {guid1:'1'.repeat(17),guid2:'0'}])
+		{
+			const before = calls.length;
+			await assert.rejects(DeviceDeployment.uploadAndRun(path.join(workspace,'app','app.oct'), application), /guid1 and guid2 must be hexadecimal strings/);
+			assert.strictEqual(calls.length,before);
+		}
+
+		for(const [platform, loader] of [['darwin','wowcube-loader.app/Contents/MacOS/wowcube-loader'],['linux','wowcube-loader'],['win32','wowcube-loader.exe']])
+		{
+			os.platform = () => platform;
+			await DeviceDeployment.upload(device.mac, path.join(workspace,'app','app.oct'));
+			assert.strictEqual(calls.at(-1).file, path.join(tools,loader));
+			assert.deepStrictEqual(calls.at(-1).args, ['up','-p',path.join(workspace,'app','app.oct'),'-a',device.mac]);
+			assert.strictEqual(calls.at(-1).options.windowsHide,true);
+		}
+		os.platform = () => 'darwin';
 
 		for(const target of ['resources', 'emulator', 'device'])
 		{
@@ -203,6 +302,18 @@ async function run()
 		await changeJson(); calls.length = 0;
 		await Promise.all([ResourceBuilder.build(workspace), ResourceBuilder.build(workspace)]);
 		assert.strictEqual(calls.length, 1, 'Concurrent requests must share the pending resource build.');
+		calls.length = 0;
+		await Promise.all([ResourceBuilder.build(workspace), ResourceBuilder.build(workspace, 'pack')]);
+		assert.strictEqual(calls.length, 1, 'Explicit packing must run after an in-flight cache check.');
+		calls.length = 0;
+		await Promise.all([ResourceBuilder.build(workspace, 'pack'), ResourceBuilder.build(workspace, 'pack')]);
+		assert.strictEqual(calls.length, 2, 'Each explicit pack request must invoke the builder without overlapping processes.');
+		calls.length = 0; failTool = 'resource-builder';
+		assert.strictEqual(await runTask(workspace, 'resources'), 1, 'An unchanged explicit pack must report builder failures.');
+		assert.strictEqual(calls.length, 1);
+		failTool = undefined; calls.length = 0;
+		assert.strictEqual(await runTask(workspace, 'resources'), 0, 'An unchanged explicit pack must retry after failure.');
+		assert.strictEqual(calls.length, 1);
 		const document = {uri:vscode.Uri.file(resources), isDirty:true, save:async function () { await changeJson(); this.isDirty = false; return true; }};
 		vscode.workspace.textDocuments = [document]; calls.length = 0;
 		await ResourceBuilder.build(workspace);
@@ -336,6 +447,7 @@ async function run()
 			{
 				assert.ok((await fs.promises.stat(path.join(workspace, output))).size > 0, output);
 			}
+			assert.match(await fs.promises.readFile(header, 'utf8'), /#include <cstdint>/);
 			const previousSaveErrors = saveErrors.length;
 			const map = ResourceTypes.get('map').create('map', 'level_before');
 			map.placements = [{id:'first',spriteId:sprite.id,side:1,x:138,y:138}];
@@ -417,7 +529,7 @@ async function run()
 		const soundBundle = ResourceBundles.create(); soundBundle.resources.push(ResourceTypes.get('sound').create('sound','coin','missing.wav'));
 		await fs.promises.writeFile(resources,JSON.stringify(soundBundle));
 		await assert.rejects(ResourceBuilder.build(workspace), /source file|Source file/);
-		console.log('Resource build checks passed: persistent JSON hashing, ordering, shared builds, save handling, output logging, platform names, failures, and retries.');
+		console.log('Resource build checks passed: persistent JSON hashing, ordering, shared builds, save handling, output logging, platform names, upload/launch ordering, deployment failures, busy cleanup, and retries.');
 	}
 	finally
 	{
@@ -425,6 +537,7 @@ async function run()
 		cp.spawn = original.spawn; cp.exec = original.exec; os.platform = original.platform;
 		Configuration.context = original.context; Configuration.getUtilsPath = original.utils;
 		Configuration.getWOWSDKPath = original.sdk; Configuration.getCurrentVersion = original.version;
+		Configuration.getCurrentDevice = original.device; Configuration.getLoggingMode = original.logging;
 		await fs.promises.rm(fixture, {recursive:true, force:true});
 	}
 }

@@ -35,11 +35,17 @@ export class ResourceBuilder
 		}));
 	}
 
-	public static async build(workspace:string, reason:'save' | 'build' = 'build'):Promise<void>
+	public static async build(workspace:string, reason:'save' | 'build' | 'pack' = 'build'):Promise<void>
 	{
 		const folder = path.resolve(workspace);
 		const pending = this.builds.get(folder);
-		if(pending) { return pending; }
+		if(pending)
+		{
+			if(reason !== 'pack') { return pending; }
+			// An explicit pack must run even if the pending request only checks the cache.
+			await pending.catch(() => {});
+			return this.build(folder, reason);
+		}
 		// Install the pending promise before saving a dirty document can fire a save event.
 		const build = Promise.resolve().then(() => this.compile(folder, reason));
 		this.builds.set(folder, build);
@@ -47,7 +53,7 @@ export class ResourceBuilder
 		finally { if(this.builds.get(folder) === build) { this.builds.delete(folder); } }
 	}
 
-	private static async compile(workspace:string, reason:'save' | 'build'):Promise<void>
+	private static async compile(workspace:string, reason:'save' | 'build' | 'pack'):Promise<void>
 	{
 		const resources = path.join(workspace, 'wowcubeapp-resources.json');
 		await ResourceStudioProvider.flushEdits(resources);
@@ -75,7 +81,7 @@ export class ResourceBuilder
 		const key = 'resourceBuilder:'+vscode.Uri.file(resources).toString();
 		const state:vscode.Memento = Configuration.context.workspaceState;
 		const channel = Output.channel();
-		if(state.get<string>(key) === hash)
+		if(reason !== 'pack' && state.get<string>(key) === hash)
 		{
 			channel.appendLine('[resource-builder] Resources are up to date.');
 			return;
