@@ -157,7 +157,7 @@
 		},
 		validateCreate:function (dialog, helpers)
 		{
-			const nameError = validation.name(dialog.name, validation.usedNames(helpers.bundle.resources));
+			const nameError = validation.name(dialog.name, validation.usedNames(helpers.bundle.resources), 'sprite');
 			if(nameError) { throw new Error(nameError); }
 			if(!dialog.source)
 			{

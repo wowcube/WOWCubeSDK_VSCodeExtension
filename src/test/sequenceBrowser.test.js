@@ -9,13 +9,13 @@ const bundle = ResourceBundles.create();
 const items = SpriteSequences.createFrames(bundle,'jump',[{source:'a.png',width:40,height:50},{source:'b.png',width:80,height:90}],1);
 items.forEach(frame => { frame.colorMode='rgb565';frame.blend='opaque';frame.compression='plain'; }); bundle.resources.push(...items);
 const media = path.join(__dirname,'../../media');
-const scripts=['resourcevalidation.js','spritepixels.js','previewviewport.js','mapgeometry.js','sourcefiles.js','spritelist.js','palettecompatibility.js','resourcetypes.js','maptextures.js','maprenderer.js','mapeditor.js','mapresource.js','sequenceeditor.js','fonteditor.js','resourcestudio.js'];
+const scripts=['resourcevalidation.js','spritepixels.js','previewviewport.js','mapgeometry.js','sourcefiles.js','spritelist.js','palettecompatibility.js','soundvalidation.js','resourcetypes.js','maptextures.js','maprenderer.js','mapeditor.js','mapresource.js','sequenceeditor.js','fonteditor.js','soundeditor.js','resourcestudio.js'];
 const setup=`
 window.bundle=${JSON.stringify(bundle)};window.version=1;window.messages=[];window.metrics={images:0,conversions:0};
 const ImageType=window.Image;window.Image=class extends ImageType{constructor(){super();window.metrics.images++;}};
 window.sources=window.bundle.resources.map((frame,index)=>{const c=document.createElement('canvas');c.width=index?80:40;c.height=index?90:50;const ctx=c.getContext('2d');ctx.fillStyle=index?'#00ff00':'#ff0000';ctx.fillRect(0,0,c.width,c.height);return{path:frame.source,uri:c.toDataURL(),image:true,missing:false};});
 window.saved={tab:'Animations',selected:window.bundle.resources[0].id};
-window.sendUpdate=()=>window.dispatchEvent(new MessageEvent('message',{data:{type:'update',bundle:structuredClone(window.bundle),sources:window.sources,resourceTypes:[{type:'sprite',label:'Sprite',canCreate:true},{type:'palette',label:'Palette',canCreate:false},{type:'map',label:'Map',canCreate:true},{type:'font',label:'Font',canCreate:true}],version:window.version,dirty:true,project:'Sequence test'}}));
+window.sendUpdate=()=>window.dispatchEvent(new MessageEvent('message',{data:{type:'update',bundle:structuredClone(window.bundle),sources:window.sources,resourceTypes:[{type:'sprite',label:'Sprite',canCreate:true},{type:'palette',label:'Palette',canCreate:false},{type:'map',label:'Map',canCreate:true},{type:'font',label:'Font',canCreate:true},{type:'sound',label:'Sound',canCreate:true}],version:window.version,dirty:true,project:'Sequence test'}}));
 window.acquireVsCodeApi=()=>({getState:()=>window.saved,setState:value=>window.saved=value,postMessage:message=>{window.messages.push(message);if(message.type==='ready')setTimeout(window.sendUpdate,0);if(message.type==='change'){setTimeout(()=>{if(message.action==='sequenceUpdate'){message.frames.forEach((edit,index)=>{const frame=window.bundle.resources.find(f=>f.id===edit.id);Object.assign(frame,edit);frame.sequence={...frame.sequence,name:message.name,index};});}window.version++;window.sendUpdate();},20);}}});
 `;
 async function run()
@@ -25,7 +25,7 @@ async function run()
 	{
 		const page=await browser.newPage({viewport:{width:1400,height:1050}}), errors=[];page.on('pageerror',error=>errors.push(error.message));
 		await page.setContent('<style>'+['resourcestudio.css','mapeditor.css','sequenceeditor.css'].map(file=>fs.readFileSync(path.join(media,file),'utf8')).join('\n')+'</style><div id="resource-studio"></div><script>'+setup+'</script>'+scripts.map(file=>'<script>'+fs.readFileSync(path.join(media,file),'utf8')+'</script>').join(''));
-		await page.waitForSelector('[data-sequence-key="x"]');await page.waitForFunction(()=>document.querySelector('.sequence-inspector').textContent.includes('40 × 50'));
+		await page.waitForSelector('[data-sequence-key="x"]');assert.strictEqual(await page.locator('.heading > button:last-child').innerText(),'Remove');await page.waitForFunction(()=>document.querySelector('.sequence-inspector').textContent.includes('40 × 50'));
 		await page.evaluate(()=>{window.canvasBefore=document.querySelector('#sequence-canvas');window.metricsBefore={...window.metrics};});
 		assert.strictEqual(await page.locator('[data-sequence-key="x"]').inputValue(),'-20');
 		async function edit(selector,value)
@@ -129,6 +129,11 @@ async function run()
 		await page.locator('[data-tab="Sprites"]').click();
 		assert.strictEqual(await page.locator('.library .sprite-group').evaluate(node=>node.open),true);
 		assert.deepStrictEqual(errors,[]);
+
+		await page.locator('[data-tab="Animations"]').click();
+		await page.locator('.heading [data-sequence-action="remove-animation"]').click();
+		await page.waitForFunction(()=>window.messages.some(message=>message.action==='sequenceRemove'));
+		assert.deepStrictEqual((await page.evaluate(()=>window.messages.findLast(message=>message.action==='sequenceRemove').ids)).sort(),items.map(item=>item.id).sort(),'The header Remove button removes the entire animation, not just the selected frame.');
 
 		console.log('Sequence browser checks passed: fixed-origin dragging, sequence-wide origin arrows, source-pixel pivots, bulk timing, reorder selection, cached playback, persistent canvas, invalid-field build blocking and collapsible animation groups in both sprite libraries.');
 	}

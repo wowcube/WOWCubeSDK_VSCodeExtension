@@ -55,7 +55,7 @@ function acknowledge()
 	}
 	else
 	{
-		bundle.resources[0] = JSON.parse(JSON.stringify(message.resource));
+		bundle.resources[bundle.resources.findIndex(resource => resource.id === message.resource.id)] = JSON.parse(JSON.stringify(message.resource));
 	}
 	version++;
 	update();
@@ -116,6 +116,8 @@ assert.strictEqual(sprite.paletteId, null);
 assert.strictEqual(sprite.colorMode, 'rgb565');
 assert.strictEqual(sprite.blend, 'opaque');
 assert.throws(() => spriteType.validateCreate({name:'hero', source:''}, {bundle:{resources:[]}}), /source image/);
+assert.doesNotThrow(() => spriteType.validateCreate({name:'icon', source:'icon.png', paletteId:'__rgb565__'}, {bundle:{resources:[]}}));
+assert.throws(() => spriteType.validateCreate({name:'icon', source:'icon.png', paletteId:'__rgb565__'}, {bundle:{resources:[{id:'existing', name:'icon', type:'sprite'}]}}), /already used/);
 
 // The first sprite requires palette details; canceling never sends a creation request.
 bundle = {schemaVersion:2, sourceFolders:[], resources:[]};
@@ -670,8 +672,11 @@ assert.deepStrictEqual(JSON.parse(JSON.stringify(toggledCollider.collider)), {en
 spriteType.change(toggledCollider, 'colliderEnabled', {checked:false}, colliderHelpers);
 assert.deepStrictEqual(JSON.parse(JSON.stringify(toggledCollider.collider)), {enabled:false, x:0, y:0, width:0, height:0});
 
-const beforeInvalidName = sent.length;
 change('name', 'icon');
+assert.strictEqual(sent.at(-1).resource.name, 'icon');
+acknowledge();
+const beforeInvalidName = sent.length;
+change('name', 'zero');
 assert.strictEqual(sent.length, beforeInvalidName);
 assert.ok(root.innerHTML.includes('V-003'));
 rootHandlers.change({target:{dataset:{paletteId:'palette-1', key:'colorCount'}, value:'257', type:'number'}});

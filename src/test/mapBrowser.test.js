@@ -13,7 +13,7 @@ const second = {...sprite, id:'other', name:'other', source:'other.png', fullsiz
 const map = ResourceTypes.get('map').create('map', 'level_01');
 map.placements = [{id:'top',spriteId:sprite.id,side:1,x:138,y:138}, {id:'bottom',spriteId:second.id,side:1,x:138,y:138}];
 bundle.resources.push(palette, sprite, second, map);
-const scripts = ['sourcefiles.js','spritelist.js','palettecompatibility.js', 'resourcevalidation.js','spritepixels.js','previewviewport.js','mapgeometry.js','resourcetypes.js','maptextures.js','maprenderer.js','mapeditor.js','mapresource.js','sequenceeditor.js','fonteditor.js','resourcestudio.js'];
+const scripts = ['sourcefiles.js','spritelist.js','palettecompatibility.js','soundvalidation.js', 'resourcevalidation.js','spritepixels.js','previewviewport.js','mapgeometry.js','resourcetypes.js','maptextures.js','maprenderer.js','mapeditor.js','mapresource.js','sequenceeditor.js','fonteditor.js','soundeditor.js','resourcestudio.js'];
 const initial = `
 window.testMetrics={images:0,conversions:0,frames:0,draws:0};
 const NativeImage=window.Image;
@@ -25,7 +25,7 @@ const image=document.createElement('canvas'); image.width=100; image.height=80;
 const ctx=image.getContext('2d'); ctx.fillStyle='#ff0000';ctx.fillRect(0,0,100,80);const uri=image.toDataURL();
 ctx.fillStyle='#0000ff';ctx.fillRect(0,0,100,80);const blue=image.toDataURL();
 window.testSources=[{path:'hero.png',uri,image:true,missing:false},{path:'other.png',uri:blue,image:true,missing:false}];
-window.testUpdate=()=>window.dispatchEvent(new MessageEvent('message',{data:{type:'update',bundle:structuredClone(window.testBundle),sources:structuredClone(window.testSources),resourceTypes:[{type:'palette',label:'Palette',canCreate:false},{type:'sprite',label:'Sprite',canCreate:true},{type:'map',label:'Map',canCreate:true},{type:'font',label:'Font',canCreate:true}],version:window.testVersion,dirty:true,project:'Map test'}}));
+window.testUpdate=()=>window.dispatchEvent(new MessageEvent('message',{data:{type:'update',bundle:structuredClone(window.testBundle),sources:structuredClone(window.testSources),resourceTypes:[{type:'palette',label:'Palette',canCreate:false},{type:'sprite',label:'Sprite',canCreate:true},{type:'map',label:'Map',canCreate:true},{type:'font',label:'Font',canCreate:true},{type:'sound',label:'Sound',canCreate:true}],version:window.testVersion,dirty:true,project:'Map test'}}));
 window.acquireVsCodeApi=()=>({getState:()=>window.testState,setState:value=>window.testState=value,postMessage:message=>{
 window.testMessages.push(message);
 if(message.type==='ready')setTimeout(window.testUpdate,0);
@@ -46,7 +46,7 @@ async function run()
 		const errors = []; page.on('pageerror', error => errors.push(error.message));
 		await page.setContent('<style>'+fs.readFileSync(path.join(media,'resourcestudio.css'),'utf8')+'\n'+fs.readFileSync(path.join(media,'mapeditor.css'),'utf8')+'</style><div id="resource-studio"></div><script>'+initial+'</script>'+scripts.map(file => '<script>'+fs.readFileSync(path.join(media,file),'utf8')+'</script>').join(''));
 		await page.waitForSelector('#map-canvas');
-		assert.deepStrictEqual(await page.locator('.tabs [data-tab]').evaluateAll(nodes=>nodes.map(node=>node.dataset.tab)),['Sprites','Maps','Animations','Fonts','Palettes','Source files']);
+		assert.deepStrictEqual(await page.locator('.tabs [data-tab]').evaluateAll(nodes=>nodes.map(node=>node.dataset.tab)),['Sprites','Maps','Animations','Fonts','Sounds','Palettes','Source files']);
 		await page.waitForTimeout(100);
 		await page.evaluate(()=>
 		{

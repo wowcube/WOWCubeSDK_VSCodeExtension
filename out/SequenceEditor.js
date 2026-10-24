@@ -151,7 +151,7 @@ class SequenceEditor {
             for (const frame of selected) {
                 const copy = JSON.parse(JSON.stringify(frame));
                 copy.id = crypto.randomBytes(16).toString('hex');
-                copy.name = ResourceValidation.deriveName(frame.name, used);
+                copy.name = ResourceValidation.deriveName(frame.name, used, 'sprite');
                 used.push(copy.name);
                 const position = frames.indexOf(frame);
                 frames.splice(position + 1, 0, copy);

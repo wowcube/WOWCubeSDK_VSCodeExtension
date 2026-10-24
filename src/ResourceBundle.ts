@@ -1,6 +1,8 @@
 import * as PaletteCompatibility from '../media/palettecompatibility';
 import * as ResourceValidation from '../media/resourcevalidation';
 import { SpriteSequences, SequenceMembership } from './SpriteSequence';
+import { soundResourceType } from './SoundResource';
+import * as SoundValidation from '../media/soundvalidation';
 import { fontResourceType } from './FontResource';
 import { mapResourceType } from './MapResource';
 
@@ -225,6 +227,7 @@ ResourceTypes.register({
 
 ResourceTypes.register(mapResourceType);
 ResourceTypes.register(fontResourceType);
+ResourceTypes.register(soundResourceType);
 
 export class ResourceBundles
 {
@@ -286,13 +289,13 @@ export class ResourceBundles
 			{
 				errors.push('Resource IDs must be nonempty and unique.');
 			}
-			if(typeof resource.name !== 'string' || !resource.name.trim() || resource.name !== resource.name.trim() || names.has(resource.name))
+			if(typeof resource.name !== 'string' || resource.type !== 'sound' && (!resource.name.trim() || resource.name !== resource.name.trim() || names.has(resource.name)))
 			{
 				errors.push('V-004: Resource names must be nonempty, trimmed, and unique.');
 			}
-			if(['sprite', 'palette', 'map', 'sound', 'font'].includes(resource.type))
+			if(['sprite', 'palette', 'map', 'font'].includes(resource.type))
 			{
-				const error = ResourceValidation.name(resource.name);
+				const error = ResourceValidation.name(resource.name, [], resource.type);
 				if(error) { errors.push(error); }
 			}
 			if(typeof resource.type !== 'string' || !resource.type)
@@ -300,7 +303,7 @@ export class ResourceBundles
 				errors.push('Resource type is required.');
 			}
 			ids.add(resource.id);
-			names.add(resource.name);
+			if(resource.type !== 'sound') { names.add(resource.name); }
 		}
 		if(errors.length > 0)
 		{
@@ -320,7 +323,7 @@ export class ResourceBundles
 		if(fonts.length > 3) { errors.push('Only three fonts are supported (slots 1–3).'); }
 		const palettes = bundle.resources.filter(resource => resource.type === 'palette');
 		if(palettes.length > ResourceValidation.maxPalettes) { errors.push('V-016: At most '+ResourceValidation.maxPalettes+' palettes are allowed.'); }
-		if(1 + bundle.resources.filter(resource => ['sprite', 'palette', 'map', 'sound'].includes(resource.type)).length > 5120)
+		if(1 + bundle.resources.filter(resource => ['sprite', 'palette', 'map'].includes(resource.type)).length > 5120)
 		{
 			errors.push('V-025: At most 5120 runtime assets are allowed.');
 		}
@@ -337,7 +340,7 @@ export class ResourceBundles
 
 	public static getBuildErrors(bundle:ResourceBundle):string[]
 	{
-		return [...(bundle.resources.some(resource => resource.type === 'font') ? ['Font export requires resource-builder support for font resources. This builder integration is not implemented yet; fonts have not been compiled.'] : []), ...SpriteSequences.buildErrors(bundle), ...bundle.resources.filter(resource => resource.type === 'palette').map(resource => PaletteCompatibility.issue(resource as PaletteResource)).filter((error):error is string => !!error)];
+		return [...bundle.resources.filter(resource => resource.type === 'sound').flatMap(resource => [...SoundValidation.nameIssues(resource,bundle.resources), ...SoundValidation.sourceIssues(resource)].map(issue => issue.message)), ...(1 + bundle.resources.filter(resource => ['sprite','palette','map','sound'].includes(resource.type)).length > 5120 ? ['The bundle cannot contain more than 5120 runtime assets.'] : []), ...SpriteSequences.buildErrors(bundle), ...bundle.resources.filter(resource => resource.type === 'palette').map(resource => PaletteCompatibility.issue(resource as PaletteResource)).filter((error):error is string => !!error)];
 	}
 
 	public static getWarnings(bundle:ResourceBundle):string[]

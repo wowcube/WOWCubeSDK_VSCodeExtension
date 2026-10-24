@@ -6,7 +6,7 @@ Schema version: 2
 The file stores one resource bundle. It contains resource records, source folder
 paths, and shared classification definitions. Image files remain separate; the
 JSON references them by path. The implemented resource types are palette,
-sprite, map, and font. Exported device data is not part of this model.
+sprite, map, font, and sound. Exported device data is not part of this model.
 
 Bundle fields
 
@@ -31,8 +31,9 @@ id: string
     Treat IDs as opaque strings; the editor currently generates 32 hex digits.
 name: string
     Resource name, independent of its source file name and ID.
+    "icon" is allowed for sprites; it remains reserved for other resource types.
 type: string
-    Resource kind: "palette", "sprite", "map", or "font" for the implemented types.
+    Resource kind: "palette", "sprite", "map", "font", or "sound" for the implemented types.
 
 Palette fields
 
@@ -411,4 +412,32 @@ Example font record (the referenced palette must also exist):
   "paletteId": "p1",
   "fullsize": true,
   "blend": "alpha"
+}
+
+Sound fields
+
+type: "sound"
+source: string
+    Source audio file, relative to the folder containing the JSON file. Uses
+    forward slashes, without leading slash, parent-directory segments, backslash
+    or colon. May be outside sourceFolders while remaining inside the project.
+
+A newly created sound record has exactly the common id/name/type fields and
+source. Identity stays unchanged on rename or source replacement. Future fields
+are preserved. Duration, sample rate, channel count, source size, waveform,
+converted samples and duplicate-source confirmations are not stored in the JSON.
+There are no volume, gain, trim, loop, group or tag properties.
+
+Names become SND_<name> at export. They use 1–23 lowercase letters, digits or
+underscores and cannot collide with any resource or animation identifier
+(including <animation>_end). Reserved names include zero, 0, pal, icon, none,
+last, bmp_none, bmp_last, bmp_0, map_none, map_last; Windows device names con,
+prn, aux, nul, com0–com9, lpt0–lpt9; and font_<digits>_<five-digit-code>.
+
+Example sound record:
+{
+  "id": "4f1c2a9e0b7d4c3fa1e5b6c7d8e9f001",
+  "name": "coin_pickup",
+  "type": "sound",
+  "source": "assets/sounds/Coin Pickup.wav"
 }

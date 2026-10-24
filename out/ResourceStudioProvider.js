@@ -9,6 +9,8 @@ const ResourceBundle_1 = require("./ResourceBundle");
 const PaletteBuilder_1 = require("./PaletteBuilder");
 const PaletteCompatibility = require("../media/palettecompatibility");
 const SpriteSequence_1 = require("./SpriteSequence");
+const SoundEditor_1 = require("./SoundEditor");
+const SoundAudio_1 = require("./SoundAudio");
 const FontEditor_1 = require("./FontEditor");
 const SequenceEditor_1 = require("./SequenceEditor");
 const ResourceValidation = require("../media/resourcevalidation");
@@ -78,6 +80,7 @@ class ResourceStudioProvider {
             localResourceRoots: [vscode.Uri.joinPath(this.context.extensionUri, 'media'), projectUri]
         };
         panel.webview.html = this.getHtmlForWebview(panel.webview);
+        const soundEditor = new SoundEditor_1.SoundEditor(projectUri, this.context);
         let disposed = false;
         let working = false;
         let updateNumber = 0;
@@ -143,11 +146,15 @@ class ResourceStudioProvider {
                         fontData[resource.id] = { error: this.getError(error) };
                     }
                 }
+                const soundData = {};
+                for (const resource of bundle.resources.filter(resource => resource.type === 'sound')) {
+                    soundData[resource.id] = (await SoundAudio_1.SoundAudio.read(projectUri, resource.source)).info;
+                }
                 if (disposed || number !== updateNumber || version !== document.version) {
                     return;
                 }
                 await panel.webview.postMessage({
-                    type: 'update', bundle, fontData, version, dirty: document.isDirty, busy: working,
+                    type: 'update', bundle, fontData, soundData, confirmedSounds: SoundEditor_1.SoundEditor.confirmed(this.context, projectUri, bundle), version, dirty: document.isDirty, busy: working,
                     project: path.posix.basename(projectUri.path), sources: sources.files, sourceWarning: sources.warning, warnings: ResourceBundle_1.ResourceBundles.getWarnings(bundle),
                     resourceTypes: ResourceBundle_1.ResourceTypes.getAll().map(resourceType => ({ type: resourceType.type, label: resourceType.label, canCreate: resourceType.canCreate !== false })),
                     selectedSource, selectedFolder
@@ -196,6 +203,31 @@ class ResourceStudioProvider {
             panel.webview.onDidReceiveMessage(async (message) => {
                 try {
                     switch (message.type) {
+                        case 'soundImport':
+                            const review = await soundEditor.prepare(ResourceBundle_1.ResourceBundles.parse(document.getText()), message);
+                            if (review) {
+                                await panel.webview.postMessage({ type: 'soundReview', rows: review });
+                            }
+                            break;
+                        case 'soundCopy':
+                            const copied = await soundEditor.copy(message.token);
+                            if (copied) {
+                                await panel.webview.postMessage({ type: 'soundReview', rows: copied });
+                            }
+                            break;
+                        case 'soundPreview':
+                            const audioResource = ResourceBundle_1.ResourceBundles.parse(document.getText()).resources.find(item => item.id === message.id && item.type === 'sound');
+                            if (audioResource) {
+                                const audio = await SoundAudio_1.SoundAudio.read(projectUri, audioResource.source, true);
+                                await panel.webview.postMessage({ type: 'soundPreview', id: audioResource.id, requestId: message.requestId, preview: audio.preview, error: audio.info.error });
+                            }
+                            break;
+                        case 'soundReveal':
+                            const reveal = ResourceBundle_1.ResourceBundles.parse(document.getText()).resources.find(item => item.type === 'sound' && item.id === message.id);
+                            if (reveal && (0, ResourceBundle_1.isResourcePath)(reveal.source)) {
+                                await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.joinPath(projectUri, reveal.source));
+                            }
+                            break;
                         case 'ready':
                             ResourceStudioProvider.editors.set(editorKey, flushEdits);
                             selectedSource = this.pendingSources.get(document.uri.toString());
@@ -207,6 +239,7 @@ class ResourceStudioProvider {
                             flushRequests.get(message.requestId)?.(typeof message.error === 'string' ? message.error : undefined);
                             break;
                         case 'save':
+                            await this.editQueues.get(document.uri.toString());
                             if (!await document.save()) {
                                 throw new Error('Unable to save the resource bundle.');
                             }
@@ -239,6 +272,9 @@ class ResourceStudioProvider {
                             working = true;
                             try {
                                 await this.edit(document, message.version, async (bundle) => {
+                                    if (typeof message.action === 'string' && message.action.startsWith('sound')) {
+                                        return soundEditor.change(bundle, message);
+                                    }
                                     if (typeof message.action === 'string' && message.action.startsWith('font')) {
                                         return FontEditor_1.FontEditor.change(bundle, message, projectUri, uri => this.getRelativePath(projectUri, uri), palette => this.generatePalette(projectUri, bundle, palette, palette.colorCount));
                                     }
@@ -672,15 +708,16 @@ class ResourceStudioProvider {
         const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'resourcestudio.js'));
         const sequenceCssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'sequenceeditor.css'));
         const mapCssUri = webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'mapeditor.css'));
-        const sharedScripts = ['spritepixels.js', 'previewviewport.js', 'mapgeometry.js', 'sourcefiles.js', 'spritelist.js', 'palettecompatibility.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
-        const mapScripts = ['maptextures.js', 'maprenderer.js', 'mapeditor.js', 'mapresource.js', 'sequenceeditor.js', 'fonteditor.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
+        const sharedScripts = ['spritepixels.js', 'previewviewport.js', 'mapgeometry.js', 'sourcefiles.js', 'spritelist.js', 'palettecompatibility.js', 'soundvalidation.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
+        const mapScripts = ['maptextures.js', 'maprenderer.js', 'mapeditor.js', 'mapresource.js', 'sequenceeditor.js', 'fonteditor.js', 'soundeditor.js'].map(file => webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, file)));
         return `<!DOCTYPE html>
 		<html lang="en">
 		<head>
 			<meta charset="UTF-8">
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
+			<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource} data:; media-src ${webview.cspSource} data: blob:; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';">
 			<link href="${cssUri}" rel="stylesheet">
+			<link href="${webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'soundeditor.css'))}" rel="stylesheet">
 			<link href="${mapCssUri}" rel="stylesheet">
 			<link href="${sequenceCssUri}" rel="stylesheet">
 			<link href="${webview.asWebviewUri(vscode.Uri.joinPath(mediaUri, 'fonteditor.css'))}" rel="stylesheet">

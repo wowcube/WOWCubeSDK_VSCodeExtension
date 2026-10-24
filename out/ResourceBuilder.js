@@ -7,6 +7,7 @@ const path = require("path");
 const crypto = require("crypto");
 const cp = require("child_process");
 const Configuration_1 = require("./Configuration");
+const SoundEditor_1 = require("./SoundEditor");
 const ResourceBundle_1 = require("./ResourceBundle");
 const Output_1 = require("./Output");
 const ResourceStudioProvider_1 = require("./ResourceStudioProvider");
@@ -66,9 +67,10 @@ class ResourceBuilder {
             Output_1.Output.channel().appendLine('[resource-builder] No resource bundle; skipping resource compilation.');
             return;
         }
-        const errors = ResourceBundle_1.ResourceBundles.getBuildErrors(ResourceBundle_1.ResourceBundles.parse(contents.toString('utf8')));
+        const bundle = ResourceBundle_1.ResourceBundles.parse(contents.toString('utf8'));
+        const errors = [...ResourceBundle_1.ResourceBundles.getBuildErrors(bundle), ...await SoundEditor_1.SoundEditor.errors(Configuration_1.Configuration.context, vscode.Uri.file(workspace), bundle)];
         if (errors.length) {
-            throw new Error(errors.join('\n'));
+            throw new Error([...new Set(errors)].join('\n'));
         }
         const toolsPath = Configuration_1.Configuration.getUtilsPath();
         if (!toolsPath) {

@@ -1,5 +1,5 @@
-export function name(name:unknown, used?:string[]):string | undefined;
-export function deriveName(filename:string, used?:string[]):string;
+export function name(name:unknown, used?:string[], resourceType?:string):string | undefined;
+export function deriveName(filename:string, used?:string[], resourceType?:string):string;
 export function paletteName(name:string):string;
 export function integer(value:unknown, min:number, max:number, code:string, label:string):string | undefined;
 export function paletteSize(size:unknown):string | undefined;

@@ -6,7 +6,7 @@
 		const groups = new Map(), sprites = new Map();
 		for(const resource of bundle.resources)
 		{
-			if(!['sprite', 'font'].includes(resource.type)) { continue; }
+			if(!['sprite', 'font', 'sound'].includes(resource.type)) { continue; }
 			for(const source of new Set([resource.source, ...(resource.type === 'font' ? [resource.atlas] : [])]))
 			{
 				if(!sprites.has(source)) { sprites.set(source, []); }
@@ -29,7 +29,7 @@
 					'<span aria-hidden="true">'+(item.image ? '▧' : '◇')+'</span><div class="source-title"><button class="link" data-source="'+escape(item.path)+'">'+escape(item.path)+'</button>'+
 					(item.missing ? '<small>Missing source file</small>' : '')+'</div>'+
 					(!users.length ? '<button data-open-source="'+escape(item.path)+'" '+(item.missing ? 'disabled' : '')+'>Open file</button>' : '')+
-					(users.length ? '<strong class="source-sprite-names">'+escape(users.map(resource => resource.name).join(', '))+'</strong>' : item.image && !item.missing ? '<button data-register-source="'+escape(item.path)+'">+ Register sprite</button>' : '')+'</div>';
+					(users.length ? '<strong class="source-sprite-names">'+escape(users.map(resource => resource.name).join(', '))+'</strong>' : /\.(wav|mp3|ogg|flac)$/i.test(item.path) && !item.missing ? '<button data-register-sound="'+escape(item.path)+'">+ Add sound</button>' : item.image && !item.missing ? '<button data-register-source="'+escape(item.path)+'">+ Register sprite</button>' : '')+'</div>';
 			}).join('');
 		}
 		function isOpen(folder, items) { return state.filter ? items.some(matches) : state.sourceGroupsOpen.includes(folder); }

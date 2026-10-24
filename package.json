@@ -241,7 +241,7 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "test:resources": "npm run compile && mocha --ui tdd out/test/suite/resourceBundle.test.js && node src/test/paletteBuilder.test.js && node src/test/resourceStudioProvider.test.js && node src/test/resourceStudioWebview.test.js && node src/test/resourceBuilder.test.js && node src/test/map.test.js && node src/test/sequence.test.js && node src/test/font.test.js"
+    "test:resources": "npm run compile && mocha --ui tdd out/test/suite/resourceBundle.test.js && node src/test/paletteBuilder.test.js && node src/test/resourceStudioProvider.test.js && node src/test/resourceStudioWebview.test.js && node src/test/resourceBuilder.test.js && node src/test/map.test.js && node src/test/sequence.test.js && node src/test/font.test.js && node src/test/sound.test.js"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
@@ -269,6 +269,7 @@
     "progress-stream": "^2.0.0",
     "regedit": "^5.0.0",
     "request": "^2.88.2",
-    "unzipper": "^0.10.11"
+    "unzipper": "^0.10.11",
+    "mpg123-decoder": "1.0.3"
   }
 }

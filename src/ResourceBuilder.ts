@@ -4,6 +4,7 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import * as cp from 'child_process';
 import { Configuration } from './Configuration';
+import { SoundEditor } from './SoundEditor';
 import { ResourceBundles } from './ResourceBundle';
 import { Output } from './Output';
 import { ResourceStudioProvider } from './ResourceStudioProvider';
@@ -60,8 +61,9 @@ export class ResourceBuilder
 			Output.channel().appendLine('[resource-builder] No resource bundle; skipping resource compilation.');
 			return;
 		}
-		const errors = ResourceBundles.getBuildErrors(ResourceBundles.parse(contents.toString('utf8')));
-		if(errors.length) { throw new Error(errors.join('\n')); }
+		const bundle = ResourceBundles.parse(contents.toString('utf8'));
+		const errors = [...ResourceBundles.getBuildErrors(bundle), ...await SoundEditor.errors(Configuration.context,vscode.Uri.file(workspace),bundle)];
+		if(errors.length) { throw new Error([...new Set(errors)].join('\n')); }
 		const toolsPath = Configuration.getUtilsPath();
 		if(!toolsPath) { throw new Error('Configure the WOWCube Development Kit path before building resources.'); }
 		const tool = path.join(toolsPath, Configuration.getResourceBuilder());

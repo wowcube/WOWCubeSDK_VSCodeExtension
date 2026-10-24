@@ -9,6 +9,7 @@
 	let bundle;
 	let sources = [];
 	let fontData = {};
+	let soundData = {}, confirmedSounds = [];
 	let resourceTypes = [];
 	let version = 0;
 	let dirty = false;
@@ -41,7 +42,7 @@
 
 	function helpers()
 	{
-		return {state, bundle, sources, fontData, root, main:root.querySelector('main'), previewScroll, escape, field, input, select, updateResource, saveState, selectPaletteColor,
+		return {state, bundle, sources, fontData, soundData, confirmedSounds, root, selectResource, postMessage:message => vscode.postMessage(message), main:root.querySelector('main'), previewScroll, escape, field, input, select, updateResource, saveState, selectPaletteColor,
 			sendChange, renderSpriteList:(items, renderItem, scope) => window.ResourceStudioSpriteList.render(items, renderItem, scope, state, escape),
 			chooseMapBackground:id => sendChange({action:'chooseMapBackground', id})};
 	}
@@ -145,7 +146,7 @@
 		const selectionEnd = active?.selectionEnd;
 		const draftValue = active?.value;
 		const resourceSections = [...new Set(resourceTypes.map(type => window.ResourceStudioTypes.get(type.type)?.section).filter(section => section && section !== 'Sprites'))];
-		const sections = ['Sprites', ...resourceSections.filter(section => section === 'Maps'), ...(window.ResourceStudioSequences ? ['Animations'] : []), ...resourceSections.filter(section => section === 'Fonts'), ...resourceSections.filter(section => section !== 'Maps' && section !== 'Fonts'), 'Source files'];
+		const sections = ['Sprites', ...resourceSections.filter(section => section === 'Maps'), ...(window.ResourceStudioSequences ? ['Animations'] : []), ...resourceSections.filter(section => section === 'Fonts'), ...resourceSections.filter(section => section === 'Sounds'), ...resourceSections.filter(section => !['Maps','Fonts','Sounds'].includes(section)), 'Source files'];
 		if(!sections.includes(state.tab))
 		{
 			state.tab = 'Sprites';
@@ -217,6 +218,7 @@
 			disposePreview = state.tab === 'Animations' ? window.ResourceStudioSequences.mount(resource, helpers()) : window.ResourceStudioTypes.get(resource.type)?.mountPreview?.(resource, {...helpers(), onPreviewReady:restoreScrollPositions});
 		}
 		else if(state.tab === 'Animations') { disposePreview = window.ResourceStudioSequences.mount(undefined, helpers()); }
+		else if(state.tab === 'Sounds') { disposePreview = window.ResourceStudioSounds.mount(undefined,helpers()); }
 		else if(state.tab === 'Source files')
 		{
 			const source = sources.find(item => item.path === selectedSource);
@@ -250,12 +252,14 @@
 		}
 		if(!state.busy) { pendingFocusKey = undefined; }
 		restoreScrollPositions();
+		window.ResourceStudioSounds?.setHelpers(helpers());
 		saveState();
 	}
 
 	function renderLibraryItem(item)
 	{
 		const type = window.ResourceStudioTypes.get(item.type);
+		if(type?.renderLibraryItem) { return type.renderLibraryItem(item,helpers()); }
 		return '<button class="item '+(item.id === state.selected ? 'active' : '')+'" data-select="'+escape(item.id)+'" aria-pressed="'+(item.id === state.selected)+'">'+
 			'<span class="resource-icon" aria-hidden="true">'+(type?.icon || '◇')+'</span><span>'+escape(state.tab === 'Animations' ? item.sequence.name : item.name)+'<small>'+escape(state.tab === 'Animations' ? 'Animation' : type?.getSummary(item) || item.type+' · unsupported')+'</small></span></button>';
 	}
@@ -263,6 +267,7 @@
 	function renderResource(resource)
 	{
 		if(state.tab === 'Animations') { return window.ResourceStudioSequences.render(resource, helpers()); }
+		if(state.tab === 'Sounds') { return window.ResourceStudioSounds.render(resource, helpers()); }
 		const addButton = '<button class="primary" data-action="newResource">'+(state.tab === 'Sprites' ? '+ Add new sprite' : state.tab === 'Maps' ? '+ Add new map' : state.tab === 'Fonts' ? '+ Add new font' : '+ Add resource')+'</button>';
 		if(!resource)
 		{
@@ -328,8 +333,9 @@
 
 	function showDialog(type, source = '')
 	{
+		if(type === 'sound') { vscode.postMessage({type:'soundImport'}); return; }
 		if(type === 'font') { sendChange({action:'fontImport'}); return; }
-		state.dialog = {type, source, name:source ? validation.deriveName(source, validation.usedNames(bundle.resources)) : '', paletteId:bundle.resources.find(item => item.type === 'palette')?.id || '', colorCount:256};
+		state.dialog = {type, source, name:source ? validation.deriveName(source, validation.usedNames(bundle.resources), type) : '', paletteId:bundle.resources.find(item => item.type === 'palette')?.id || '', colorCount:256};
 		error = '';
 		render();
 		root.querySelector('[data-dialog="name"]')?.focus();
@@ -471,11 +477,12 @@
 		const element = event.target;
 		if(element.dataset.dialog)
 		{
+			if(element.dataset.dialog === 'type' && element.value === 'sound') { state.dialog = null; vscode.postMessage({type:'soundImport'}); return; }
 			if(element.dataset.dialog === 'type' && element.value === 'font') { state.dialog = null; sendChange({action:'fontImport'}); return; }
 			state.dialog[element.dataset.dialog] = element.value;
 			if(element.dataset.dialog === 'source' && !state.dialog.name)
 			{
-				state.dialog.name = validation.deriveName(element.value, validation.usedNames(bundle.resources));
+				state.dialog.name = validation.deriveName(element.value, validation.usedNames(bundle.resources), state.dialog.type);
 				render();
 			}
 		}
@@ -514,6 +521,7 @@
 		const element = event.target;
 		if(element.dataset.dialog)
 		{
+			if(element.dataset.dialog === 'type' && element.value === 'sound') { state.dialog = null; vscode.postMessage({type:'soundImport'}); return; }
 			if(element.dataset.dialog === 'type' && element.value === 'font') { state.dialog = null; sendChange({action:'fontImport'}); return; }
 			state.dialog[element.dataset.dialog] = element.value;
 			if(element.dataset.dialog === 'name' && state.dialog.paletteName === undefined)
@@ -575,7 +583,7 @@
 			if(key === 'name')
 			{
 				resource.name = element.value.trim();
-				const error = validation.name(resource.name, validation.usedNames(bundle.resources, resource.id));
+				const error = validation.name(resource.name, validation.usedNames(bundle.resources, resource.id), resource.type);
 				if(error) { throw new Error(error); }
 			}
 			else
@@ -600,7 +608,7 @@
 		}
 		const dialog = state.dialog;
 		const name = dialog.name.trim();
-		const nameError = validation.name(name, validation.usedNames(bundle.resources));
+		const nameError = validation.name(name, validation.usedNames(bundle.resources), dialog.type);
 		if(nameError)
 		{
 			error = nameError;
@@ -629,7 +637,7 @@
 		{
 			state.spacePressed = true;
 			const target = event.target || document.activeElement;
-			if(target?.closest?.('[data-map-lock], [data-sequence-action], [data-sequence-frame], .sprite-group > summary') || target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName))
+			if(target?.closest?.('.sound-modal, audio, [data-sound-action], [data-sound-play], [data-register-sound], [data-map-lock], [data-sequence-action], [data-sequence-frame], .sprite-group > summary') || target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName))
 			{
 				return;
 			}
@@ -638,7 +646,7 @@
 		if((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's')
 		{
 			event.preventDefault();
-			if(root.contains(document.activeElement) && (document.activeElement.dataset.key || document.activeElement.dataset.sequenceKey))
+			if(root.contains(document.activeElement) && (document.activeElement.dataset.key || document.activeElement.dataset.sequenceKey || document.activeElement.hasAttribute('data-sound-name')))
 			{
 				document.activeElement.blur();
 			}
@@ -674,7 +682,7 @@
 		{
 			flushRequests.push(message.requestId);
 			const active = document.activeElement;
-			if(!state.busy && root.contains(active) && (active.dataset.key || active.dataset.mapKey || active.dataset.sequenceKey)) { active.blur(); }
+			if(!state.busy && root.contains(active) && (active.dataset.key || active.dataset.mapKey || active.dataset.sequenceKey || active.hasAttribute('data-sound-name'))) { active.blur(); }
 			finishFlush();
 		}
 		else if(message.type === 'update')
@@ -697,6 +705,7 @@
 			resourceTypes = message.resourceTypes;
 			version = message.version;
 			fontData = message.fontData || {};
+			soundData = message.soundData || {}; confirmedSounds = message.confirmedSounds || [];
 			dirty = message.dirty;
 			project = message.project;
 			sourceWarning = message.sourceWarning;

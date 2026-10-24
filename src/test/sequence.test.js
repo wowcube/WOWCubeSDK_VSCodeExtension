@@ -95,6 +95,9 @@ async function run()
 	const validateSchema=new Ajv({allErrors:true}).compile(schema), schemaBundle=ResourceBundles.create();
 	const schemaSprite=ResourceTypes.get('sprite').create('schema','schema_sprite','file.png',{colorMode:'rgb565'});schemaBundle.resources.push(schemaSprite);
 	assert.strictEqual(validateSchema(schemaBundle),true,JSON.stringify(validateSchema.errors));
+	schemaSprite.name='icon';assert.strictEqual(validateSchema(schemaBundle),true,JSON.stringify(validateSchema.errors));
+	schemaSprite.name='schema_sprite';
+	for(const type of ['palette','map','font','sound']) { assert.strictEqual(validateSchema({...schemaBundle,resources:[{id:'reserved',type,name:'icon'}]}),false); }
 	schemaSprite.paletteId='unexpected';assert.strictEqual(validateSchema(schemaBundle),false);schemaSprite.paletteId=null;
 	const schemaPalette=ResourceTypes.get('palette').create('schema_pal','schema_palette');schemaBundle.resources.push(schemaPalette);assert.strictEqual(validateSchema(schemaBundle),true);
 	schemaPalette.transparentIndex=null;assert.strictEqual(validateSchema(schemaBundle),false);

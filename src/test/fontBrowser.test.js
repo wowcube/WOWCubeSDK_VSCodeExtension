@@ -11,7 +11,7 @@ const palette = ResourceTypes.get('palette').create('p','font_palette'); palette
 const font = ResourceTypes.get('font').create('f','font_1','fonts/demo.fnt',{atlas:'fonts/atlas.png',slot:1,paletteId:'p'});
 bundle.resources.push(palette,font);
 const metadata = parseBitmapFont(fontFixture()); metadata.referencedAtlas='fonts/atlas.png';
-const media = path.join(__dirname,'../../media'), scripts = ['resourcevalidation.js','spritepixels.js','previewviewport.js','mapgeometry.js','sourcefiles.js','spritelist.js','palettecompatibility.js','resourcetypes.js','maptextures.js','maprenderer.js','mapeditor.js','mapresource.js','sequenceeditor.js','fonteditor.js','resourcestudio.js'];
+const media = path.join(__dirname,'../../media'), scripts = ['resourcevalidation.js','spritepixels.js','previewviewport.js','mapgeometry.js','sourcefiles.js','spritelist.js','palettecompatibility.js','soundvalidation.js','resourcetypes.js','maptextures.js','maprenderer.js','mapeditor.js','mapresource.js','sequenceeditor.js','fonteditor.js','soundeditor.js','resourcestudio.js'];
 const initial = `window.bundle=${JSON.stringify(bundle)};window.metadata=${JSON.stringify(metadata)};window.version=1;window.messages=[];window.saved={tab:'Fonts',selected:'f'};
 const image=document.createElement('canvas');image.width=256;image.height=256;const ctx=image.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,256,256);
 window.sources=[{path:'fonts/demo.fnt',uri:'',image:false,missing:false},{path:'fonts/atlas.png',uri:image.toDataURL(),image:true,missing:false}];
@@ -25,7 +25,7 @@ async function run()
 		const page=await browser.newPage({viewport:{width:1400,height:1050}}), errors=[];page.on('pageerror',e=>errors.push(e.message));
 		await page.setContent('<style>'+['resourcestudio.css','mapeditor.css','sequenceeditor.css','fonteditor.css'].map(file=>fs.readFileSync(path.join(media,file),'utf8')).join('\n')+'</style><div id="resource-studio"></div><script>'+initial+'</script>'+scripts.map(file=>'<script>'+fs.readFileSync(path.join(media,file),'utf8')+'</script>').join(''));
 		await page.waitForSelector('#font-canvas'); await page.waitForFunction(()=>document.querySelector('[data-font-status]').textContent.includes('Shift'));
-		assert.deepStrictEqual(await page.locator('.tabs button').evaluateAll(nodes=>nodes.map(n=>n.dataset.tab)),['Sprites','Maps','Animations','Fonts','Palettes','Source files']);
+		assert.deepStrictEqual(await page.locator('.tabs button').evaluateAll(nodes=>nodes.map(n=>n.dataset.tab)),['Sprites','Maps','Animations','Fonts','Sounds','Palettes','Source files']);
 		assert.strictEqual(await page.locator('[data-key="slot"] option').count(),3); assert.strictEqual(await page.locator('[data-key="slot"]').inputValue(),'1');
 		await page.locator('[data-font-mode="atlas"]').click(); await page.locator('[data-font-zoom]').selectOption('1');
 		const pixel=()=>page.locator('#font-canvas').evaluate(canvas=>Array.from(canvas.getContext('2d').getImageData(200,200,1,1).data));

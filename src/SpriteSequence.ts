@@ -31,7 +31,7 @@ export class SpriteSequences
 			}
 			const frames = groups.get(sequence.id) || []; frames.push(sprite); groups.set(sequence.id, frames);
 		}
-		const names = new Set(bundle.resources.map(resource => resource.name));
+		const names = new Set(bundle.resources.filter(resource => resource.type !== 'sound').map(resource => resource.name));
 		for(const frames of groups.values())
 		{
 			frames.sort((a, b) => a.sequence!.index - b.sequence!.index);
@@ -51,7 +51,7 @@ export class SpriteSequences
 		{
 			if(sprite.type !== 'sprite' || !sprite.sequence || seen.has(sprite.sequence.id)) { continue; }
 			seen.add(sprite.sequence.id);
-			const error = ResourceValidation.animationName(sprite.sequence.name, ResourceValidation.usedNames(bundle.resources, undefined, sprite.sequence.id));
+			const error = ResourceValidation.animationName(sprite.sequence.name, ResourceValidation.usedNames(bundle.resources.filter(resource => resource.type !== 'sound'), undefined, sprite.sequence.id));
 			if(error) { errors.push(error); }
 		}
 		return errors;
@@ -80,7 +80,7 @@ export class SpriteSequences
 		const offset = this.frames(bundle, id).length, used = [...this.usedNames(bundle), name, name+'_end'];
 		return sources.map((source, index) =>
 		{
-			const frameName = ResourceValidation.deriveName(name.slice(0, 17)+'_'+String(offset + index).padStart(3, '0'), used);
+			const frameName = ResourceValidation.deriveName(name.slice(0, 17)+'_'+String(offset + index).padStart(3, '0'), used, 'sprite');
 			used.push(frameName);
 			const frame = ResourceTypes.get('sprite')!.create(crypto.randomBytes(16).toString('hex'), frameName, source.source) as SpriteResource;
 			frame.sequence = {id, name, index:offset + index}; frame.frameRate = rate;

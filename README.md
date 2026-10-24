@@ -203,10 +203,46 @@ characters advance by the width of `n`. Runtime layout conversion remains part
 of the font exporter. The preview has the shared Fit / 0.5×–128× zoom,
 Shift-wheel zoom, ordinary wheel scrolling and vertical resize handle.
 
-Font authoring is implemented, but font export is not yet supported by the
-installed `resource-builder`. Saving still saves the JSON; resource compilation
-and app builds report this missing integration instead of silently omitting fonts.
-Bundles containing no fonts retain their existing build behavior.
+Fonts compile through `resource-builder` into the ordinary glyph sprite assets
+used by the engine. The compiler generates glyph IDs and converts BMFont offsets,
+advances and line height into the runtime layout fields.
+
+### Sounds
+
+Open **Sounds** and choose **+ Add sounds…**, drop audio files onto the view, or
+use **+ Add sound** beside an unregistered audio source in **Source files**.
+A single import review supports multiple files, editable proposed names,
+per-file diagnostics and excluding individual files. External files require an
+explicit **Copy into project folder…** action. Sources are never moved or renamed.
+
+Sources support PCM WAV (8/16/24-bit), 32-bit floating-point WAV, mono or stereo,
+and MP3. OGG and FLAC are currently reported as unsupported. MP3 analysis uses
+[mpg123-decoder](https://github.com/eshaz/wasm-audio-decoders/tree/main/src/mpg123-decoder),
+which runs in the extension host without a system audio converter.
+The default preview averages channels to mono and resamples to 22,050 Hz;
+it is labelled **Approximate** because MP3 encoding artefacts are not included.
+**Original** plays the source for comparison. Only one preview plays at a time.
+Waveforms and peak meters describe the converted mono signal.
+
+The inspector supports renaming, revealing and replacing sources, and confirmed
+deletion of a record while keeping its source file. It displays source properties,
+estimated device size and plain-language diagnostics. The 64 KB device limit is a
+build error; above 48 KB shows a warning. Silence uses a −60 dBFS threshold.
+Duplicate source confirmations are stored in VS Code workspace state, keyed to
+the source path and resource IDs; no confirmation fields are added to the JSON.
+Renaming may require updating app code that references `SND_<name>`.
+
+Each new sound record contains only `id`, `name`, `type:"sound"` and `source`.
+Derived audio data is transient, and future fields remain preserved. Sound
+semantic errors can be saved and corrected in the editor, but block builds.
+Sound names additionally exclude Windows device names, `none`/`last`, all
+`font_<digits>_<five digits>` names, and resource/animation identifiers.
+
+Sounds compile through `resource-builder` into device-format MP3 files and
+generated `SND_<name>` IDs. Sources already in the exact device format can be
+copied by the compiler; other sources require the `ffmpeg` executable beside
+`resource-builder` in the SDK tools folder. The editor does not write converted
+assets, IDs headers, or changes to `wowcubeapp-build.json`.
 
 ### Adding resource types
 

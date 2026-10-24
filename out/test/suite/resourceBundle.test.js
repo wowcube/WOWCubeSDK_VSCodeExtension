@@ -174,6 +174,23 @@ suite('Resource bundle', () => {
         sprite.name = 'UpperCase';
         assert.match(ResourceBundle_1.ResourceBundles.validate(bundle).join(' '), /V-001/);
     });
+    test('allows icon only as a sprite name and preserves uniqueness', () => {
+        assert.strictEqual(ResourceValidation.name('icon', [], 'sprite'), undefined);
+        assert.strictEqual(ResourceValidation.deriveName('icon.png', [], 'sprite'), 'icon');
+        assert.strictEqual(ResourceValidation.deriveName('icon.png', ['icon'], 'sprite'), 'icon_1');
+        assert.match(ResourceValidation.name('icon', ['icon'], 'sprite'), /V-004/);
+        assert.match(ResourceValidation.name('zero', [], 'sprite'), /V-003/);
+        for (const type of ['palette', 'map', 'font', 'sound']) {
+            assert.match(ResourceValidation.name('icon', [], type), /V-003/);
+        }
+        assert.match(ResourceValidation.animationName('icon'), /V-003/);
+        const { bundle, palette, sprite } = createBundle();
+        sprite.name = 'icon';
+        assert.deepStrictEqual(ResourceBundle_1.ResourceBundles.validate(bundle), []);
+        assert.deepStrictEqual(ResourceBundle_1.ResourceBundles.parse(JSON.stringify(bundle)), bundle);
+        palette.name = 'icon';
+        assert.match(ResourceBundle_1.ResourceBundles.validate(bundle).join(' '), /V-003/);
+    });
     test('enforces palette limits and prevents mixed alpha membership', () => {
         const { bundle, palette, sprite } = createBundle();
         for (const size of [2, 3, 15, 16, 32, 33, 64, 128, 255, 256]) {

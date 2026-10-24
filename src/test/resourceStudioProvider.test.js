@@ -143,7 +143,8 @@ PaletteBuilder.generate = async function (sources, size, reserveTransparent)
 
 async function run()
 {
-	const provider = new ResourceStudioProvider({extensionUri:new TestUri('/extension')});
+	const soundState = new Map();
+	const provider = new ResourceStudioProvider({extensionUri:new TestUri('/extension'),workspaceState:{get:(key,fallback) => soundState.has(key) ? soundState.get(key) : fallback,update:async (key,value) => soundState.set(key,value)}});
 	await provider.open(document.uri);
 	assert.strictEqual(commands.pop()[1].path, document.uri.path);
 	await provider.open(new TestUri('/project/characters/hero.png'));
@@ -422,8 +423,10 @@ async function run()
 		}
 		assert.deepStrictEqual(JSON.parse(text).resources.find(item => item.id === companion.id).tags, ['solid']);
 		await receive({type:'change', action:'remove', version:document.version, id:companion.id});
-		const beforeBadName = text;
 		await receive({type:'change', action:'update', version:document.version, resource:{...JSON.parse(text).resources[0], name:'icon'}});
+		assert.strictEqual(JSON.parse(text).resources[0].name, 'icon');
+		const beforeBadName = text;
+		await receive({type:'change', action:'update', version:document.version, resource:{...JSON.parse(text).resources[0], name:'zero'}});
 		assert.strictEqual(text, beforeBadName);
 		assert.match(messages.at(-1).message, /V-003/);
 		await receive({type:'change', action:'update', version:document.version, resource:{...JSON.parse(text).resources[0], frameRate:128}});
@@ -511,6 +514,26 @@ async function run()
 		const beforeFontDelete = text;
 		await receive({type:'change',action:'remove',version:document.version,id:font.paletteId});
 		assert.strictEqual(text,beforeFontDelete,'An assigned font palette cannot be deleted.');
+
+		// Sound semantic errors remain editable and savable; previews are transient messages.
+		const {wav} = require('./soundFixture');
+		text = JSON.stringify({schemaVersion:2,sourceFolders:[],resources:[],registries:{groups:[],types:[],tags:[]}}); document.version++;
+		files.set('/project/coin.wav',wav()); backgroundChoice = '/project/coin.wav';
+		await receive({type:'soundImport'});
+		let review = messages.at(-1); assert.strictEqual(review.type,'soundReview'); assert.strictEqual(review.rows[0].name,'coin');
+		await receive({type:'change',action:'soundConfirm',version:document.version,rows:[{token:review.rows[0].token,name:'coin'}]});
+		const sound = JSON.parse(text).resources[0]; assert.strictEqual(sound.type,'sound'); assert.strictEqual(sound.source,'coin.wav');
+		assert.strictEqual(messages.at(-1).soundData[sound.id].channels,2);
+		const withFuture = {...sound,futureField:{keep:true}};
+		await receive({type:'change',action:'update',version:document.version,resource:withFuture});
+		await receive({type:'change',action:'soundUpdate',version:document.version,id:sound.id,name:'none'});
+		assert.strictEqual(JSON.parse(text).resources[0].name,'none'); assert.strictEqual(messages.at(-1).type,'update');
+		await receive({type:'save'}); assert.strictEqual(document.isDirty,false);
+		assert.deepStrictEqual(JSON.parse(text).resources[0].futureField,{keep:true});
+		await receive({type:'soundPreview',id:sound.id,requestId:'preview'}); assert.strictEqual(messages.at(-1).type,'soundPreview'); assert(messages.at(-1).preview.startsWith('data:audio/wav;base64,'));
+		assert(!text.includes('base64')); assert(!text.includes('waveform'));
+		files.delete('/project/coin.wav'); await receive({type:'refresh'}); assert.strictEqual(messages.at(-1).type,'update'); assert.match(messages.at(-1).soundData[sound.id].error,/not found/);
+		await receive({type:'save'}); assert.strictEqual(JSON.parse(text).resources.length,1);
 
 		text = '{broken';
 		await receive({type:'refresh'});

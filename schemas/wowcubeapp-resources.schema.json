@@ -52,7 +52,6 @@
                 "zero",
                 "0",
                 "pal",
-                "icon",
                 "bmp_none",
                 "bmp_last",
                 "bmp_0",
@@ -67,6 +66,18 @@
           }
         },
         "allOf": [
+          {
+            "if": {
+              "properties": {
+                "type": { "const": "sprite" }
+              }
+            },
+            "else": {
+              "properties": {
+                "name": { "not": { "const": "icon" } }
+              }
+            }
+          },
           {
             "if": {
               "properties": {
@@ -650,6 +661,26 @@
                 },
                 "blend": {
                   "const": "alpha"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "sound"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "source"
+              ],
+              "properties": {
+                "source": {
+                  "type": "string",
+                  "description": "Source WAV or MP3, relative to the folder containing the resource JSON. Audio properties and preview data are computed, not stored."
                 }
               }
             }

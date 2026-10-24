@@ -5,6 +5,8 @@ exports.isResourcePath = isResourcePath;
 const PaletteCompatibility = require("../media/palettecompatibility");
 const ResourceValidation = require("../media/resourcevalidation");
 const SpriteSequence_1 = require("./SpriteSequence");
+const SoundResource_1 = require("./SoundResource");
+const SoundValidation = require("../media/soundvalidation");
 const FontResource_1 = require("./FontResource");
 const MapResource_1 = require("./MapResource");
 // These modes are preserved for future support but never offered by the editor.
@@ -141,6 +143,7 @@ ResourceTypes.register({
 });
 ResourceTypes.register(MapResource_1.mapResourceType);
 ResourceTypes.register(FontResource_1.fontResourceType);
+ResourceTypes.register(SoundResource_1.soundResourceType);
 class ResourceBundles {
     static create() {
         return { schemaVersion: 2, sourceFolders: [], resources: [], registries: { groups: [], types: [], tags: [] } };
@@ -187,11 +190,11 @@ class ResourceBundles {
             if (typeof resource.id !== 'string' || resource.id.length === 0 || ids.has(resource.id)) {
                 errors.push('Resource IDs must be nonempty and unique.');
             }
-            if (typeof resource.name !== 'string' || !resource.name.trim() || resource.name !== resource.name.trim() || names.has(resource.name)) {
+            if (typeof resource.name !== 'string' || resource.type !== 'sound' && (!resource.name.trim() || resource.name !== resource.name.trim() || names.has(resource.name))) {
                 errors.push('V-004: Resource names must be nonempty, trimmed, and unique.');
             }
-            if (['sprite', 'palette', 'map', 'sound', 'font'].includes(resource.type)) {
-                const error = ResourceValidation.name(resource.name);
+            if (['sprite', 'palette', 'map', 'font'].includes(resource.type)) {
+                const error = ResourceValidation.name(resource.name, [], resource.type);
                 if (error) {
                     errors.push(error);
                 }
@@ -200,7 +203,9 @@ class ResourceBundles {
                 errors.push('Resource type is required.');
             }
             ids.add(resource.id);
-            names.add(resource.name);
+            if (resource.type !== 'sound') {
+                names.add(resource.name);
+            }
         }
         if (errors.length > 0) {
             return errors;
@@ -221,7 +226,7 @@ class ResourceBundles {
         if (palettes.length > ResourceValidation.maxPalettes) {
             errors.push('V-016: At most ' + ResourceValidation.maxPalettes + ' palettes are allowed.');
         }
-        if (1 + bundle.resources.filter(resource => ['sprite', 'palette', 'map', 'sound'].includes(resource.type)).length > 5120) {
+        if (1 + bundle.resources.filter(resource => ['sprite', 'palette', 'map'].includes(resource.type)).length > 5120) {
             errors.push('V-025: At most 5120 runtime assets are allowed.');
         }
         for (const palette of palettes) {
@@ -233,7 +238,7 @@ class ResourceBundles {
         return errors;
     }
     static getBuildErrors(bundle) {
-        return [...(bundle.resources.some(resource => resource.type === 'font') ? ['Font export requires resource-builder support for font resources. This builder integration is not implemented yet; fonts have not been compiled.'] : []), ...SpriteSequence_1.SpriteSequences.buildErrors(bundle), ...bundle.resources.filter(resource => resource.type === 'palette').map(resource => PaletteCompatibility.issue(resource)).filter((error) => !!error)];
+        return [...bundle.resources.filter(resource => resource.type === 'sound').flatMap(resource => [...SoundValidation.nameIssues(resource, bundle.resources), ...SoundValidation.sourceIssues(resource)].map(issue => issue.message)), ...(1 + bundle.resources.filter(resource => ['sprite', 'palette', 'map', 'sound'].includes(resource.type)).length > 5120 ? ['The bundle cannot contain more than 5120 runtime assets.'] : []), ...SpriteSequence_1.SpriteSequences.buildErrors(bundle), ...bundle.resources.filter(resource => resource.type === 'palette').map(resource => PaletteCompatibility.issue(resource)).filter((error) => !!error)];
     }
     static getWarnings(bundle) {
         const warnings = this.getBuildErrors(bundle);

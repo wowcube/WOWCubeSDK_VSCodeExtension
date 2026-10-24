@@ -6,7 +6,7 @@
 	function render(resource, h)
 	{
 		const imports = '<button data-sequence-action="files">+ Add more files</button><button data-sequence-action="folder">+ Add files from folder</button>';
-		return '<div class="heading"><strong>'+h.escape(resource?.sequence.name || 'Animations')+'</strong><span class="spacer"></span><button class="primary" data-sequence-action="new">+ Add new animation</button>'+imports+'</div>'+
+		return '<div class="heading"><strong>'+h.escape(resource?.sequence.name || 'Animations')+'</strong><span class="spacer"></span><button class="primary" data-sequence-action="new">+ Add new animation</button>'+imports+(resource ? '<button data-sequence-action="remove-animation">Remove</button>' : '')+'</div>'+
 			(!resource ? '<div class="empty"><h2>No animations yet</h2><p>Import PNG files or a folder. Every frame becomes a distinct sprite.</p></div>' :
 			'<div class="sequence-detail"><div class="sequence-center"><div class="sequence-toolbar"><label><input type="checkbox" data-sequence-onion> Previous frame</label><label><input type="checkbox" data-sequence-solid> Solid background</label><input type="color" data-sequence-background value="#555555" aria-label="Preview background color"><label class="sequence-zoom">Zoom <select data-sequence-zoom><option value="fit">Fit</option>'+window.ResourceStudioViewport.zoomLevels.map(value => '<option value="'+value+'">'+value+'×</option>').join('')+'</select></label></div>'+
 			'<div class="sequence-preview-wrap"><div id="sequence-preview" class="checker"><canvas id="sequence-canvas"></canvas></div><div class="view-resize-handle preview-resize-handle" role="separator" tabindex="0" aria-label="Resize animation preview vertically" aria-orientation="horizontal"></div><div class="sequence-origin-controls" role="group" aria-label="Move sequence origin">'+
@@ -141,6 +141,7 @@
 				playing = true; started = performance.now() - items.slice(0, current).reduce((sum, frame) => sum + (frame.frameRate + 1)*50, 0); button.textContent = 'Pause'; animation = requestAnimationFrame(tick); return;
 			}
 			stop();
+			if(action === 'remove-animation') { h.sendChange({action:'sequenceRemove', sequenceId:id, ids:items.map(frame => frame.id)}); return; }
 			if(action.startsWith('origin-'))
 			{
 				if(textures.size !== items.length) { query('[data-sequence-time]').textContent = 'Wait for all frame images to load.'; return; }
@@ -178,7 +179,7 @@
 			{
 				const validation = window.ResourceStudioValidation;
 				const used = validation.usedNames(h.bundle.resources, key === 'name' ? frame.id : undefined, key === 'sequence' ? id : undefined);
-				const error = key === 'sequence' ? validation.animationName(element.value, used) : validation.name(element.value, used); element.setCustomValidity(error || ''); if(!element.reportValidity()) { return; }
+				const error = key === 'sequence' ? validation.animationName(element.value, used) : validation.name(element.value, used, 'sprite'); element.setCustomValidity(error || ''); if(!element.reportValidity()) { return; }
 				if(key === 'name') { frame.name = element.value; } else { items.forEach(item => item.sequence.name = element.value); }
 			}
 			if(key === 'x' || key === 'y')

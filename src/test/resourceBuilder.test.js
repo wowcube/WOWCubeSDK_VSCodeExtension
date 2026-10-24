@@ -20,8 +20,9 @@ const saveErrors = [];
 const workspaceState = {get:key => data.get(key), update:async (key, value) => data.set(key, value)};
 const vscode = {
 	EventEmitter:VSCodeEmitter, window:{createOutputChannel:() => channel, showErrorMessage:message => saveErrors.push(message)},
-	workspace:{textDocuments:[], onDidSaveTextDocument:handler => { saveHandler = handler; return {dispose:function () {}}; }},
-	Uri:{file:value => ({scheme:'file', fsPath:value, toString:() => 'file://'+value})}, TaskScope:{Workspace:1},
+	FileType:{File:1,Directory:2},
+	workspace:{fs:{stat:async uri=>{const stat=await fs.promises.stat(uri.fsPath);return{type:stat.isFile()?1:2,mtime:stat.mtimeMs,size:stat.size};},readFile:uri=>fs.promises.readFile(uri.fsPath)},textDocuments:[], onDidSaveTextDocument:handler => { saveHandler = handler; return {dispose:function () {}}; }},
+	Uri:{joinPath:(uri,...parts) => vscode.Uri.file(path.join(uri.fsPath || uri.path,...parts)),file:value => ({scheme:'file', fsPath:value, toString:() => 'file://'+value})}, TaskScope:{Workspace:1},
 	Task:class { constructor(definition, scope, name, source, execution) { Object.assign(this, {definition, execution}); } },
 	CustomExecution:class { constructor(callback) { this.callback = callback; } }
 };
@@ -308,6 +309,16 @@ async function run()
 		await fs.promises.writeFile(resources,JSON.stringify(incompatible));
 		await assert.rejects(ResourceBuilder.build(workspace),/reserve color 0/);assert.strictEqual(calls.length,beforeToolUpdate+1);
 
+		// Valid font and sound records must reach the compiler, even without an SDK in CI.
+		const supported = ResourceBundles.create();
+		const fontPalette = ResourceTypes.get('palette').create('font_palette','font_palette');
+		supported.resources.push(fontPalette,ResourceTypes.get('font').create('font','ui_font','font.fnt',{slot:1,atlas:'atlas.png',paletteId:fontPalette.id}),ResourceTypes.get('sound').create('sound','coin','coin.wav'));
+		await fs.promises.writeFile(path.join(workspace,'coin.wav'),require('./soundFixture').wav());
+		await fs.promises.writeFile(resources,JSON.stringify(supported));
+		const supportedCalls = calls.length;
+		await ResourceBuilder.build(workspace); assert.strictEqual(calls.length,supportedCalls+1);
+		await ResourceBuilder.build(workspace); assert.strictEqual(calls.length,supportedCalls+1);
+
 		if(process.env.WOWCUBE_RESOURCE_BUILDER)
 		{
 			ResourceStudioProvider.flushEdits = original.flushEdits;
@@ -368,8 +379,44 @@ async function run()
 				const scale=frame.fullsize?1:2;assert.strictEqual(bytes.readFloatLE(4),scale*frame.pivot.x-.5);assert.strictEqual(bytes.readFloatLE(8),scale*frame.pivot.y-.5);
 			}
 			assert.strictEqual(assetIds.walk,assetIds[frames[0].name]);assert.strictEqual(assetIds.walk_end,assetIds[frames[1].name]);
+			// Fonts expand into glyph sprites; sounds reach the compiler without extension gates.
+			const {fontFixture, atlasPng} = require('./fontFixture');
+			await fs.promises.writeFile(path.join(workspace,'font.fnt'),fontFixture());
+			await fs.promises.writeFile(path.join(workspace,'atlas.png'),atlasPng());
+			const font = ResourceTypes.get('font').create('font','ui_font','font.fnt',{slot:1,atlas:'atlas.png',paletteId:palette.id});
+			const scaledFont = {...font,id:'font_two',name:'scaled_font',slot:2,fullsize:false};
+			const sound = ResourceTypes.get('sound').create('sound','coin','Coin Pickup.wav');
+			await fs.promises.writeFile(path.join(workspace,sound.source),require('./soundFixture').wav());
+			bundle.resources.push(font,scaledFont,sound);
+			await fs.promises.writeFile(resources,JSON.stringify(bundle));
+			await ResourceBuilder.build(workspace);
+			const fontSoundHeader = await fs.promises.readFile(header,'utf8');
+			assert.match(fontSoundHeader,/BMP_font_1_00065\s*=/); assert.match(fontSoundHeader,/BMP_font_2_00110\s*=/); assert.match(fontSoundHeader,/SND_coin\s*=/);
+			for(const [slot,zoom] of [[1,1],[2,2]])
+			{
+				const glyph = await fs.promises.readFile(path.join(workspace,'app/art/packed','font_'+slot+'_00065.raw'));
+				assert.strictEqual(glyph.readFloatLE(4),-zoom); assert.strictEqual(glyph.readFloatLE(8),16*zoom);
+				assert.strictEqual(glyph.readFloatLE(20),14); assert.strictEqual(glyph.readFloatLE(24),24*zoom);
+				assert.strictEqual(Boolean(glyph.readUInt8(44)&2),zoom===1);
+			}
+			assert(!fs.existsSync(path.join(workspace,'app/art/packed/font_1_00032.raw')),'Space uses the n glyph width rather than a bitmap asset.');
+			const soundPath = path.join(workspace,'app/sound/assets/coin.mp3'), mp3 = await fs.promises.readFile(soundPath);
+			assert(mp3.length>0 && mp3.length<=65536); assert.notStrictEqual(mp3.toString('ascii',0,3),'ID3');
+			for(let offset=0;offset<mp3.length;)
+			{
+				assert.strictEqual(mp3[offset],255); assert.strictEqual((mp3[offset+1]>>3)&3,2); assert.strictEqual((mp3[offset+1]>>1)&3,1);
+				assert.strictEqual(mp3[offset+2]>>4,4); assert.strictEqual((mp3[offset+2]>>2)&3,0); assert.strictEqual(mp3[offset+3]>>6,3);
+				offset += 104 + ((mp3[offset+2]>>1)&1); assert(offset<=mp3.length);
+			}
+			const soundModified = (await fs.promises.stat(soundPath)).mtimeMs;
+			await ResourceBuilder.build(workspace); assert.strictEqual((await fs.promises.stat(soundPath)).mtimeMs,soundModified,'Unchanged font/sound JSON reuses the successful build.');
+			console.log('Installed font/sound integration passed: glyph IDs, pivots/metrics, FULLSIZE scaling, MP3 conversion/format/size, SND IDs and cache reuse.');
 			console.log('Installed resource-builder integration passed: packed assets, map rename and saved positions decoded from binary, index/header generation, sequence links/timing/pivots and cache reuse.');
 		}
+		// Sound errors are checked before compiler invocation, with no editor required.
+		const soundBundle = ResourceBundles.create(); soundBundle.resources.push(ResourceTypes.get('sound').create('sound','coin','missing.wav'));
+		await fs.promises.writeFile(resources,JSON.stringify(soundBundle));
+		await assert.rejects(ResourceBuilder.build(workspace), /source file|Source file/);
 		console.log('Resource build checks passed: persistent JSON hashing, ordering, shared builds, save handling, output logging, platform names, failures, and retries.');
 	}
 	finally

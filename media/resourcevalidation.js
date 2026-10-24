@@ -3,18 +3,18 @@
 	const reservedNames = ['zero', '0', 'pal', 'icon', 'bmp_none', 'bmp_last', 'bmp_0', 'map_none', 'map_last'];
 	const validation = {
 		maxPalettes:64,
-		name:function (name, used = [])
+		name:function (name, used = [], resourceType)
 		{
 			if(typeof name !== 'string' || !/^[a-z0-9_]+$/.test(name)) { return 'V-001: Names may use only a-z, 0-9 and _.'; }
 			if(name.length > 23) { return 'V-002: "'+name+'" is '+name.length+' characters; the limit is 23.'; }
-			if(reservedNames.includes(name) || /^font_[123]_\d{5}$/.test(name) && +name.slice(-5) >= 32 && +name.slice(-5) <= 127) { return 'V-003: "'+name+'" is reserved.'; }
+			if(reservedNames.includes(name) && !(name === 'icon' && resourceType === 'sprite') || /^font_[123]_\d{5}$/.test(name) && +name.slice(-5) >= 32 && +name.slice(-5) <= 127) { return 'V-003: "'+name+'" is reserved.'; }
 			if(used.includes(name)) { return 'V-004: the name "'+name+'" is already used.'; }
 		},
-		deriveName:function (filename, used = [])
+		deriveName:function (filename, used = [], resourceType)
 		{
 			const base = filename.split('/').pop().replace(/\.[^.]+$/, '').toLowerCase().replace(/[ -]/g, '_').replace(/[^a-z0-9_]/g, '').replace(/_+/g, '_').replace(/^_+|_+$/g, '').slice(0, 23) || 'sprite';
 			let name = base;
-			for(let index = 1; validation.name(name, used); index++)
+			for(let index = 1; validation.name(name, used, resourceType); index++)
 			{
 				const suffix = '_'+index;
 				name = base.slice(0, 23 - suffix.length)+suffix;

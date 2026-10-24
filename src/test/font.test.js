@@ -25,7 +25,7 @@ async function run()
 	dialogs.open.push([{path:'/project/fonts/demo.fnt'}]); dialogs.input.push('font_1','font_1_palette','32'); dialogs.pick.push(0);
 	assert.strictEqual(await change({action:'fontImport'}),true); assert.strictEqual(generations,1);
 	const font = bundle.resources.find(item => item.type === 'font'); assert.strictEqual(font.atlas,'fonts/atlas.png'); assert.strictEqual(font.slot,1); assert.strictEqual(font.fullsize,true); assert.strictEqual((await FontEditor.read(project,font)).glyphs.length,4);
-	assert.deepStrictEqual(ResourceBundles.validate(bundle),[]); assert.match(ResourceBundles.getBuildErrors(bundle).join(),/Font export/);
+	assert.deepStrictEqual(ResourceBundles.validate(bundle),[]); assert.deepStrictEqual(ResourceBundles.getBuildErrors(bundle),[]);
 	const invalid = mutate => { const b = structuredClone(bundle); mutate(b); assert(ResourceBundles.validate(b).length); };
 	invalid(b => b.resources.find(r => r.type === 'font').slot = 0);
 	invalid(b => b.resources.push({...font,id:'second',name:'second'}));
@@ -64,6 +64,6 @@ async function run()
 			}
 		}
 	}
-	console.log('Font checks passed: binary parsing, names, slots, atlas resolution/validation, alpha sharing, atomic cancellation, palette generation and explicit export gating.');
+	console.log('Font checks passed: binary parsing, names, slots, atlas resolution/validation, alpha sharing, atomic cancellation, palette generation and compiler-ready font records.');
 }
 run().catch(error => { console.error(error); process.exitCode = 1; });
