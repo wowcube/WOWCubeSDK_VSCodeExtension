@@ -8,6 +8,7 @@ import {Configuration} from './Configuration';
 import { Project } from "./Project";
 import {Output} from './Output';
 import { NameBeautifier } from "./NameBeautifier";
+import { WOWCubeSimulatorDebugProvider } from './WOWCubeSimulatorDebugProvider';
 
 import * as crypto from 'crypto';
 import { LoadCanvas } from './Canvas';
@@ -353,29 +354,28 @@ export class WizardPanel {
                 this.makeDirSync(apppath);
                 
                 this.makeDirSync(fullpath+'/.vscode');
-                //this.makeDirSync(fullpath+'/binary');
                 this.makeDirSync(apppath+'/bin');
                 this.makeDirSync(apppath+'/src');
-                //this.makeDirSync(fullpath+'/assets');
-                //this.makeDirSync(fullpath+'/assets/images');
-                //this.makeDirSync(fullpath+'/assets/sounds');
+                this.makeDirSync(apppath+'/assets');
+                this.makeDirSync(apppath+'/assets/sounds');
+                this.makeDirSync(apppath+'/assets/fonts');
+                this.makeDirSync(apppath+'/assets/icon');
+
                 this.makeDirSync(apppath+'/art');
                 this.makeDirSync(apppath+'/art/packed'); 
-                this.makeDirSync(apppath+'/art/exported');
                 this.makeDirSync(apppath+'/sound');
 
-                //const iconFilename:string = this._extensionUri.fsPath+"/media/templates/icon.png";
-                fs.copyFileSync(templatespath+"icon.png",apppath+'/art/exported/icon.png');
-                fs.copyFileSync(templatespath+"ico.csv",apppath+'/art/exported/ico.csv');
-                fs.copyFileSync(templatespath+"ico.psl",apppath+'/art/exported/ico.psl');
-                fs.copyFileSync(templatespath+"ico.log",apppath+'/art/exported/ico.log');
-
-                fs.copyFileSync(templatespath+"ahover_00.png",apppath+'/art/exported/ahover_00.png');
-                fs.copyFileSync(templatespath+"ahover.csv",apppath+'/art/exported/ahover.csv');
-                fs.copyFileSync(templatespath+"ahover.psl",apppath+'/art/exported/ahover.psl');
-                fs.copyFileSync(templatespath+"ahover.log",apppath+'/art/exported/ahover.log');
-
-                fs.copyFileSync(templatespath+"_palettes.txt",apppath+'/art/palettes.txt');
+                fs.copyFileSync(templatespath+"icon.png",apppath+'/assets/icon/icon.png');
+                fs.copyFileSync(templatespath+"ahover_00.png",apppath+'/assets/icon/ahover_00.png');
+                fs.copyFileSync(templatespath+"ahover_01.png",apppath+'/assets/icon/ahover_01.png');
+                fs.copyFileSync(templatespath+"ahover_02.png",apppath+'/assets/icon/ahover_02.png');
+                fs.copyFileSync(templatespath+"ahover_03.png",apppath+'/assets/icon/ahover_03.png');
+                fs.copyFileSync(templatespath+"ahover_04.png",apppath+'/assets/icon/ahover_04.png');
+                fs.copyFileSync(templatespath+"ahover_05.png",apppath+'/assets/icon/ahover_05.png');
+                fs.copyFileSync(templatespath+"ahover_06.png",apppath+'/assets/icon/ahover_06.png');
+                fs.copyFileSync(templatespath+"ahover_07.png",apppath+'/assets/icon/ahover_07.png');
+                fs.copyFileSync(templatespath+"ahover_08.png",apppath+'/assets/icon/ahover_08.png');
+                fs.copyFileSync(templatespath+"ahover_09.png",apppath+'/assets/icon/ahover_09.png');
 
                 fs.writeFileSync(apppath+'/art/packed/new', '');
                 fs.writeFileSync(apppath+'/'+Configuration.getAppFolderName(name)+'.target', '');
@@ -510,8 +510,7 @@ export class WizardPanel {
                     fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.sounds[i],fullpath+'/sound/'+currentTemplate.sounds[i]);
                 }
 
-                //create json file for build
-                
+                //create json file for build               
                 const json = fs.readFileSync(templatespath+currentTemplate.id+"/_build.json").toString();
                 var str = json.replace(/##NAME##/gi,name);
                 str = str.replace(/##CNAME##/gi,Configuration.getAppFolderName(name)+'.h');
@@ -528,11 +527,22 @@ export class WizardPanel {
                 str = str.replace(/##VMIN##/gi,"0");
                 str = str.replace(/##VPATCH##/gi,"0");
 
-                fs.writeFileSync(fullpath+'/wowcubeapp-build.json',str);
+                const buildManifest = JSON.parse(str);
+                buildManifest.simulatorDebug ??= WOWCubeSimulatorDebugProvider.createBuildSettings(buildManifest.appFolder);
+                fs.writeFileSync(fullpath+'/wowcubeapp-build.json', JSON.stringify(buildManifest, null, 2)+'\n');
                 
+                //create jsor file for resources
+                const json_res = fs.readFileSync(templatespath+currentTemplate.id+"/_build_resources.json").toString();
+                str = json_res.replace(/##APPDIR##/gi,Configuration.getAppFolderName(name));
+
+                const buildResourceManifest = JSON.parse(str);
+                fs.writeFileSync(fullpath+'/wowcubeapp-resources.json', JSON.stringify(buildResourceManifest, null, 2)+'\n');
 
                 //create vscode-related configs
-                fs.copyFileSync(templatespath+"_extensions.json",fullpath+'/.vscode/extensions.json');
+                const extensionRecommendations = JSON.parse(fs.readFileSync(templatespath+"_extensions.json", 'utf8'));
+                fs.writeFileSync(fullpath+'/.vscode/extensions.json', JSON.stringify(
+                    WOWCubeSimulatorDebugProvider.filterDebuggerRecommendations(extensionRecommendations), null, 2)+'\n');
+
                 fs.copyFileSync(templatespath+"_settings.json",fullpath+'/.vscode/settings.json');
 
                 if(!this.replaceInFileAndSave(templatespath+"_c_cpp_properties.json", fullpath+"/.vscode/c_cpp_properties.json",
@@ -541,11 +551,8 @@ export class WizardPanel {
                       throw new Error("Unable to generate C/C++ properties file");
                     }
 
-                if(!this.replaceInFileAndSave(templatespath+"_launch.json", fullpath+"/.vscode/launch.json",
-                        '##APPDIR##',Configuration.getAppFolderName(name)))
-                        {
-                          throw new Error("Unable to generate task launcher properties file");
-                        }
+                fs.writeFileSync(fullpath+'/.vscode/launch.json',
+                    JSON.stringify(WOWCubeSimulatorDebugProvider.createLaunchFile(), null, 4)+'\n');
 
                 if(!this.replaceInFileAndSave(templatespath+"_tasks.json", fullpath+"/.vscode/tasks.json",
                             '##APPDIR##',Configuration.getAppFolderName(name)))

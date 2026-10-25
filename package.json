@@ -30,7 +30,10 @@
     "onCommand:config.commands.configureViewOnWindowOpen",
     "onCommand:workbench.action.tasks.runTask",
     "onCustomEditor:WOWCubeSDK.resourceStudio",
-    "onCommand:WOWCubeSDK.openResourceStudio"
+    "onCommand:WOWCubeSDK.openResourceStudio",
+    "onDebugResolve:wowcube-simulator",
+    "onDebugResolve:cppvsdbg",
+    "onDebugResolve:lldb-dap"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -231,6 +234,47 @@
         "fileMatch": "**/wowcubeapp-resources.json",
         "url": "./schemas/wowcubeapp-resources.schema.json"
       }
+    ],
+    "debuggers": [
+      {
+        "type": "wowcube-simulator",
+        "label": "WOWCube Octavios Simulator",
+        "languages": [
+          "c",
+          "cpp"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Optional simulator executable override. The extension resolves the default for this platform."
+              },
+              "cwd": {
+                "type": "string",
+                "description": "Optional simulator working directory."
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "name": "Build and Debug with WOWCube OcvatiOS Simulator",
+            "type": "wowcube-simulator",
+            "request": "launch",
+            "preLaunchTask": "Build and Debug with WOWCube OcvatiOS Simulator",
+            "args": []
+          }
+        ]
+      }
     ]
   },
   "scripts": {
@@ -241,7 +285,9 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "test:resources": "npm run compile && mocha --ui tdd out/test/suite/resourceBundle.test.js && node src/test/paletteBuilder.test.js && node src/test/resourceStudioProvider.test.js && node src/test/resourceStudioWebview.test.js && node src/test/resourceBuilder.test.js && node src/test/map.test.js && node src/test/sequence.test.js && node src/test/font.test.js && node src/test/sound.test.js"
+    "test:resources": "npm run compile && mocha --ui tdd out/test/suite/resourceBundle.test.js && node src/test/paletteBuilder.test.js && node src/test/resourceStudioProvider.test.js && node src/test/resourceStudioWebview.test.js && node src/test/resourceBuilder.test.js && node src/test/map.test.js && node src/test/sequence.test.js && node src/test/font.test.js && node src/test/sound.test.js",
+    "test:simulator-debug": "npm run compile && node src/test/simulatorDebug.test.js",
+    "test:device-deployment": "npm run compile && node src/test/deviceDeployment.test.js"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",

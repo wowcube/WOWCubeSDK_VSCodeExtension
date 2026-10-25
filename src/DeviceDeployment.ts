@@ -31,12 +31,23 @@ export class DeviceDeployment
 			if(application)
 			{
 				channel.appendLine('Refreshing installed applications...');
-				const catalog = await DeviceDeployment.command(['ci', '-f', '-c', '-al', '-a', mac], 'application list refresh');
 				const guid1 = application.guid1.toLowerCase().padStart(16, '0');
 				const guid2 = application.guid2.toLowerCase().padStart(16, '0');
-				const app = Array.from(catalog.matchAll(/^(.+) \(([^\r\n]*)\) guid1=([0-9a-fA-F]{16}) guid2=([0-9a-fA-F]{16})\r?$/gm))
-					.find(entry => entry[3].toLowerCase() === guid1 && entry[4].toLowerCase() === guid2);
-				if(!app) { throw new Error('Upload completed, but the application is not in the device application list. Open WOWCube Device Details and refresh its application list.'); }
+				const maxRetries = 5;
+				let app:RegExpMatchArray | undefined;
+				for(let retry = 0; retry <= maxRetries; retry++)
+				{
+					if(retry > 0)
+					{
+						channel.appendLine('Application is not listed yet. Retrying application list ('+retry+'/'+maxRetries+') in two seconds...');
+						await new Promise<void>(resolve => setTimeout(resolve, 2000));
+					}
+					const catalog = await DeviceDeployment.command(['ci', '-f', '-c', '-al', '-a', mac], 'application list refresh');
+					app = Array.from(catalog.matchAll(/^(.+) \(([^\r\n]*)\) guid1=([0-9a-fA-F]{16}) guid2=([0-9a-fA-F]{16})\r?$/gm))
+						.find(entry => entry[3].toLowerCase() === guid1 && entry[4].toLowerCase() === guid2);
+					if(app) { break; }
+				}
+				if(!app) { throw new Error('Upload completed, but the application is not in the device application list after '+maxRetries+' retries. Open WOWCube Device Details and refresh its application list.'); }
 				channel.appendLine('Waiting one second before launch...');
 				await new Promise<void>(resolve => setTimeout(resolve, 1000));
 				channel.appendLine('Starting '+app[1]+'...');

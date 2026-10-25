@@ -11,6 +11,7 @@ import { BTDeviceViewProvider } from './BTDeviceViewProvider';
 import { SettingsViewProvider } from './SettingsViewProvider';
 import { ExamplesViewProvider } from './ExamplesViewProvider';
 import { WOWCubeBuildTaskProvider } from './WOWCubeBuildTaskProvider';
+import { WOWCubeSimulatorDebugProvider } from './WOWCubeSimulatorDebugProvider';
 import { WOWCubeProjectProvider } from './WOWCubeProjectProvider';
 import { ExternalToolsPanel } from './ExternalToolsPanel';
 import { ResourceStudioProvider } from './ResourceStudioProvider';
@@ -29,6 +30,7 @@ let buildTask: vscode.Disposable | undefined;
 export async function activate(context: vscode.ExtensionContext) 
 {	
 	console.log('WOWCube SDK extension is loaded...');
+	WOWCubeSimulatorDebugProvider.register(context);
 
 	ResourceStudioProvider.register(context);
 	

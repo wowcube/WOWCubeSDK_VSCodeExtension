@@ -43,7 +43,7 @@ const {WOWCubeBuildTaskProvider} = require('../../out/WOWCubeBuildTaskProvider')
 const {DeviceDeployment} = require('../../out/DeviceDeployment');
 Module._load = originalLoad;
 
-async function runTask(workspace, target)
+async function runTask(workspace, target, timeoutMs = 3000)
 {
 	const tasks = await new WOWCubeBuildTaskProvider(workspace).provideTasks();
 	const task = tasks.find(item => item.definition.target === target);
@@ -51,7 +51,7 @@ async function runTask(workspace, target)
 	const exits = [];
 	await new Promise((resolve, reject) =>
 	{
-		const timeout = setTimeout(() => reject(new Error('Build task did not finish.')), 3000);
+		const timeout = setTimeout(() => reject(new Error('Build task did not finish.')), timeoutMs);
 		const listener = terminal.onDidClose(code =>
 		{
 			exits.push(code);
@@ -253,7 +253,8 @@ async function run()
 		for(const mode of ['missing','error'])
 		{
 			catalogMode = mode; calls.length = 0;
-			assert.strictEqual(await runTask(workspace,'device'),1);
+			assert.strictEqual(await runTask(workspace,'device',15000),1);
+			assert.strictEqual(calls.filter(call => call.args[0] === 'ci').length, mode === 'missing' ? 6 : 1);
 			assert.strictEqual(calls.some(call => call.args[0] === 'ra'),false);
 			assert.strictEqual(Configuration.isDeviceBusy(device.mac),false);
 			assert.strictEqual(waits.at(-1),false);

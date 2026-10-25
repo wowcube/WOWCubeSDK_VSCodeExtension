@@ -125,13 +125,60 @@ New names are normalized from filenames. Validation also enforces registry capac
 compatibility, frame durations, Number limits and valid PNG headers/dimensions.
 Encoding-dependent compilation checks are handled by `resource-builder`.
 
+### Simulator debugging
+
+New Octavios projects use a portable `wowcube-simulator` launch entry. On F5, the
+extension resolves it in memory to `lldb-dap` on macOS or `cppvsdbg` on Windows,
+then runs the existing simulator pre-launch build task. If the debugger extension
+is missing, an **Install** action offers **LLDB DAP**
+(`llvm-vs-code-extensions.lldb-dap`) on macOS or **C/C++** (`ms-vscode.cpptools`)
+on Windows. Installation requires choosing that action; start debugging again
+after it finishes. Generated projects omit these debugger extensions from static
+workspace recommendations. LLDB DAP also requires an available `lldb-dap` binary from your
+Xcode/LLVM toolchain; its `lldb-dap.executable-path` setting can select one.
+
+Platform parameters live in `wowcubeapp-build.json` under `simulatorDebug.macos`
+and `simulatorDebug.windows`. The wizard generates both sections. For example:
+
+```json
+"simulatorDebug": {
+  "macos": {
+    "type": "lldb-dap",
+    "program": "${workspaceFolder}/app_example/bin/app_${workspaceFolderBasename}",
+    "cwd": "${workspaceFolder}/app_example/bin",
+    "args": [],
+    "stopOnEntry": false,
+    "disableASLR": false,
+    "enableAutoVariableSummaries": false
+  },
+  "windows": {
+    "type": "cppvsdbg",
+    "program": "${workspaceFolder}/app_example/bin/app_${workspaceFolderBasename}.exe",
+    "cwd": "${workspaceFolder}/app_example/bin",
+    "args": [],
+    "stopAtEntry": false,
+    "environment": [],
+    "console": "integratedTerminal"
+  }
+}
+```
+
+The resolver reads the current platform's section on each launch, before VS Code
+substitutes variables. These parameters override corresponding launch entry values;
+the launch name, request, and pre-launch task remain controlled by the launch entry.
+Older manifests without the section retain the previous defaults and launch overrides.
+Existing native launch entries with both the name and pre-launch task
+`Build and Debug with WOWCube OcvatiOS Simulator` are also resolved in memory.
+Resolving a launch does not rewrite either JSON file. A build manifest with
+`appFolder` is required.
+
 ### Building resources
 
 Saving `wowcubeapp-resources.json`, from Resource Studio or the text editor, compiles
 changed resources and refreshes the configured IDs header automatically.
 Simulator and device builds await resource compilation before compiling app source code.
 
-After a successful device build, the extension uploads the generated `.oct` package to the device selected in WOWCube Devices and, after upload succeeds, refreshes the installed application list and sends a separate launch command using the matching entry’s GUIDs. The entry is matched against `metadata.application.guid1` and `guid2` from the build manifest. Upload and launch progress appear in Output. If no device is selected, the device is busy, or deployment fails, the task reports that compilation succeeded but deployment failed. Simulator and resource-only builds do not upload.
+After a successful device build, the extension uploads the generated `.oct` package to the device selected in WOWCube Devices and, after upload succeeds, refreshes the installed application list and sends a separate launch command using the matching entry’s GUIDs. The entry is matched against `metadata.application.guid1` and `guid2` from the build manifest. If the uploaded application is not listed yet, the extension retries the application-list refresh up to five times, waiting two seconds before each retry. It launches as soon as the matching application appears; the package is uploaded only once. Upload and launch progress appear in Output. If no device is selected, the device is busy, or deployment fails, the task reports that compilation succeeded but deployment failed. Simulator and resource-only builds do not upload.
 The **build resources** task runs the same step independently. It saves pending changes
 to `wowcubeapp-resources.json` and invokes `sdk/tools/resource-builder`
 (`resource-builder.exe` on Windows), passing the workspace's `wowcubeapp-build.json`.

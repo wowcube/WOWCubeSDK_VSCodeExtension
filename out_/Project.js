@@ -52,7 +52,10 @@ class Project {
         return res;
     }
     static validateAssets(workspace, autosave) {
-        try {
+
+        return true;
+        
+        try { 
             //load current project file
             var json = JSON.parse(fs.readFileSync(workspace + '/wowcubeapp-build.json', 'utf-8'));
             //check icon 

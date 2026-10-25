@@ -13,6 +13,7 @@ const BTDeviceViewProvider_1 = require("./BTDeviceViewProvider");
 const SettingsViewProvider_1 = require("./SettingsViewProvider");
 const ExamplesViewProvider_1 = require("./ExamplesViewProvider");
 const WOWCubeBuildTaskProvider_1 = require("./WOWCubeBuildTaskProvider");
+const WOWCubeSimulatorDebugProvider_1 = require("./WOWCubeSimulatorDebugProvider");
 const WOWCubeProjectProvider_1 = require("./WOWCubeProjectProvider");
 const ExternalToolsPanel_1 = require("./ExternalToolsPanel");
 const ResourceStudioProvider_1 = require("./ResourceStudioProvider");
@@ -26,6 +27,7 @@ let buildTask;
 // your extension is activated the very first time the command is executed
 async function activate(context) {
     console.log('WOWCube SDK extension is loaded...');
+    WOWCubeSimulatorDebugProvider_1.WOWCubeSimulatorDebugProvider.register(context);
     ResourceStudioProvider_1.ResourceStudioProvider.register(context);
     await Configuration_1.Configuration.init();
     Configuration_1.Configuration.context = context;
