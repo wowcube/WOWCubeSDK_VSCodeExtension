@@ -502,12 +502,12 @@ export class WizardPanel {
             
                 for(var i=0;i<currentTemplate.images.length; i++)
                 {
-                    fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.images[i],fullpath+'/art/exported/'+currentTemplate.images[i]);
+                    fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.images[i],apppath+'/assets/'+currentTemplate.images[i]);
                 }
 
                 for(var i=0;i<currentTemplate.sounds.length; i++)
                 {
-                    fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.sounds[i],fullpath+'/sound/'+currentTemplate.sounds[i]);
+                    fs.copyFileSync(templatespath+currentTemplate.id+"/"+currentTemplate.sounds[i],apppath+'/assets/sound'+currentTemplate.sounds[i]);
                 }
 
                 //create json file for build               
@@ -1245,21 +1245,20 @@ export class WizardPanel {
                                 <div id="i2" class="item">
                                     <div style="margin:5px;"><strong>Basic cubeapp</strong></div>
                                     <div class="itemdesc">Creates a project of WOWCube cubeapp application with basic rendering support</div>
-                                    <div class="itemdesc">Demonstrates principles of work with a compound multi-screen device</div>
                                 </div>
 
                                 <div id="i3" class="item">
                                     <div style="margin:5px;"><strong>Basic cubeapp with resources</strong></div>
                                     <div class="itemdesc">Creates a project of WOWCube cubeapp application with some resources</div>
-                                    <div class="itemdesc">Demonstrates how to find and use application resources</div>
                                 </div>
                                 
-                                <div id="i4" class="item">
+                                <!-- <div id="i4" class="item">
                                     <div style="margin:5px;"><strong>Basic cubeapp with splash screens</strong></div>
                                     <div class="itemdesc">Creates a project of WOWCube cubeapp application with in-game splash screens support</div>
                                     <div class="itemdesc">Demonstrates the use of in-game splash screens</div>
-                                </div>`;
+                                </div> -->`;
 
+                                /*
                                 if(lastLanguage=='cpp')
                                 {
                                     ret+=`
@@ -1300,6 +1299,7 @@ export class WizardPanel {
                                      </div>
                                     `;   
                                 }
+                                */
                             ret+=`</div>
                             
                         </div>

@@ -157,7 +157,8 @@
         {
           "type": "webview",
           "id": "WOWCubeSDK.examplesView",
-          "name": "Documentation & Code Examples"
+          "name": "Documentation & Code Examples",
+          "when": "false"
         },
         {
           "type": "webview",
