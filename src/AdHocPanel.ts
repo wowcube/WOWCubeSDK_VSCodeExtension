@@ -7,7 +7,7 @@ import { Uri } from "vscode";
 import {Output} from "./Output";
 import { Project } from './Project';
 import {Configuration} from './Configuration';
-import * as FormData from "form-data";
+import FormData = require("form-data");
 
 export class AdHocPanel {
 
@@ -167,7 +167,7 @@ export class AdHocPanel {
 
                 const options = {
                     host: 'store.wowcube.com',
-                    path: '/api/upload',
+                    path: '/api/v3/upload',
                     method: 'POST',
                     protocol: 'https:', // note : in the end
                     headers: {
@@ -176,8 +176,8 @@ export class AdHocPanel {
                   };
 
                   const res:string = await this.makeRequest(formData,options);
-                  ret.url = res;
 
+                  ret.url = JSON.parse(res).url;
             }
             catch(error)
             {
@@ -236,11 +236,10 @@ export class AdHocPanel {
             try
             {
                 const build_json = JSON.parse(fs.readFileSync(AdHocPanel.workspace+'/wowcubeapp-build.json', 'utf-8'));//require(AdHocPanel.workspace+'/wowcubeapp-build.json');
-                const output = AdHocPanel.workspace+'/binary/'+build_json.name+'.cub';
-
+                const output = AdHocPanel.workspace+'/'+build_json.appFolder+'/'+build_json.appFolder+'.oct';
 
                 //const icon = AdHocPanel.workspace+'/assets/icon.png';
-                const icon = AdHocPanel.workspace+'/'+build_json.appIcon.path;
+                const icon = AdHocPanel.workspace+'/'+build_json.appFolder+'/assets/icon/icon.png';
 
                 if(fs.existsSync(output)===false)
                 {

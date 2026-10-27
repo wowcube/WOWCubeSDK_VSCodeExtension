@@ -108,7 +108,7 @@ class AdHocPanel {
             formData.append('file', fs.createReadStream(this._cubfile));
             const options = {
                 host: 'store.wowcube.com',
-                path: '/api/upload',
+                path: '/api/v3/upload',
                 method: 'POST',
                 protocol: 'https:', // note : in the end
                 headers: {
@@ -116,7 +116,7 @@ class AdHocPanel {
                 },
             };
             const res = await this.makeRequest(formData, options);
-            ret.url = res;
+            ret.url = JSON.parse(res).url;
         }
         catch (error) {
             ret.desc = error;
@@ -159,9 +159,9 @@ class AdHocPanel {
         this._appname = "";
         try {
             const build_json = JSON.parse(fs.readFileSync(AdHocPanel.workspace + '/wowcubeapp-build.json', 'utf-8')); //require(AdHocPanel.workspace+'/wowcubeapp-build.json');
-            const output = AdHocPanel.workspace + '/binary/' + build_json.name + '.cub';
+            const output = AdHocPanel.workspace + '/' + build_json.appFolder + '/' + build_json.appFolder + '.oct';
             //const icon = AdHocPanel.workspace+'/assets/icon.png';
-            const icon = AdHocPanel.workspace + '/' + build_json.appIcon.path;
+            const icon = AdHocPanel.workspace + '/' + build_json.appFolder + '/assets/icon/icon.png';
             if (fs.existsSync(output) === false) {
                 this._channel.appendLine("Share Ad-Hoc: Not ready to share, file '" + output + "' is not found!");
                 this._channel.show(true);

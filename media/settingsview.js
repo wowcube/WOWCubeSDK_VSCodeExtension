@@ -23,11 +23,6 @@
         vscode.postMessage({ type: 'buttonCheckForUpdatesPressed', value: "" });
     });
 
-    document.getElementById('manageToolsButton').addEventListener('click', () => 
-    {
-        vscode.postMessage({ type: 'buttonManageToolsPressed', value: "" });
-    });
-
     document.getElementById('autoCheck').addEventListener('click',()=>
     {
         vscode.postMessage({type:'autoCheckPressed',value:document.getElementById('autoCheck').checked});

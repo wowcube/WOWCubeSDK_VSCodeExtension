@@ -348,6 +348,9 @@ class WizardPanel {
             for (var i = 0; i < currentTemplate.images.length; i++) {
                 fs.copyFileSync(templatespath + currentTemplate.id + "/" + currentTemplate.images[i], apppath + '/assets/' + currentTemplate.images[i]);
             }
+            for (var i = 0; i < currentTemplate.fonts.length; i++) {
+                fs.copyFileSync(templatespath + currentTemplate.id + "/" + currentTemplate.fonts[i], apppath + '/assets/fonts/' + currentTemplate.fonts[i]);
+            }
             for (var i = 0; i < currentTemplate.sounds.length; i++) {
                 fs.copyFileSync(templatespath + currentTemplate.id + "/" + currentTemplate.sounds[i], apppath + '/assets/sound' + currentTemplate.sounds[i]);
             }
@@ -594,6 +597,9 @@ class WizardPanel {
             }
             for (var i = 0; i < currentTemplate.images.length; i++) {
                 fs.copyFileSync(templatespath + currentTemplate.id + "/" + currentTemplate.images[i], fullpath + '/assets/images/' + currentTemplate.images[i]);
+            }
+            for (var i = 0; i < currentTemplate.fonts.length; i++) {
+                fs.copyFileSync(templatespath + currentTemplate.id + "/" + currentTemplate.fonts[i], fullpath + '/assets/fonts/' + currentTemplate.fonts[i]);
             }
             for (var i = 0; i < currentTemplate.sounds.length; i++) {
                 fs.copyFileSync(templatespath + currentTemplate.id + "/" + currentTemplate.sounds[i], fullpath + '/assets/sounds/' + currentTemplate.sounds[i]);

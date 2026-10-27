@@ -485,8 +485,6 @@ class SettingsViewProvider {
 
 			<br/>
 			<br/>
-			<button id="manageToolsButton" class="share-adhoc-button">Manage External Tools</button>
-			<br/>
 			<button id="checkForUpdatesButton" class="share-adhoc-button">Check For Updates</button>
 			<br/>
 			<div>`;
