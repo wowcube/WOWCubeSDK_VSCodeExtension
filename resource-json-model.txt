@@ -113,11 +113,12 @@ colorMode: "palette" | "rgb565" | "rgb6666"
     "rgb565": direct color without a palette.
     "rgb6666": reserved, unsupported placeholder.
 blend: "opaque" | "alpha" | "additive" | "bg" | "bump" | "dudv" | "refl"
-    Alpha and Additive use alpha-form palettes. Opaque and BG use opaque-form
-    palettes. BG currently behaves as Opaque. Bump, DuDv and Refl are reserved,
-    unsupported placeholders. RGB565 uses Opaque.
+    In palette mode, Alpha and Additive use alpha-form palettes; Opaque and BG
+    use opaque-form palettes. BG currently behaves as Opaque. Bump, DuDv and Refl are reserved,
+    unsupported placeholders. RGB565 allows only Opaque without a palette.
 fullsize: boolean
     true means 1:1 source-to-runtime pixels; false means doubled runtime size.
+    Additive blended sprites cannot use FULLSIZE: they will not be drawn (warning V-032).
     Pivot and collider coordinates remain in source pixels in either case.
 dither: boolean
     RGB565 dithering flag. Palettized sprites store false.

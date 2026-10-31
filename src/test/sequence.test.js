@@ -98,6 +98,8 @@ async function run()
 	schemaSprite.name='icon';assert.strictEqual(validateSchema(schemaBundle),true,JSON.stringify(validateSchema.errors));
 	schemaSprite.name='schema_sprite';
 	for(const type of ['palette','map','font','sound']) { assert.strictEqual(validateSchema({...schemaBundle,resources:[{id:'reserved',type,name:'icon'}]}),false); }
+	for(const blend of ['additive','alpha','bg','bump','dudv','refl']) { schemaSprite.blend=blend;assert.strictEqual(validateSchema(schemaBundle),false); }
+	schemaSprite.blend='opaque';
 	schemaSprite.paletteId='unexpected';assert.strictEqual(validateSchema(schemaBundle),false);schemaSprite.paletteId=null;
 	const schemaPalette=ResourceTypes.get('palette').create('schema_pal','schema_palette');schemaBundle.resources.push(schemaPalette);assert.strictEqual(validateSchema(schemaBundle),true);
 	schemaPalette.transparentIndex=null;assert.strictEqual(validateSchema(schemaBundle),false);

@@ -160,8 +160,25 @@ suite('Resource bundle', () =>
 		assert.deepStrictEqual(ResourceBundles.validate(bundle), []);
 		assert.deepStrictEqual(ResourceTypes.get('sprite')!.getReferences(sprite), []);
 		assert.strictEqual(ResourceTypes.get('sprite')!.getPaletteSource!(sprite), undefined);
+		assert.deepStrictEqual(ResourceBundles.parse(JSON.stringify(bundle)), bundle);
+		for(const blend of ['additive', 'alpha', 'bg', 'bump', 'dudv', 'refl'] as const)
+		{
+			sprite.blend = blend;
+			assert.match(ResourceBundles.validate(bundle).join(' '), /Opaque blend/);
+		}
+
+	});
+	test('warns when an additive sprite uses FULLSIZE', () =>
+	{
+		const {bundle, sprite} = createBundle();
+		sprite.blend = 'additive';
+		sprite.fullsize = true;
+		assert.ok(ResourceBundles.getWarnings(bundle).some(message => message.includes('V-032') && message.includes(sprite.name)));
+		sprite.fullsize = false;
+		assert.ok(!ResourceBundles.getWarnings(bundle).some(message => message.includes('V-032')));
+		sprite.fullsize = true;
 		sprite.blend = 'alpha';
-		assert.match(ResourceBundles.validate(bundle).join(' '), /Opaque/);
+		assert.ok(!ResourceBundles.getWarnings(bundle).some(message => message.includes('V-032')));
 	});
 	test('validates sprite metadata, classification references and pixel pivots', () =>
 	{

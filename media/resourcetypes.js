@@ -205,9 +205,10 @@
 					{value:'__new_palette__', label:'Generate a new palette…', disabled:palettes.length >= validation.maxPalettes}, {value:'__rgb565__', label:'RGB565 — no palette'}], rgb ? '__rgb565__' : resource.paletteId || '')))+
 				(!rgb && !unsupported ? '<div class="minor">'+helpers.bundle.resources.filter(item => item.paletteId && item.paletteId === resource.paletteId).length+' sprites share this palette</div>' : '')+
 				helpers.field('Blend', hiddenBlendModes.includes(resource.blend) ? '<span class="minor">Unsupported blend (preserved)</span>' :
-					'<select data-key="blend" '+(rgb || unsupported ? 'disabled title="RGB565 uses Opaque blend."' : '')+'>'+['opaque', 'alpha', 'additive', ...(helpers.state.advancedBlend || resource.blend === 'bg' ? ['bg'] : [])].map(value =>
+					'<select data-key="blend" '+(unsupported ? 'disabled' : '')+'>'+(rgb ? ['opaque'] : ['opaque', 'alpha', 'additive', ...(helpers.state.advancedBlend || resource.blend === 'bg' ? ['bg'] : [])]).map(value =>
 						'<option value="'+value+'" '+(resource.blend === value ? 'selected' : '')+'>'+({opaque:'Opaque', alpha:'Alpha', additive:'Additive', bg:'BG (advanced)'})[value]+'</option>').join('')+'</select>')+
-				'<label class="check"><input id="advanced-blend" type="checkbox" '+(helpers.state.advancedBlend ? 'checked' : '')+'> Show advanced blend options</label>'+
+				(!rgb ? '<label class="check"><input id="advanced-blend" type="checkbox" '+(helpers.state.advancedBlend ? 'checked' : '')+'> Show advanced blend options</label>' : '')+
+				(resource.blend === 'additive' ? '<div class="notice">Additive blended sprites cannot use FULLSIZE mode; the engine will not draw them. Keep Full size disabled.</div>' : '')+
 				'<label class="check"><input type="checkbox" data-key="fullsize" '+(resource.fullsize ? 'checked' : '')+'> Full size (1:1 runtime pixels)</label>'+
 				'<label class="check" title="Dithering is available for RGB565."><input type="checkbox" data-key="dither" '+(resource.dither ? 'checked' : '')+' '+(!rgb ? 'disabled' : '')+'> Dithering</label>'+
 				helpers.field('Encoding', rgb ? helpers.select('compression', [{value:'plain', label:'Plain RGB565'}, {value:'softkey', label:'Color Key'}], resource.compression) : '<select disabled title="Encoding options are available for RGB565."><option>Palette indexed</option></select>')+
@@ -318,7 +319,12 @@
 				if(error) { throw new Error(error); }
 				resource[key] = value;
 			}
-			else if(['blend', 'group', 'objectType'].includes(key)) { resource[key] = element.value || null; }
+			else if(key === 'blend')
+			{
+				if(resource.colorMode === 'rgb565' && element.value !== 'opaque') { throw new Error('V-019: RGB565 sprites require Opaque blend and no palette.'); }
+				resource.blend = element.value;
+			}
+			else if(['group', 'objectType'].includes(key)) { resource[key] = element.value || null; }
 			else if(key === 'tag')
 			{
 				resource.tags = element.checked ? [...new Set([...resource.tags, element.dataset.tag])] : resource.tags.filter(tag => tag !== element.dataset.tag);
@@ -415,6 +421,7 @@
 					}
 					if(!resource.fullsize && (width > 120 || height > 120)) { notices.push('V-008: Sprite will draw at '+width*2+'×'+height*2+' screen pixels, larger than a 240 face.'); }
 					if(authored.x < 0 || authored.y < 0 || authored.x > width || authored.y > height) { notices.push('V-009: Pivot lies outside the sprite.'); }
+					if(resource.blend === 'additive' && resource.fullsize) { notices.push('V-032: Additive blended sprites cannot use FULLSIZE mode and will not be drawn. Disable FULLSIZE.'); }
 					if(resource.blend === 'bg') { notices.push('V-031: BG currently behaves exactly like Opaque.'); }
 					diagnostics.textContent = notices.join('\n');
 					diagnostics.hidden = notices.length === 0;

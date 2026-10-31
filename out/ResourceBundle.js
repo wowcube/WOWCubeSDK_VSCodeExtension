@@ -252,6 +252,9 @@ class ResourceBundles {
             warnings.push('V-026: Palettes total more than 4096 entries; the engine may swap palettes at runtime.');
         }
         for (const resource of bundle.resources.filter(resource => resource.type === 'sprite')) {
+            if (resource.blend === 'additive' && resource.fullsize) {
+                warnings.push('V-032: ' + resource.name + ' uses Additive blend with FULLSIZE and will not be drawn. Disable FULLSIZE.');
+            }
             if (resource.blend === 'bg') {
                 warnings.push('V-031: BG currently behaves exactly like Opaque.');
             }

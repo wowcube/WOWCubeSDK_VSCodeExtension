@@ -550,6 +550,23 @@ assert.ok(spriteType.renderInspector(previewSprite, inspectorHelpers).includes('
 const rgbSprite = {...previewSprite, colorMode:'rgb565', paletteId:null, blend:'opaque', pivot:null};
 const rgbPreviewHtml = spriteType.renderPreview(rgbSprite, inspectorHelpers);
 const rgbInspectorHtml = spriteType.renderInspector(rgbSprite, inspectorHelpers);
+const rgbBlendSelect = rgbInspectorHtml.match(/<select data-key="blend"[^>]*>([\s\S]*?)<\/select>/);
+assert.ok(rgbBlendSelect);
+assert.ok(!rgbBlendSelect[0].includes('disabled'));
+assert.deepStrictEqual([...rgbBlendSelect[1].matchAll(/value="([^"]+)"/g)].map(match => match[1]), ['opaque']);
+assert.ok(!rgbInspectorHtml.includes('advanced-blend'));
+assert.throws(() => spriteType.change(rgbSprite, 'blend', {value:'additive'}, inspectorHelpers), /V-019/);
+assert.strictEqual(rgbSprite.blend, 'opaque');
+rgbSprite.blend = 'additive';
+spriteType.change(rgbSprite, 'paletteId', {value:'__rgb565__'}, inspectorHelpers);
+assert.strictEqual(rgbSprite.blend, 'opaque');
+const additiveSprite = {...previewSprite, blend:'additive', fullsize:true};
+assert.ok(spriteType.renderInspector(additiveSprite, inspectorHelpers).includes('Additive blended sprites cannot use FULLSIZE mode'));
+additiveSprite.fullsize = false;
+assert.ok(spriteType.renderInspector(additiveSprite, inspectorHelpers).includes('Keep Full size disabled.'));
+spriteType.change(additiveSprite, 'paletteId', {value:'__rgb565__'}, inspectorHelpers);
+assert.strictEqual(additiveSprite.blend, 'opaque');
+
 assert.ok(rgbInspectorHtml.includes('Color Key'));
 assert.ok(rgbInspectorHtml.includes('value="softkey"'));
 assert.ok(!rgbInspectorHtml.includes('Softkey'));

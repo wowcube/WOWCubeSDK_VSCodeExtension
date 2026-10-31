@@ -49,7 +49,7 @@ Supported resource types are palettes, sprites, and maps:
   the pivot. Picking respects zoom and scrolling.
 
 When registering a sprite, choose an existing palette, generate a new palette, or select
-**RGB565 — no palette**. RGB565 bypasses palette-builder, uses Opaque blend and Plain
+**RGB565 — no palette**. RGB565 bypasses palette-builder, supports only Opaque blend, uses Plain
 encoding by default, and offers optional Floyd–Steinberg dithering. Select Color Key in
 Encoding to choose a transparent color using the color picker or #RRGGBB field, with a
 threshold from 0 to 255. The RGB565 preview applies the SDK renderer's quantized-channel
@@ -95,7 +95,8 @@ Source paths are relative to the JSON file's containing folder; no fixed asset d
 is required. Source browsing is limited to 5000 entries per refresh, skips symbolic
 links, and excludes `.git`, `.vscode`, and `node_modules`. Sprite previews support
 PNG files up to 240×240 pixels. Non-fullsize sprites over 120 pixels in either dimension
-show a warning because the runtime doubles their size.
+show a warning because the runtime doubles their size. Additive blended sprites cannot
+use FULLSIZE mode: the engine will not draw them, and the editor shows a warning.
 
 All definitions live in one versioned JSON document. Document edits participate in
 VS Code save, undo, redo, and recovery. **SAVE CHANGES** and the normal Save command
