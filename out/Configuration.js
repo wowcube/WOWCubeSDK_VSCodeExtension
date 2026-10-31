@@ -632,6 +632,10 @@ class Configuration {
         ret += 'sdk/' + Configuration.getCurrentVersion() + '/pawn/bin/';
         return ret;
     }
+    static getBuildToolPaths() {
+        const paths = vscode.workspace.getConfiguration().get('wowsdk.buildTools.paths');
+        return Array.isArray(paths) ? paths.filter((value) => typeof value === 'string' && value.length > 0) : [];
+    }
     static getUtilsPath() {
         var ret = Configuration.getWOWSDKPath();
         if (typeof (ret) === 'undefined' || ret.length === 0) {

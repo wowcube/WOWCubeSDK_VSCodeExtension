@@ -3,7 +3,7 @@
   "displayName": "WOWCube SDK Extension",
   "description": "Develop Cubeapp applications for WOWCube device with WOWCube Development Kit",
   "icon": "media/icon.png",
-  "version": "2.5.5",
+  "version": "3.0.0",
   "publisher": "cubios-inc",
   "engines": {
     "vscode": "^1.64.0"
@@ -97,6 +97,13 @@
             "default": "pawn",
             "description": "Last used programming language of new project",
             "scope": "application"
+          },
+          "wowsdk.buildTools.paths": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": [],
+            "scope": "machine",
+            "description": "Additional directories containing CMake, Ninja, ARM GNU tools or SDL3. Checked before PATH; used only by WOWCube builds."
           },
           "wowsdk.conf.wowsdkpath": {
             "type": "string",
@@ -286,7 +293,7 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "test:resources": "npm run compile && mocha --ui tdd out/test/suite/resourceBundle.test.js && node src/test/paletteBuilder.test.js && node src/test/resourceStudioProvider.test.js && node src/test/resourceStudioWebview.test.js && node src/test/resourceBuilder.test.js && node src/test/map.test.js && node src/test/sequence.test.js && node src/test/font.test.js && node src/test/sound.test.js",
+    "test:resources": "npm run compile && node src/test/buildPrerequisites.test.js && mocha --ui tdd out/test/suite/resourceBundle.test.js && node src/test/paletteBuilder.test.js && node src/test/resourceStudioProvider.test.js && node src/test/resourceStudioWebview.test.js && node src/test/resourceBuilder.test.js && node src/test/map.test.js && node src/test/sequence.test.js && node src/test/font.test.js && node src/test/sound.test.js",
     "test:simulator-debug": "npm run compile && node src/test/simulatorDebug.test.js",
     "test:device-deployment": "npm run compile && node src/test/deviceDeployment.test.js"
   },

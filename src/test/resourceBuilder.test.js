@@ -39,6 +39,7 @@ const {Configuration} = require('../../out/Configuration');
 const {ResourceBuilder} = require('../../out/ResourceBuilder');
 const {ResourceStudioProvider} = require('../../out/ResourceStudioProvider');
 const {ResourceBundles, ResourceTypes} = require('../../out/ResourceBundle');
+const {BuildPrerequisites} = require('../../out/BuildPrerequisites');
 const {WOWCubeBuildTaskProvider} = require('../../out/WOWCubeBuildTaskProvider');
 const {DeviceDeployment} = require('../../out/DeviceDeployment');
 Module._load = originalLoad;
@@ -73,7 +74,7 @@ async function run()
 	const buildPath = path.join(workspace, 'wowcubeapp-build.json');
 	const header = path.join(workspace, 'app', 'src', 'resource_ids.h');
 	const original = {flushEdits:ResourceStudioProvider.flushEdits, spawn:cp.spawn, exec:cp.exec, platform:os.platform, context:Configuration.context,
-		utils:Configuration.getUtilsPath, sdk:Configuration.getWOWSDKPath, version:Configuration.getCurrentVersion, device:Configuration.getCurrentDevice, logging:Configuration.getLoggingMode};
+		utils:Configuration.getUtilsPath, sdk:Configuration.getWOWSDKPath, version:Configuration.getCurrentVersion, device:Configuration.getCurrentDevice, logging:Configuration.getLoggingMode, prerequisites:BuildPrerequisites.require};
 	const calls = [];
 	const events = [];
 	let failTool;
@@ -99,6 +100,7 @@ async function run()
 		Configuration.getCurrentVersion = () => 'test';
 		Configuration.getCurrentDevice = () => device;
 		Configuration.getLoggingMode = () => '0';
+		BuildPrerequisites.require = async () => ({cmake:'cmake',env:{...process.env,WOWCUBE_CHECKED_TOOLS:'yes'},issues:[]});
 		for(const [platform, expected] of [['darwin', 'resource-builder'], ['linux', 'resource-builder'], ['win32', 'resource-builder.exe'], ['unknown', 'resource-builder']])
 		{
 			os.platform = () => platform;
@@ -196,6 +198,7 @@ async function run()
 		assert.strictEqual(await runTask(workspace, 'emulator'), 0);
 		assert.deepStrictEqual(events, ['start:resource-builder', 'close:resource-builder', 'start:bash', 'close:bash']);
 		assert.strictEqual(calls[1].args[1], path.join(workspace, 'app'));
+		assert.strictEqual(calls[1].options.env.WOWCUBE_CHECKED_TOOLS,'yes');
 		assert.match(logged, /resource-builder/);
 		calls.length = 0;
 		assert.strictEqual(await runTask(workspace, 'device'), 0);
@@ -276,6 +279,19 @@ async function run()
 			assert.strictEqual(calls.at(-1).options.windowsHide,true);
 		}
 		os.platform = () => 'darwin';
+
+		// Missing prerequisites stop app builds before resource compilation or deployment.
+		const readyTools = BuildPrerequisites.require;
+		for(const target of ['emulator','device'])
+		{
+			BuildPrerequisites.require = async checkedTarget => { assert.strictEqual(checkedTarget,target === 'device' ? 'device' : 'simulator'); throw new Error('Missing CMake'); };
+			calls.length = 0;
+			assert.strictEqual(await runTask(workspace,target),1);
+			assert.strictEqual(calls.length,0);
+		}
+		await changeJson(); calls.length = 0;
+		assert.strictEqual(await runTask(workspace,'resources'),0,'Resource-only builds must not require compilers.');
+		BuildPrerequisites.require = readyTools;
 
 		for(const target of ['resources', 'emulator', 'device'])
 		{
@@ -534,6 +550,7 @@ async function run()
 	}
 	finally
 	{
+		BuildPrerequisites.require = original.prerequisites;
 		ResourceStudioProvider.flushEdits = original.flushEdits;
 		cp.spawn = original.spawn; cp.exec = original.exec; os.platform = original.platform;
 		Configuration.context = original.context; Configuration.getUtilsPath = original.utils;

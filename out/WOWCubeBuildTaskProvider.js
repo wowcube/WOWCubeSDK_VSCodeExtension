@@ -12,6 +12,7 @@ const Output_1 = require("./Output");
 const Script_1 = require("./Script");
 const ResourceBuilder_1 = require("./ResourceBuilder");
 const DeviceDeployment_1 = require("./DeviceDeployment");
+const BuildPrerequisites_1 = require("./BuildPrerequisites");
 class WOWCubeBuildTaskProvider {
     constructor(workspaceRoot) {
         this.workspaceRoot = workspaceRoot;
@@ -132,6 +133,7 @@ class WOWCubeBuildTaskTerminal {
         this._channel.show(true);
     }
     async doBuildSimulator() {
+        const tools = await BuildPrerequisites_1.BuildPrerequisites.require('simulator');
         await this.doBuildResources();
         const sdkpath = path.join(Configuration_1.Configuration.getWOWSDKPath(), 'sdk', Configuration_1.Configuration.getCurrentVersion(), 'c');
         const buildScript = path.join(sdkpath, 'octavios', 'apps', Configuration_1.Configuration.isWindows() ? 'build_sim.cmd' : 'build_sim.sh');
@@ -139,7 +141,7 @@ class WOWCubeBuildTaskTerminal {
         const appFolder = path.resolve(this.workspace, build_json.appFolder);
         this._channel.appendLine('Building simulator...');
         await new Promise((resolve, reject) => {
-            const options = { cwd: appFolder, env: process.env, windowsHide: true };
+            const options = { cwd: appFolder, env: tools.env, windowsHide: true };
             const proc = Configuration_1.Configuration.isWindows() ? cp.exec('"' + buildScript + '"', options) : cp.spawn('/bin/bash', [buildScript, appFolder], options);
             proc.stdout?.on('data', data => this._channel.append(data.toString()));
             proc.stderr?.on('data', data => this._channel.append(data.toString()));
@@ -148,20 +150,21 @@ class WOWCubeBuildTaskTerminal {
         });
     }
     async doBuildARMModule() {
+        const tools = await BuildPrerequisites_1.BuildPrerequisites.require('device');
         await this.doBuildResources();
         const sourceDir = path.join(Configuration_1.Configuration.getWOWSDKPath(), 'sdk', Configuration_1.Configuration.getCurrentVersion(), 'c', 'octavios', 'apps');
         const buildPath = path.join(this.workspace, 'wowcubeapp-build.json');
         const build_json = JSON.parse(fs.readFileSync(buildPath, 'utf-8'));
         const appFolder = path.resolve(this.workspace, build_json.appFolder);
         const commands = [
-            { tool: 'cmake', args: ['-G', 'Ninja', '-S', sourceDir, '-B', 'out'] },
-            { tool: 'cmake', args: ['--build', 'out'] },
+            { tool: tools.cmake, args: ['-G', 'Ninja', '-S', sourceDir, '-B', 'out'] },
+            { tool: tools.cmake, args: ['--build', 'out'] },
             { tool: path.join(Configuration_1.Configuration.getUtilsPath(), Configuration_1.Configuration.getBuilder()), args: [appFolder, build_json.appFolder, '--manifest', buildPath] }
         ];
         for (const command of commands) {
-            this._channel.appendLine(command.tool === 'cmake' ? 'Building cubeapp...' : 'Linking OCT file...');
+            this._channel.appendLine(command.tool === tools.cmake ? 'Building cubeapp...' : 'Linking OCT file...');
             await new Promise((resolve, reject) => {
-                const proc = cp.spawn(command.tool, command.args, { cwd: appFolder, env: process.env, windowsHide: true });
+                const proc = cp.spawn(command.tool, command.args, { cwd: appFolder, env: tools.env, windowsHide: true });
                 proc.stdout?.on('data', data => this._channel.append(data.toString()));
                 proc.stderr?.on('data', data => this._channel.append(data.toString()));
                 proc.on('error', reject);

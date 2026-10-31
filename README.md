@@ -178,6 +178,17 @@ Saving `wowcubeapp-resources.json`, from Resource Studio or the text editor, com
 changed resources and refreshes the configured IDs header automatically.
 Simulator and device builds await resource compilation before compiling app source code.
 
+Before building, the extension checks the prerequisites for the selected target:
+
+- Device: CMake 3.13+, Ninja, and the complete `arm-none-eabi` GCC toolchain.
+- macOS simulator: CMake 3.20+, Ninja, Apple Command Line Tools/macOS SDK, and SDL3 development files.
+- Windows simulator: Visual Studio C++ Build Tools and the Windows SDK, as required by the SDK's `build_sim.cmd`.
+
+Missing, incompatible, or unusable tools stop the build with a message explaining what to install or repair. The extension does not launch an installer or install tools. Resource-only builds do not require these prerequisites.
+
+Tools are discovered on `PATH`, in common installation directories, and in the SDK tools directory. For custom installations, add their directories to the machine-specific `wowsdk.buildTools.paths` setting. The resolved tool directories are passed to builds without changing the system `PATH`. After installing or repairing prerequisites, run the build again to recheck them.
+
+
 After a successful device build, the extension uploads the generated `.oct` package to the device selected in WOWCube Devices and, after upload succeeds, refreshes the installed application list and sends a separate launch command using the matching entry’s GUIDs. The entry is matched against `metadata.application.guid1` and `guid2` from the build manifest. If the uploaded application is not listed yet, the extension retries the application-list refresh up to five times, waiting two seconds before each retry. It launches as soon as the matching application appears; the package is uploaded only once. Upload and launch progress appear in Output. If no device is selected, the device is busy, or deployment fails, the task reports that compilation succeeded but deployment failed. Simulator and resource-only builds do not upload.
 The **build resources** task runs the same step independently. It saves pending changes
 to `wowcubeapp-resources.json` and invokes `sdk/tools/resource-builder`

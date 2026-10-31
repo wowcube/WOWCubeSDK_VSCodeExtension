@@ -1,3 +1,6 @@
+### 3.0.0
+* Migration to OctaviOS and completely new SDK
+
 ### 2.5.5
 * Fixed the inability to use nested folders in С++ project structure
 

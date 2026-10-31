@@ -12,6 +12,7 @@ import { Script } from "./Script";
 import { NameBeautifier } from "./NameBeautifier";
 import { ResourceBuilder } from './ResourceBuilder';
 import { DeviceDeployment } from './DeviceDeployment';
+import { BuildPrerequisites } from './BuildPrerequisites';
 
 interface WOWCubeBuildTaskDefinition extends vscode.TaskDefinition 
 {
@@ -190,6 +191,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 	private async doBuildSimulator():Promise<void>
 	{
+		const tools = await BuildPrerequisites.require('simulator');
 		await this.doBuildResources();
 		const sdkpath = path.join(Configuration.getWOWSDKPath(), 'sdk', Configuration.getCurrentVersion(), 'c');
 		const buildScript = path.join(sdkpath, 'octavios', 'apps', Configuration.isWindows() ? 'build_sim.cmd' : 'build_sim.sh');
@@ -198,7 +200,7 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 		this._channel.appendLine('Building simulator...');
 		await new Promise<void>((resolve, reject) =>
 		{
-			const options = {cwd:appFolder, env:process.env, windowsHide:true};
+			const options = {cwd:appFolder, env:tools.env, windowsHide:true};
 			const proc = Configuration.isWindows() ? cp.exec('"'+buildScript+'"', options) : cp.spawn('/bin/bash', [buildScript, appFolder], options);
 			proc.stdout?.on('data', data => this._channel.append(data.toString()));
 			proc.stderr?.on('data', data => this._channel.append(data.toString()));
@@ -209,22 +211,23 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 
 	private async doBuildARMModule():Promise<void>
 	{
+		const tools = await BuildPrerequisites.require('device');
 		await this.doBuildResources();
 		const sourceDir = path.join(Configuration.getWOWSDKPath(), 'sdk', Configuration.getCurrentVersion(), 'c', 'octavios', 'apps');
 		const buildPath = path.join(this.workspace, 'wowcubeapp-build.json');
 		const build_json = JSON.parse(fs.readFileSync(buildPath, 'utf-8'));
 		const appFolder = path.resolve(this.workspace, build_json.appFolder);
 		const commands = [
-			{tool:'cmake', args:['-G', 'Ninja', '-S', sourceDir, '-B', 'out']},
-			{tool:'cmake', args:['--build', 'out']},
+			{tool:tools.cmake!, args:['-G', 'Ninja', '-S', sourceDir, '-B', 'out']},
+			{tool:tools.cmake!, args:['--build', 'out']},
 			{tool:path.join(Configuration.getUtilsPath(), Configuration.getBuilder()), args:[appFolder, build_json.appFolder, '--manifest', buildPath]}
 		];
 		for(const command of commands)
 		{
-			this._channel.appendLine(command.tool === 'cmake' ? 'Building cubeapp...' : 'Linking OCT file...');
+			this._channel.appendLine(command.tool === tools.cmake ? 'Building cubeapp...' : 'Linking OCT file...');
 			await new Promise<void>((resolve, reject) =>
 			{
-				const proc = cp.spawn(command.tool, command.args, {cwd:appFolder, env:process.env, windowsHide:true});
+				const proc = cp.spawn(command.tool, command.args, {cwd:appFolder, env:tools.env, windowsHide:true});
 				proc.stdout?.on('data', data => this._channel.append(data.toString()));
 				proc.stderr?.on('data', data => this._channel.append(data.toString()));
 				proc.on('error', reject);

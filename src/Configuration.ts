@@ -845,6 +845,12 @@ export class Configuration
         return ret;
     }
 
+    public static getBuildToolPaths():string[]
+    {
+        const paths = vscode.workspace.getConfiguration().get<unknown>('wowsdk.buildTools.paths');
+        return Array.isArray(paths) ? paths.filter((value):value is string => typeof value === 'string' && value.length > 0) : [];
+    }
+
     public static getUtilsPath()
     {
         var ret:string = Configuration.getWOWSDKPath();
