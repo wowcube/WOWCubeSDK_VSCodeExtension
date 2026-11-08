@@ -510,7 +510,12 @@
             });
             */
 
-            document.getElementById('save_button').addEventListener('click', () => 
+            document.getElementById('simulatorMetrics').addEventListener('change', event =>
+            {
+                vscode.postMessage({ type: 'simulatorMetrics', value: event.target.checked });
+            });
+
+            document.getElementById('save_button').addEventListener('click', () =>
             {
                 var resp = validate();
                 vscode.postMessage({ type: 'save', value: resp });
@@ -552,6 +557,11 @@
                     try
                     {                        
                         var d = JSON.parse(message.text);
+
+                        document.getElementById('simulatorMetrics').checked =
+                            d.simulatorDebug?.macos?.env?.WOWCUBE_SIM_METRICS === '1' &&
+                            d.simulatorDebug?.windows?.environment?.some(entry =>
+                                entry.name === 'WOWCUBE_SIM_METRICS' && entry.value === '1') === true;
 
                         document.getElementById('appname').value = d.metadata.application.name;
                         document.getElementById('appversion').value = d.version;

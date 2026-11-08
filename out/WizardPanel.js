@@ -126,7 +126,7 @@ class WizardPanel {
         if(WizardPanel.currentLanguage=='rust')  { ret =  this.generate_rust(name,path,template); }
         */
         WizardPanel.currentLanguage = "c";
-        Configuration_1.Configuration.setCurrentVersion("0.98");
+        //Configuration.setCurrentVersion("0.98");
         ret = this.generate_oct(name, path, template);
         return ret;
     }

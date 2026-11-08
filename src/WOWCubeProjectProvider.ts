@@ -9,6 +9,7 @@ import {Configuration} from './Configuration';
 import { Project } from './Project';
 import {Providers} from './Providers';
 import {Output} from './Output';
+import { simulatorMetricsEnabled, setSimulatorMetrics } from './SimulatorMetrics';
 
  export class WOWCubeProjectProvider implements vscode.CustomTextEditorProvider {
 
@@ -155,10 +156,23 @@ import {Output} from './Output';
 						//handle adhoc description
 						params.adhocDescription = Project.AdHocDescription;
 
-						this.updateTextDocument(document,params);
+						const current = this.getDocumentAsJson(document);
+						this.updateTextDocument(document, {...current, ...params, metadata: {
+							...current.metadata, ...params.metadata, application: {
+								...current.metadata?.application, ...params.metadata?.application
+							}
+						}});
 					}	   
 				   }
 				break;
+				case 'simulatorMetrics':
+					{
+						if(typeof message.value === 'boolean')
+						{
+							this.updateTextDocument(document, setSimulatorMetrics(this.getDocumentAsJson(document), message.value));
+						}
+					}
+					break;
 				case 'save':
 					{
 						const text = document.getText();
@@ -374,6 +388,14 @@ import {Output} from './Output';
 						}
 
 						body+= `</div>
+
+						<div style="display:inline-block;margin-left: 2px;margin-top:30px;font-size:14px;min-width:165px;"><strong>Advanced settings</strong></div>
+						<div style="margin-top:15px;margin-bottom:80px;">
+							<label style="display:flex;align-items:flex-start;gap:8px;">
+								<input id="simulatorMetrics" type="checkbox" ${simulatorMetricsEnabled(json) ? 'checked' : ''}>
+								<span style="font-size:14px;">Show periodic performance and diagnostic counters in the simulator log</span>
+							</label>
+						</div>
 
 						<button id="save_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">SAVE</button>
                 		</div>

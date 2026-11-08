@@ -134,6 +134,12 @@ Encoding-dependent compilation checks are handled by `resource-builder`.
 
 ### Simulator debugging
 
+In the project settings editor, **Advanced settings** contains **Show periodic
+performance and diagnostic counters in the simulator log**. Checking it sets
+`simulatorDebug.macos.env.WOWCUBE_SIM_METRICS` and the matching Windows
+`environment` entry to `"1"`; clearing it sets both to `"0"`. Use **SAVE** to persist
+the change. Other simulator options and environment variables are preserved.
+
 New Octavios projects use a portable `wowcube-simulator` launch entry. On F5, the
 extension resolves it in memory to `lldb-dap` on macOS or `cppvsdbg` on Windows,
 then runs the existing simulator pre-launch build task. If the debugger extension

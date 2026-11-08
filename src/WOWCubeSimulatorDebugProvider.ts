@@ -54,11 +54,14 @@ export class WOWCubeSimulatorDebugProvider implements vscode.DebugConfigurationP
         return {
             macos: {
                 type: 'lldb-dap', program, cwd: bin, args: [], stopOnEntry: false,
-                disableASLR: false, enableAutoVariableSummaries: false
+                disableASLR: false, enableAutoVariableSummaries: false,
+                env:{
+                    WOWCUBE_SIM_METRICS: '0'
+                }
             },
             windows: {
                 type: 'cppvsdbg', program: program+'.exe', cwd: bin, args: [],
-                stopAtEntry: false, environment: [], console: 'integratedTerminal'
+                stopAtEntry: false, environment: [{name: 'WOWCUBE_SIM_METRICS', value: '0'}], console: 'integratedTerminal',
             }
         };
     }

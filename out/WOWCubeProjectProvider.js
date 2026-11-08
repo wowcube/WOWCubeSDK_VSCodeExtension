@@ -7,6 +7,7 @@ const fs = require("fs");
 const Configuration_1 = require("./Configuration");
 const Project_1 = require("./Project");
 const Output_1 = require("./Output");
+const SimulatorMetrics_1 = require("./SimulatorMetrics");
 class WOWCubeProjectProvider {
     constructor(context) {
         this.context = context;
@@ -118,7 +119,19 @@ class WOWCubeProjectProvider {
                             */
                             //handle adhoc description
                             params.adhocDescription = Project_1.Project.AdHocDescription;
-                            this.updateTextDocument(document, params);
+                            const current = this.getDocumentAsJson(document);
+                            this.updateTextDocument(document, { ...current, ...params, metadata: {
+                                    ...current.metadata, ...params.metadata, application: {
+                                        ...current.metadata?.application, ...params.metadata?.application
+                                    }
+                                } });
+                        }
+                    }
+                    break;
+                case 'simulatorMetrics':
+                    {
+                        if (typeof message.value === 'boolean') {
+                            this.updateTextDocument(document, (0, SimulatorMetrics_1.setSimulatorMetrics)(this.getDocumentAsJson(document), message.value));
                         }
                     }
                     break;
@@ -292,6 +305,14 @@ class WOWCubeProjectProvider {
             body += `<div class="negative" id="targetsdkwarn" style="display:none;margin-left: 185px;font-size:14px;">`;
         }
         body += `</div>
+
+						<div style="display:inline-block;margin-left: 2px;margin-top:30px;font-size:14px;min-width:165px;"><strong>Advanced settings</strong></div>
+						<div style="margin-top:15px;margin-bottom:80px;">
+							<label style="display:flex;align-items:flex-start;gap:8px;">
+								<input id="simulatorMetrics" type="checkbox" ${(0, SimulatorMetrics_1.simulatorMetricsEnabled)(json) ? 'checked' : ''}>
+								<span style="font-size:14px;">Show periodic performance and diagnostic counters in the simulator log</span>
+							</label>
+						</div>
 
 						<button id="save_button" style="position:absolute; left:20px; right:20px; bottom:20px; height:40px; width:calc(100% - 40px);">SAVE</button>
                 		</div>
