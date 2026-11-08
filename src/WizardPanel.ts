@@ -186,7 +186,6 @@ export class WizardPanel {
             */
 
             WizardPanel.currentLanguage = "c";
-            //Configuration.setCurrentVersion("0.98");
             ret = this.generate_oct(name, path, template);
 
             return ret;
