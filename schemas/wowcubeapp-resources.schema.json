@@ -69,12 +69,18 @@
           {
             "if": {
               "properties": {
-                "type": { "const": "sprite" }
+                "type": {
+                  "const": "sprite"
+                }
               }
             },
             "else": {
               "properties": {
-                "name": { "not": { "const": "icon" } }
+                "name": {
+                  "not": {
+                    "const": "icon"
+                  }
+                }
               }
             }
           },
@@ -266,6 +272,7 @@
                 "compression": {
                   "enum": [
                     "plain",
+                    "rle",
                     "softkey",
                     null
                   ]
@@ -370,7 +377,34 @@
                       "compression": {
                         "enum": [
                           "plain",
+                          "rle",
                           "softkey"
+                        ]
+                      }
+                    }
+                  }
+                },
+                {
+                  "if": {
+                    "properties": {
+                      "colorMode": {
+                        "const": "rgb6666"
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "paletteId": {
+                        "type": "null"
+                      },
+                      "blend": {
+                        "const": "alpha"
+                      },
+                      "compression": {
+                        "enum": [
+                          "plain",
+                          "rle",
+                          null
                         ]
                       }
                     }

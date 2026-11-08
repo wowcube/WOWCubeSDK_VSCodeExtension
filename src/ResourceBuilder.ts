@@ -5,7 +5,7 @@ import * as crypto from 'crypto';
 import * as cp from 'child_process';
 import { Configuration } from './Configuration';
 import { SoundEditor } from './SoundEditor';
-import { ResourceBundles } from './ResourceBundle';
+import { ResourceBundle, ResourceBundles } from './ResourceBundle';
 import { Output } from './Output';
 import { ResourceStudioProvider } from './ResourceStudioProvider';
 
@@ -53,6 +53,25 @@ export class ResourceBuilder
 		finally { if(this.builds.get(folder) === build) { this.builds.delete(folder); } }
 	}
 
+	private static async fingerprint(workspace:string, contents:Buffer, executable:Buffer, bundle:ResourceBundle):Promise<string>
+	{
+		const hash = crypto.createHash('sha256');
+		const add = (name:string, bytes:Buffer) => { hash.update(JSON.stringify([name, bytes.length])+'\n').update(bytes); };
+		add('manifest', contents); add('builder', executable);
+		const sources = new Set<string>(['wowcubeapp-build.json']);
+		for(const resource of bundle.resources)
+		{
+			if(['sprite', 'font', 'sound'].includes(resource.type) && typeof resource.source === 'string') { sources.add(resource.source); }
+			if(resource.type === 'font' && typeof resource.atlas === 'string') { sources.add(resource.atlas); }
+		}
+		for(const source of [...sources].sort())
+		{
+			try { add(source, await fs.promises.readFile(path.resolve(workspace, source))); }
+			catch { throw new Error('Cannot read resource build input: '+source+'. Restore the file or update the resource.'); }
+		}
+		return hash.digest('hex');
+	}
+
 	private static async compile(workspace:string, reason:'save' | 'build' | 'pack'):Promise<void>
 	{
 		const resources = path.join(workspace, 'wowcubeapp-resources.json');
@@ -77,7 +96,7 @@ export class ResourceBuilder
 		try { executable = await fs.promises.readFile(tool); }
 		catch { throw new Error('Resource builder not found: '+tool+'. Install it in the SDK tools folder.'); }
 		// A new compiler must rebuild outputs produced by the previous executable.
-		const hash = crypto.createHash('sha256').update(contents).update(executable).digest('hex');
+		const hash = await this.fingerprint(workspace, contents, executable, bundle);
 		const key = 'resourceBuilder:'+vscode.Uri.file(resources).toString();
 		const state:vscode.Memento = Configuration.context.workspaceState;
 		const channel = Output.channel();
@@ -97,9 +116,9 @@ export class ResourceBuilder
 			child.on('close', code => code === 0 ? resolve() : reject(new Error('Resource compilation failed with exit code '+code+'.')));
 		});
 		const current = await fs.promises.readFile(resources);
-		if(!contents.equals(current) || document?.isDirty)
+		if(!contents.equals(current) || document?.isDirty || await this.fingerprint(workspace, current, await fs.promises.readFile(tool), bundle) !== hash)
 		{
-			throw new Error('Resource JSON changed during resource compilation. Build again before compiling the app.');
+			throw new Error('Resource build inputs changed during resource compilation. Build again before compiling the app.');
 		}
 		await state.update(key, hash);
 		channel.appendLine('[resource-builder] Resources built successfully.');

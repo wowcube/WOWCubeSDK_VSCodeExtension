@@ -162,6 +162,7 @@ export class AdHocPanel {
 
                 formData.append('name',this._appname);
                 formData.append('description',value);
+                formData.append('blobType','oct_app');
                 formData.append('icon',fs.createReadStream(this._icon));
                 formData.append('file',fs.createReadStream(this._cubfile));
 

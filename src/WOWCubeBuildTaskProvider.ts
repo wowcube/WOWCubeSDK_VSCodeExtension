@@ -13,6 +13,7 @@ import { NameBeautifier } from "./NameBeautifier";
 import { ResourceBuilder } from './ResourceBuilder';
 import { DeviceDeployment } from './DeviceDeployment';
 import { BuildPrerequisites } from './BuildPrerequisites';
+import { CMakeBuildCache } from './CMakeBuildCache';
 
 interface WOWCubeBuildTaskDefinition extends vscode.TaskDefinition 
 {
@@ -197,6 +198,10 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 		const buildScript = path.join(sdkpath, 'octavios', 'apps', Configuration.isWindows() ? 'build_sim.cmd' : 'build_sim.sh');
 		const build_json = JSON.parse(fs.readFileSync(path.join(this.workspace, 'wowcubeapp-build.json'), 'utf-8'));
 		const appFolder = path.resolve(this.workspace, build_json.appFolder);
+		if(await CMakeBuildCache.prepare(path.join(appFolder, 'build-sim'), path.join(sdkpath, 'octavios')))
+		{
+			this._channel.appendLine('SDK source or project location changed. Reset simulator CMake cache.');
+		}
 		this._channel.appendLine('Building simulator...');
 		await new Promise<void>((resolve, reject) =>
 		{
@@ -217,6 +222,10 @@ class WOWCubeBuildTaskTerminal implements vscode.Pseudoterminal
 		const buildPath = path.join(this.workspace, 'wowcubeapp-build.json');
 		const build_json = JSON.parse(fs.readFileSync(buildPath, 'utf-8'));
 		const appFolder = path.resolve(this.workspace, build_json.appFolder);
+		if(await CMakeBuildCache.prepare(path.join(appFolder, 'out'), sourceDir))
+		{
+			this._channel.appendLine('SDK source or project location changed. Reset device CMake cache.');
+		}
 		const commands = [
 			{tool:tools.cmake!, args:['-G', 'Ninja', '-S', sourceDir, '-B', 'out']},
 			{tool:tools.cmake!, args:['--build', 'out']},

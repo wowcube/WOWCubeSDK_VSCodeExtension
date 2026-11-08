@@ -90,6 +90,18 @@ async function run()
 	const map = ResourceTypes.get('map').create('map','test_map'); map.placements = [{id:'place',spriteId:imported[0].id,side:0,x:0,y:0}]; bundle.resources.push(map);
 	await assert.rejects(SequenceEditor.change(bundle,{action:'sequenceRemove',sequenceId:imported[0].sequence.id,ids:[imported[0].id]}, {},services),/referenced/);
 
+	const argbBundle=ResourceBundles.create();
+	dialogs.open.push([{path:'/project/frames'}]);dialogs.input.push('glow','100');dialogs.pick.push(2,0);
+	await SequenceEditor.change(argbBundle,{action:'sequenceImport',folder:true},{},services);
+	const argbFrames=argbBundle.resources.filter(item=>item.type==='sprite');
+	assert.strictEqual(argbFrames.length,2);assert(argbFrames.every(frame=>frame.colorMode==='rgb6666'&&frame.blend==='alpha'&&frame.paletteId===null&&frame.compression==='rle'));
+	const members=argbFrames.map(frame=>({id:frame.id,name:frame.name,pivot:frame.pivot,frameRate:frame.frameRate}));
+	await SequenceEditor.change(argbBundle,{action:'sequenceUpdate',sequenceId:argbFrames[0].sequence.id,name:'glow',frames:members,paletteId:null,colorMode:'rgb565'},{},services);
+	await SequenceEditor.change(argbBundle,{action:'sequenceUpdate',sequenceId:argbFrames[0].sequence.id,name:'glow',frames:members,paletteId:null,colorMode:'rgb6666'},{},services);
+	assert(argbFrames.every(frame=>frame.blend==='alpha'&&frame.compression==='rle'));
+	await SequenceEditor.change(argbBundle,{action:'sequenceUpdate',sequenceId:argbFrames[0].sequence.id,name:'glow',frames:members,compression:'plain',dither:true},{},services);
+	assert(argbFrames.every(frame=>frame.compression==='plain'&&frame.dither===true));assert.deepStrictEqual(argbFrames.map(frame=>frame.pivot),members.map(frame=>frame.pivot));
+	assert.deepStrictEqual(argbFrames.map(frame=>frame.sequence.index),[0,1]);assert.deepStrictEqual(argbFrames.map(frame=>frame.frameRate),[1,1]);
 	// The JSON schema retains sprite-mode constraints alongside the new contract.
 	const Ajv=require('ajv'), schema=require('../../schemas/wowcubeapp-resources.schema.json');
 	const validateSchema=new Ajv({allErrors:true}).compile(schema), schemaBundle=ResourceBundles.create();

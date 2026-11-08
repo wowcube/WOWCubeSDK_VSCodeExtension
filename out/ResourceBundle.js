@@ -9,8 +9,8 @@ const SoundResource_1 = require("./SoundResource");
 const SoundValidation = require("../media/soundvalidation");
 const FontResource_1 = require("./FontResource");
 const MapResource_1 = require("./MapResource");
-// These modes are preserved for future support but never offered by the editor.
-exports.hiddenSpriteModes = { color: ['rgb6666'], blend: ['bump', 'dudv', 'refl'] };
+// Unsupported blend modes are preserved but never offered by the editor.
+exports.hiddenSpriteModes = { color: [], blend: ['bump', 'dudv', 'refl'] };
 function isNumber(value, min, max = Infinity) {
     return typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
 }
@@ -71,9 +71,9 @@ ResourceTypes.register({
     label: 'Sprite',
     getPaletteSource: (resource) => resource.colorMode === 'palette' && typeof resource.source === 'string' ? resource.source : undefined,
     create: (id, name, source = '', options = {}) => ({
-        id, name, type: 'sprite', source, colorMode: options.colorMode === 'rgb565' ? 'rgb565' : 'palette',
-        paletteId: options.colorMode !== 'rgb565' && typeof options.paletteId === 'string' && options.paletteId ? options.paletteId : null,
-        blend: options.colorMode === 'rgb565' ? 'opaque' : 'alpha', fullsize: false, dither: false, compression: options.colorMode === 'rgb565' ? 'plain' : null, softkey: null,
+        id, name, type: 'sprite', source, colorMode: options.colorMode === 'rgb6666' ? 'rgb6666' : options.colorMode === 'rgb565' ? 'rgb565' : 'palette',
+        paletteId: !['rgb565', 'rgb6666'].includes(options.colorMode) && typeof options.paletteId === 'string' && options.paletteId ? options.paletteId : null,
+        blend: options.colorMode === 'rgb565' ? 'opaque' : 'alpha', fullsize: false, dither: false, compression: options.colorMode === 'rgb6666' ? 'rle' : options.colorMode === 'rgb565' ? 'plain' : null, softkey: null,
         number: 0, frameRate: 1, group: null, objectType: null, tags: [],
         pivot: null, collider: { enabled: false, x: 0, y: 0, width: 0, height: 0 }
     }),
@@ -89,7 +89,7 @@ ResourceTypes.register({
         if (resource.colorMode === 'palette' && !bundle.resources.some(item => item.id === resource.paletteId && item.type === 'palette')) {
             errors.push('V-014: Sprite palette must reference an existing palette.');
         }
-        if (typeof resource.colorMode !== 'string' || !['palette', 'rgb565', ...exports.hiddenSpriteModes.color].includes(resource.colorMode)) {
+        if (typeof resource.colorMode !== 'string' || !['palette', 'rgb565', 'rgb6666'].includes(resource.colorMode)) {
             errors.push('Unknown sprite color mode.');
         }
         if (typeof resource.blend !== 'string' || !['opaque', 'alpha', 'additive', 'bg', ...exports.hiddenSpriteModes.blend].includes(resource.blend)) {
@@ -98,16 +98,19 @@ ResourceTypes.register({
         if (resource.colorMode === 'rgb565' && (resource.paletteId !== null || resource.blend !== 'opaque')) {
             errors.push('V-019: RGB565 sprites require Opaque blend and no palette.');
         }
-        if (resource.colorMode !== 'rgb565' && resource.dither) {
-            errors.push('Dithering is available only for RGB565.');
+        if (resource.colorMode === 'rgb6666' && (resource.paletteId !== null || resource.blend !== 'alpha')) {
+            errors.push('V-019: ARGB6666 requires Embedded alpha blend and no palette.');
+        }
+        if (resource.colorMode === 'palette' && resource.dither) {
+            errors.push('Dithering is available only for raw-color sprites.');
         }
         for (const key of ['fullsize', 'dither']) {
             if (typeof resource[key] !== 'boolean') {
                 errors.push(key + ' must be a boolean.');
             }
         }
-        if (resource.colorMode === 'rgb565' ? !['plain', 'softkey'].includes(resource.compression) : resource.compression !== null) {
-            errors.push('V-020: RGB565 requires Plain or Softkey encoding; other color modes must leave compression unset.');
+        if (resource.colorMode === 'rgb565' ? !['plain', 'rle', 'softkey'].includes(resource.compression) : resource.colorMode === 'rgb6666' ? resource.compression !== null && !['plain', 'rle'].includes(resource.compression) : resource.compression !== null) {
+            errors.push('V-020: RGB565 requires Plain, RLE or Color Key; ARGB6666 requires Plain or RLE (null defaults to RLE); palette encoding must be unset.');
         }
         const softkey = resource.softkey;
         if (resource.compression === 'softkey' && (!softkey || typeof softkey.key !== 'string' || !/^#[0-9a-f]{6}$/i.test(softkey.key) || ResourceValidation.integer(softkey.threshold, 0, 255, 'V-020', 'Softkey threshold'))) {
@@ -238,7 +241,7 @@ class ResourceBundles {
         return errors;
     }
     static getBuildErrors(bundle) {
-        return [...bundle.resources.filter(resource => resource.type === 'sound').flatMap(resource => [...SoundValidation.nameIssues(resource, bundle.resources), ...SoundValidation.sourceIssues(resource)].map(issue => issue.message)), ...(1 + bundle.resources.filter(resource => ['sprite', 'palette', 'map', 'sound'].includes(resource.type)).length > 5120 ? ['The bundle cannot contain more than 5120 runtime assets.'] : []), ...SpriteSequence_1.SpriteSequences.buildErrors(bundle), ...bundle.resources.filter(resource => resource.type === 'palette').map(resource => PaletteCompatibility.issue(resource)).filter((error) => !!error)];
+        return [...bundle.resources.filter(resource => resource.type === 'sprite' && exports.hiddenSpriteModes.blend.includes(resource.blend)).map(resource => resource.name + ': This blend mode is not supported by the renderer.'), ...bundle.resources.filter(resource => resource.type === 'sound').flatMap(resource => [...SoundValidation.nameIssues(resource, bundle.resources), ...SoundValidation.sourceIssues(resource)].map(issue => issue.message)), ...(1 + bundle.resources.filter(resource => ['sprite', 'palette', 'map', 'sound'].includes(resource.type)).length > 5120 ? ['The bundle cannot contain more than 5120 runtime assets.'] : []), ...SpriteSequence_1.SpriteSequences.buildErrors(bundle), ...bundle.resources.filter(resource => resource.type === 'palette').map(resource => PaletteCompatibility.issue(resource)).filter((error) => !!error)];
     }
     static getWarnings(bundle) {
         const warnings = this.getBuildErrors(bundle);

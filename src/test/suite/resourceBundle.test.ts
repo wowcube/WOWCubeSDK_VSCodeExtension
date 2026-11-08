@@ -191,10 +191,31 @@ suite('Resource bundle', () =>
 		bundle.registries.tags = Array(33).fill('tag');
 		assert.match(ResourceBundles.validate(bundle).join(' '), /32/);
 	});
+	test('validates raw color modes, RLE, and embedded alpha without palette references', () =>
+	{
+		const bundle = ResourceBundles.create();
+		const sprite = ResourceTypes.get('sprite')!.create('argb', 'argb', 'hero.png', {colorMode:'rgb6666'}) as SpriteResource;
+		bundle.resources.push(sprite);
+		assert.strictEqual(sprite.paletteId, null); assert.strictEqual(sprite.blend, 'alpha'); assert.strictEqual(sprite.compression, 'rle');
+		for(const compression of ['plain', 'rle', null] as const)
+		{
+			sprite.compression = compression; sprite.dither = true;
+			assert.deepStrictEqual(ResourceBundles.parse(JSON.stringify(bundle)), bundle);
+		}
+		for(const blend of ['opaque','additive','bg','bump','dudv','refl'] as const)
+		{
+			sprite.blend = blend; assert.match(ResourceBundles.validate(bundle).join(' '), /Embedded alpha/);
+		}
+		sprite.blend = 'alpha'; sprite.compression = 'softkey';
+		assert.match(ResourceBundles.validate(bundle).join(' '), /ARGB6666 requires Plain or RLE/);
+		sprite.compression = 'rle'; sprite.paletteId = 'unexpected';
+		assert.match(ResourceBundles.validate(bundle).join(' '), /no palette/);
+		sprite.paletteId = null; sprite.colorMode = 'rgb565'; sprite.blend = 'opaque';
+		assert.deepStrictEqual(ResourceBundles.validate(bundle), []);
+	});
 	test('reserves hidden modes without losing their metadata', () =>
 	{
 		const {bundle, sprite} = createBundle();
-		sprite.colorMode = 'rgb6666';
 		sprite.blend = 'bump';
 		assert.deepStrictEqual(ResourceBundles.parse(JSON.stringify(bundle)), bundle);
 		for(const blend of ['dudv', 'refl'] as const)

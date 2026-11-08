@@ -33,6 +33,31 @@
 			data[i + 3] = keyedOut ? 0 : 255;
 		}
 	}
+	function argb6666Preview(data, width, dither)
+	{
+		// Match argb6666.py: upper six bits, with optional Floyd–Steinberg on RGB only.
+		const buffer = dither ? Float32Array.from(data) : null;
+		for(let i = 0; i < data.length; i += 4)
+		{
+			for(let channel = 0; channel < 4; channel++)
+			{
+				const value = buffer && channel < 3 ? buffer[i + channel] : data[i + channel];
+				const quantized = Math.max(0, Math.min(63, buffer && channel < 3 ? Math.trunc(Math.fround(value + 0.5)) >> 2 : value >> 2));
+				data[i + channel] = (quantized << 2) | (quantized >> 4);
+				if(buffer && channel < 3)
+				{
+					const error = value - (quantized << 2), x = (i/4)%width;
+					if(x + 1 < width) { buffer[i + 4 + channel] += Math.fround(error*7/16); }
+					if(i + width*4 < data.length)
+					{
+						if(x > 0) { buffer[i + (width - 1)*4 + channel] += Math.fround(error*3/16); }
+						buffer[i + width*4 + channel] += Math.fround(error*5/16);
+						if(x + 1 < width) { buffer[i + (width + 1)*4 + channel] += Math.fround(error/16); }
+					}
+				}
+			}
+		}
+	}
 	function colorChannels(color)
 	{
 		return [parseInt(color.slice(1, 3), 16), parseInt(color.slice(3, 5), 16), parseInt(color.slice(5, 7), 16),
@@ -46,6 +71,7 @@
 	}
 	function convert(data, width, resource, palette)
 	{
+		if(resource.colorMode === 'rgb6666') { argb6666Preview(data, width, resource.dither); return; }
 		if(resource.colorMode === 'rgb565') { rgb565Preview(data, width, resource.dither, resource.compression === 'softkey' ? resource.softkey : null); return; }
 		if(resource.colorMode !== 'palette' || !palette) { return; }
 		const mappingColors = palette.mappingColors.map(colorChannels);
@@ -81,7 +107,7 @@
 		}
 		return indices;
 	}
-	const pixels = {convert, rgb565Preview, colorChannels, paletteChannels};
+	const pixels = {convert, rgb565Preview, argb6666Preview, colorChannels, paletteChannels};
 	if(typeof module !== 'undefined' && module.exports) { module.exports = pixels; }
 	else { window.ResourceStudioPixels = pixels; }
 }());

@@ -3,7 +3,7 @@
 {
 	const types = new Map();
 	const zoomLevels = window.ResourceStudioViewport.zoomLevels;
-	const hiddenColorModes = ['rgb6666'];
+	const hiddenColorModes = [];
 	const hiddenBlendModes = ['bump', 'dudv', 'refl'];
 	const validation = window.ResourceStudioValidation;
 	function spritePivot(resource, width, height)
@@ -148,9 +148,10 @@
 			const palettes = helpers.bundle.resources.filter(resource => resource.type === 'palette');
 			return helpers.field('Unique name', '<input data-dialog="name" pattern="[a-z0-9_]{1,23}" maxlength="23" value="'+helpers.escape(dialog.name)+'" required>')+
 				helpers.field('Color / palette', '<select data-dialog="paletteId"><option value="" '+(palettes.length >= validation.maxPalettes ? 'disabled' : '')+'>Generate a new palette</option>'+palettes.map(palette =>
-					'<option value="'+helpers.escape(palette.id)+'" '+(dialog.paletteId === palette.id ? 'selected' : '')+'>'+helpers.escape(palette.name)+'</option>').join('')+'<option value="__rgb565__" '+(dialog.paletteId === '__rgb565__' ? 'selected' : '')+'>RGB565 — no palette</option></select>')+
+					'<option value="'+helpers.escape(palette.id)+'" '+(dialog.paletteId === palette.id ? 'selected' : '')+'>'+helpers.escape(palette.name)+'</option>').join('')+'<option value="__rgb565__" '+(dialog.paletteId === '__rgb565__' ? 'selected' : '')+'>RGB565 — no palette</option><option value="__rgb6666__" '+(dialog.paletteId === '__rgb6666__' ? 'selected' : '')+'>ARGB6666 — color + alpha</option></select>')+
 				(!dialog.paletteId ? helpers.field('New palette name', '<input data-dialog="paletteName" pattern="[a-z0-9_]{1,23}" maxlength="23" value="'+helpers.escape(dialog.paletteName ?? validation.paletteName(dialog.name))+'" required>')+
 					helpers.field('Number of colors · 2–256', '<input data-dialog="colorCount" type="number" min="2" max="256" step="1" value="'+helpers.escape(dialog.colorCount)+'" required>') :
+					dialog.paletteId === '__rgb6666__' ? '<p class="notice">ARGB6666 stores color and embedded alpha without a palette. RLE encoding is selected by default.</p>' :
 					dialog.paletteId === '__rgb565__' ? '<p class="notice">Plain RGB565 stores colors without a palette. Transparency is not supported.</p>' :
 					'<p class="notice">This palette will be regenerated from the new sprite and all sprites already using it. Edited colors will be replaced.</p>')+
 				(!sources.length ? '<p class="notice">Add source folders to register an image.</p><button type="button" data-action="addFolder">+ Add source folders</button>' : '');
@@ -192,6 +193,7 @@
 			}
 			const palettes = helpers.bundle.resources.filter(item => item.type === 'palette');
 			const rgb = resource.colorMode === 'rgb565';
+			const argb = resource.colorMode === 'rgb6666';
 			const unsupported = hiddenColorModes.includes(resource.colorMode);
 			const size = helpers.state.imageSizes?.[resource.source];
 			const pivot = size ? spritePivot(resource, size.width, size.height) : {x:0, y:0};
@@ -202,16 +204,16 @@
 				helpers.field('Unique resource name', helpers.input('name', resource.name, 'text', 'pattern="[a-z0-9_]{1,23}" maxlength="23"'))+
 				(unsupported ? '<div class="notice">This sprite uses an unsupported color mode. Its settings are preserved.</div>' :
 				helpers.field('Color / palette', helpers.select('paletteId', [...palettes.map(item => ({value:item.id, label:item.name})),
-					{value:'__new_palette__', label:'Generate a new palette…', disabled:palettes.length >= validation.maxPalettes}, {value:'__rgb565__', label:'RGB565 — no palette'}], rgb ? '__rgb565__' : resource.paletteId || '')))+
-				(!rgb && !unsupported ? '<div class="minor">'+helpers.bundle.resources.filter(item => item.paletteId && item.paletteId === resource.paletteId).length+' sprites share this palette</div>' : '')+
-				helpers.field('Blend', hiddenBlendModes.includes(resource.blend) ? '<span class="minor">Unsupported blend (preserved)</span>' :
+					{value:'__new_palette__', label:'Generate a new palette…', disabled:palettes.length >= validation.maxPalettes}, {value:'__rgb565__', label:'RGB565 — no palette'}, {value:'__rgb6666__', label:'ARGB6666 — color + alpha'}], argb ? '__rgb6666__' : rgb ? '__rgb565__' : resource.paletteId || '')))+
+				(!rgb && !argb && !unsupported ? '<div class="minor">'+helpers.bundle.resources.filter(item => item.paletteId && item.paletteId === resource.paletteId).length+' sprites share this palette</div>' : '')+
+				helpers.field('Blend', argb ? '<select data-key="blend" disabled aria-label="Embedded alpha"><option value="alpha" selected>Embedded alpha</option></select>' : hiddenBlendModes.includes(resource.blend) ? '<span class="minor">Unsupported blend (preserved)</span>' :
 					'<select data-key="blend" '+(unsupported ? 'disabled' : '')+'>'+(rgb ? ['opaque'] : ['opaque', 'alpha', 'additive', ...(helpers.state.advancedBlend || resource.blend === 'bg' ? ['bg'] : [])]).map(value =>
 						'<option value="'+value+'" '+(resource.blend === value ? 'selected' : '')+'>'+({opaque:'Opaque', alpha:'Alpha', additive:'Additive', bg:'BG (advanced)'})[value]+'</option>').join('')+'</select>')+
-				(!rgb ? '<label class="check"><input id="advanced-blend" type="checkbox" '+(helpers.state.advancedBlend ? 'checked' : '')+'> Show advanced blend options</label>' : '')+
+				(!rgb && !argb ? '<label class="check"><input id="advanced-blend" type="checkbox" '+(helpers.state.advancedBlend ? 'checked' : '')+'> Show advanced blend options</label>' : '')+
 				(resource.blend === 'additive' ? '<div class="notice">Additive blended sprites cannot use FULLSIZE mode; the engine will not draw them. Keep Full size disabled.</div>' : '')+
 				'<label class="check"><input type="checkbox" data-key="fullsize" '+(resource.fullsize ? 'checked' : '')+'> Full size (1:1 runtime pixels)</label>'+
-				'<label class="check" title="Dithering is available for RGB565."><input type="checkbox" data-key="dither" '+(resource.dither ? 'checked' : '')+' '+(!rgb ? 'disabled' : '')+'> Dithering</label>'+
-				helpers.field('Encoding', rgb ? helpers.select('compression', [{value:'plain', label:'Plain RGB565'}, {value:'softkey', label:'Color Key'}], resource.compression) : '<select disabled title="Encoding options are available for RGB565."><option>Palette indexed</option></select>')+
+				'<label class="check" title="Dithering affects RGB only; embedded alpha is unchanged."><input type="checkbox" data-key="dither" '+(resource.dither ? 'checked' : '')+' '+(!rgb && !argb ? 'disabled' : '')+'> Dithering</label>'+
+				helpers.field('Encoding', rgb || argb ? helpers.select('compression', [{value:'plain', label:'Plain'}, {value:'rle', label:'RLE'}, ...(rgb ? [{value:'softkey', label:'Color Key'}] : [])], resource.compression || 'rle') : '<select disabled><option>Palette indexed</option></select>')+
 				helpers.field('Color Key · RGB', '<div class="pair">'+helpers.input('softkeyColor', resource.softkey?.key || '#ff00ff', 'color', rgb && resource.compression === 'softkey' ? '' : 'disabled title="Select RGB565 and Color Key encoding."')+
 					helpers.input('softkeyHex', resource.softkey?.key || '#ff00ff', 'text', 'maxlength="7" '+(rgb && resource.compression === 'softkey' ? '' : 'disabled title="Select RGB565 and Color Key encoding."'))+'</div>')+
 				helpers.field('Color Key threshold', helpers.input('softkeyThreshold', resource.softkey?.threshold || 0, 'number', 'min="0" max="255" step="1" '+(rgb && resource.compression === 'softkey' ? '' : 'disabled title="Select RGB565 and Color Key encoding."')))+
@@ -238,10 +240,11 @@
 		renderPreview:function (resource, helpers)
 		{
 			const rgb = resource.colorMode === 'rgb565';
+			const argb = resource.colorMode === 'rgb6666';
 			const palette = resource.colorMode === 'palette' ? helpers.bundle.resources.find(item => item.id === resource.paletteId) : undefined;
 			return '<div class="preview-head"><span>Sprite preview</span><span id="image-size"></span></div>'+
 				'<div class="actions preview-tools"><button data-preview-mode="source" aria-pressed="'+(helpers.state.previewMode === 'source')+'">Source</button>'+
-				'<button data-preview-mode="indexed" aria-pressed="'+(helpers.state.previewMode === 'indexed')+'" '+(!palette && !rgb ? 'disabled' : '')+'>'+(rgb ? 'RGB565' : 'Indexed')+'</button>'+
+				'<button data-preview-mode="indexed" aria-pressed="'+(helpers.state.previewMode === 'indexed')+'" '+(!palette && !rgb && !argb ? 'disabled' : '')+'>'+(argb ? 'ARGB6666' : rgb ? 'RGB565' : 'Indexed')+'</button>'+
 				'<label>Zoom <select id="preview-zoom" aria-label="Preview zoom">'+['fit', ...zoomLevels.map(String)].map(value =>
 					'<option value="'+value+'" '+(helpers.state.zoom === value ? 'selected' : '')+'>'+(value === 'fit' ? 'Fit' : value+'×')+'</option>').join('')+'</select></label></div>'+
 				'<div class="preview" id="sprite-preview"><span class="minor" id="preview-message">Loading image…</span>'+ 
@@ -254,7 +257,8 @@
 				window.ResourceStudioTypes.get('palette').renderGrid(palette, helpers)+'</div><div class="palette-controls inspector">'+
 				window.ResourceStudioTypes.get('palette').renderInspector(palette, helpers).replace(/data-key="/g, 'data-palette-id="'+helpers.escape(palette.id)+'" data-key="')+
 				'</div></section>' :
-				rgb ? '<div class="notice">RGB565 preview uses 5 red, 6 green and 5 blue bits per pixel.'+(resource.compression === 'softkey' ? ' Color Key matches are transparent.' : ' Plain encoding has no transparency.')+'</div>' : '<div class="notice">This color mode is not supported yet. Source preview remains available.</div>');
+				argb ? '<div class="notice">ARGB6666 preview quantizes RGB and embedded alpha to six bits per channel. Plain and RLE decode to identical pixels.</div>' :
+				rgb ? '<div class="notice">RGB565 preview uses 5 red, 6 green and 5 blue bits per pixel.'+(resource.compression === 'softkey' ? ' Color Key matches are transparent.' : ' Plain and RLE encodings have no transparency.')+'</div>' : '<div class="notice">This color mode is not supported yet. Source preview remains available.</div>');
 		},
 		change:function (resource, key, element, helpers)
 		{
@@ -264,15 +268,16 @@
 			}
 			else if(key === 'paletteId')
 			{
-				resource.colorMode = element.value === '__rgb565__' ? 'rgb565' : 'palette';
-				resource.paletteId = element.value === '__rgb565__' ? null : element.value || null;
-				if(resource.colorMode === 'rgb565') { resource.blend = 'opaque'; resource.compression = 'plain'; }
+				resource.colorMode = element.value === '__rgb6666__' ? 'rgb6666' : element.value === '__rgb565__' ? 'rgb565' : 'palette';
+				resource.paletteId = ['__rgb565__', '__rgb6666__'].includes(element.value) ? null : element.value || null;
+				if(resource.colorMode === 'rgb6666') { resource.blend = 'alpha'; resource.compression = 'rle'; }
+				else if(resource.colorMode === 'rgb565') { resource.blend = 'opaque'; resource.compression = 'plain'; }
 				else { resource.dither = false; resource.compression = null; }
 				resource.softkey = null;
 			}
 			else if(key === 'compression')
 			{
-				if(resource.colorMode !== 'rgb565' || !['plain', 'softkey'].includes(element.value)) { throw new Error('V-020: Choose Plain or Color Key encoding for RGB565.'); }
+				if(!(resource.colorMode === 'rgb565' ? ['plain', 'rle', 'softkey'] : resource.colorMode === 'rgb6666' ? ['plain', 'rle'] : []).includes(element.value)) { throw new Error('V-020: Choose an encoding supported by this color mode.'); }
 				resource.compression = element.value;
 				resource.softkey = element.value === 'softkey' ? {key:'#ff00ff', threshold:0} : null;
 			}
@@ -322,6 +327,7 @@
 			else if(key === 'blend')
 			{
 				if(resource.colorMode === 'rgb565' && element.value !== 'opaque') { throw new Error('V-019: RGB565 sprites require Opaque blend and no palette.'); }
+				if(resource.colorMode === 'rgb6666' && element.value !== 'alpha') { throw new Error('V-019: ARGB6666 requires Embedded alpha.'); }
 				resource.blend = element.value;
 			}
 			else if(['group', 'objectType'].includes(key)) { resource[key] = element.value || null; }

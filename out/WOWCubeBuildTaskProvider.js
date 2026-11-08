@@ -13,6 +13,7 @@ const Script_1 = require("./Script");
 const ResourceBuilder_1 = require("./ResourceBuilder");
 const DeviceDeployment_1 = require("./DeviceDeployment");
 const BuildPrerequisites_1 = require("./BuildPrerequisites");
+const CMakeBuildCache_1 = require("./CMakeBuildCache");
 class WOWCubeBuildTaskProvider {
     constructor(workspaceRoot) {
         this.workspaceRoot = workspaceRoot;
@@ -139,6 +140,9 @@ class WOWCubeBuildTaskTerminal {
         const buildScript = path.join(sdkpath, 'octavios', 'apps', Configuration_1.Configuration.isWindows() ? 'build_sim.cmd' : 'build_sim.sh');
         const build_json = JSON.parse(fs.readFileSync(path.join(this.workspace, 'wowcubeapp-build.json'), 'utf-8'));
         const appFolder = path.resolve(this.workspace, build_json.appFolder);
+        if (await CMakeBuildCache_1.CMakeBuildCache.prepare(path.join(appFolder, 'build-sim'), path.join(sdkpath, 'octavios'))) {
+            this._channel.appendLine('SDK source or project location changed. Reset simulator CMake cache.');
+        }
         this._channel.appendLine('Building simulator...');
         await new Promise((resolve, reject) => {
             const options = { cwd: appFolder, env: tools.env, windowsHide: true };
@@ -156,6 +160,9 @@ class WOWCubeBuildTaskTerminal {
         const buildPath = path.join(this.workspace, 'wowcubeapp-build.json');
         const build_json = JSON.parse(fs.readFileSync(buildPath, 'utf-8'));
         const appFolder = path.resolve(this.workspace, build_json.appFolder);
+        if (await CMakeBuildCache_1.CMakeBuildCache.prepare(path.join(appFolder, 'out'), sourceDir)) {
+            this._channel.appendLine('SDK source or project location changed. Reset device CMake cache.');
+        }
         const commands = [
             { tool: tools.cmake, args: ['-G', 'Ninja', '-S', sourceDir, '-B', 'out'] },
             { tool: tools.cmake, args: ['--build', 'out'] },

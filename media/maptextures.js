@@ -50,7 +50,6 @@
 			palette?.colors, palette?.mappingColors, palette?.transparentIndex]);
 		return get(key, async () =>
 		{
-			if(sprite.colorMode === 'rgb6666') { throw new Error('RGB6666 is not supported.'); }
 			const image = await loadImage(source);
 			if(!image.naturalWidth || !image.naturalHeight || image.naturalWidth > 240 || image.naturalHeight > 240) { throw new Error('Sprite must be a PNG no larger than 240 × 240.'); }
 			const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;

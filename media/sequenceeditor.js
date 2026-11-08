@@ -88,8 +88,11 @@
 				h.field('Unique sprite name', input('name', frame.name))+'<p>'+h.escape(frame.source)+'</p><p class="minor">'+(texture ? texture.width+' × '+texture.height+' source pixels' : 'Loading image…')+'</p>'+
 				'<div class="sequence-offsets">'+h.field('X offset', input('x', p.x, 'number', 'step="0.5"'))+h.field('Y offset', input('y', p.y, 'number', 'step="0.5"'))+'</div><p class="minor" data-sequence-pivot>Local pivot: '+(-p.x)+', '+(-p.y)+'</p>'+
 				h.field('Hold duration (ms)', input('duration', (frame.frameRate + 1)*50, 'number', 'min="50" max="6400" step="50"'))+'<button data-sequence-action="duration">Apply duration to selected ('+selected.size+')</button>'+
-				h.field('Shared colors', '<select data-sequence-key="palette"><option value="" '+(!frame.paletteId ? 'selected' : '')+'>Plain RGB565</option><option value="__new__">Generate new shared palette…</option>'+h.bundle.resources.filter(item => item.type === 'palette').map(item => '<option value="'+h.escape(item.id)+'" '+(item.id === frame.paletteId ? 'selected' : '')+'>'+h.escape(item.name)+'</option>').join('')+'</select>')+
-				'<p class="sequence-notice">Color selection applies to all frames in this sequence. Static sprite properties remain available in the Sprites tab.</p>';
+				h.field('Shared colors', '<select data-sequence-key="palette"><option value="" '+(frame.colorMode === 'rgb565' ? 'selected' : '')+'>RGB565 — no palette</option><option value="__rgb6666__" '+(frame.colorMode === 'rgb6666' ? 'selected' : '')+'>ARGB6666 — color + alpha</option><option value="__new__">Generate new shared palette…</option>'+h.bundle.resources.filter(item => item.type === 'palette').map(item => '<option value="'+h.escape(item.id)+'" '+(item.id === frame.paletteId ? 'selected' : '')+'>'+h.escape(item.name)+'</option>').join('')+'</select>')+
+				(frame.colorMode !== 'palette' ? h.field('Shared encoding', '<select data-sequence-key="compression">'+['plain','rle', ...(frame.colorMode === 'rgb565' ? ['softkey'] : [])].map(value => '<option value="'+value+'" '+((frame.compression || 'rle') === value ? 'selected' : '')+'>'+({plain:'Plain',rle:'RLE',softkey:'Color Key'})[value]+'</option>').join('')+'</select>')+
+				'<label class="check"><input type="checkbox" data-sequence-key="dither" '+(frame.dither ? 'checked' : '')+'> Dither RGB (all frames)</label>' : '')+
+				(frame.colorMode === 'rgb6666' ? '<p class="minor">Blend: Embedded alpha</p>' : '')+
+				'<p class="sequence-notice">Color and encoding selections apply to all frames in this sequence. Static sprite properties remain available in the Sprites tab.</p>';
 		}
 		function strip()
 		{
@@ -189,7 +192,7 @@
 			}
 			if(key === 'duration') { if(!validDuration(element)) { return; } items.filter(item => selected.has(item.id)).forEach(item => item.frameRate = +element.value/50 - 1); }
 			if(key === 'palette' && element.value === '__new__') { h.sendChange({action:'sequenceGeneratePalette', sequenceId:id}); return; }
-			commit(key === 'palette' ? {paletteId:element.value || null} : {});
+			commit(key === 'compression' ? {compression:element.value} : key === 'dither' ? {dither:element.checked} : key === 'palette' ? {paletteId:element.value === '__rgb6666__' ? null : element.value || null, colorMode:element.value === '__rgb6666__' ? 'rgb6666' : element.value ? 'palette' : 'rgb565'} : {});
 		}
 		function clearValidity(event) { if(event.target.dataset.sequenceKey) { event.target.setCustomValidity(''); } }
 		main.addEventListener('input', clearValidity); main.addEventListener('click', click); main.addEventListener('change', change);

@@ -152,6 +152,9 @@ rootHandlers.submit({preventDefault:function () {}});
 assert.strictEqual(sent.at(-1).resourceType, 'sprite');
 assert.strictEqual(sent.at(-1).options.paletteId, null);
 assert.strictEqual(sent.at(-1).options.colorMode, 'rgb565');
+version++;update();click({registerSource:'hero.png'});dialogChange('paletteId','__rgb6666__');
+assert.ok(!root.innerHTML.includes('data-dialog="paletteName"'));rootHandlers.submit({preventDefault:function(){}});
+assert.strictEqual(sent.at(-1).options.colorMode,'rgb6666');assert.strictEqual(sent.at(-1).options.paletteId,null);
 version++;
 update();
 click({registerSource:'hero.png'});
@@ -544,7 +547,7 @@ for(const key of ['fullsize', 'blend', 'group', 'objectType', 'tag', 'pivotX', '
 }
 assert.ok(inspector.includes('RGB565 — no palette'));
 assert.ok(!inspector.includes('Keep in RAM'));
-for(const mode of ['rgb6666', 'bump', 'dudv', 'refl', 'bg']) { assert.ok(!inspector.includes('value="'+mode+'"')); }
+for(const mode of ['bump', 'dudv', 'refl', 'bg']) { assert.ok(!inspector.includes('value="'+mode+'"')); }
 inspectorHelpers.state.advancedBlend = true;
 assert.ok(spriteType.renderInspector(previewSprite, inspectorHelpers).includes('value="bg"'));
 const rgbSprite = {...previewSprite, colorMode:'rgb565', paletteId:null, blend:'opaque', pivot:null};
@@ -567,6 +570,20 @@ assert.ok(spriteType.renderInspector(additiveSprite, inspectorHelpers).includes(
 spriteType.change(additiveSprite, 'paletteId', {value:'__rgb565__'}, inspectorHelpers);
 assert.strictEqual(additiveSprite.blend, 'opaque');
 
+const argbSprite = {...rgbSprite, colorMode:'rgb6666', blend:'alpha', compression:null, softkey:null};
+const argbInspector = spriteType.renderInspector(argbSprite, inspectorHelpers);
+assert.ok(argbInspector.includes('ARGB6666 — color + alpha'));
+assert.ok(/<select data-key="blend" disabled[^>]*><option value="alpha" selected>Embedded alpha/.test(argbInspector));
+assert.ok(!argbInspector.match(/<select data-key="compression"[^>]*>[\s\S]*?<\/select>/)[0].includes('softkey'));
+assert.ok(argbInspector.includes('value="rle" selected'));
+assert.ok(spriteType.renderPreview(argbSprite, inspectorHelpers).includes('>ARGB6666</button>'));
+spriteType.change(argbSprite, 'paletteId', {value:'__rgb6666__'}, inspectorHelpers);
+assert.strictEqual(argbSprite.paletteId,null); assert.strictEqual(argbSprite.compression,'rle'); assert.strictEqual(argbSprite.blend,'alpha');
+spriteType.change(argbSprite, 'compression', {value:'plain'}); assert.strictEqual(argbSprite.compression,'plain');
+assert.throws(()=>spriteType.change(argbSprite,'compression',{value:'softkey'}),/V-020/);
+assert.throws(()=>spriteType.change(argbSprite,'blend',{value:'opaque'}),/V-019/);
+spriteType.change(argbSprite,'paletteId',{value:'__rgb565__'},inspectorHelpers);
+spriteType.change(argbSprite,'compression',{value:'rle'}); assert.strictEqual(argbSprite.compression,'rle');
 assert.ok(rgbInspectorHtml.includes('Color Key'));
 assert.ok(rgbInspectorHtml.includes('value="softkey"'));
 assert.ok(!rgbInspectorHtml.includes('Softkey'));

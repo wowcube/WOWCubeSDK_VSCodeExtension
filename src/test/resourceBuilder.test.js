@@ -165,7 +165,7 @@ async function run()
 		await fs.promises.utimes(resources, new Date(), new Date());
 		await fs.promises.writeFile(path.join(workspace, 'source.png'), 'changed image');
 		await ResourceBuilder.build(workspace);
-		assert.strictEqual(calls.length, 2, 'Timestamps and source-only edits must not rebuild resources.');
+		assert.strictEqual(calls.length, 2, 'Timestamp-only changes and unrelated source files must not rebuild resources.');
 		delete require.cache[require.resolve('../../out/ResourceBuilder')];
 		Module._load = function (name, parent, isMain) { return name === 'vscode' ? vscode : originalLoad.call(this, name, parent, isMain); };
 		const reloaded = require('../../out/ResourceBuilder').ResourceBuilder;
@@ -381,6 +381,7 @@ async function run()
 		const savedMap = ResourceTypes.get('map').create('map', 'level_before');
 		savedMap.placements = [{id:'placed',spriteId:mapSprite.id,side:1,x:138,y:138}];
 		mapBundle.resources.push(mapSprite, savedMap);
+		await fs.promises.writeFile(path.join(workspace,'hero.png'),'source PNG fixture');
 		await fs.promises.writeFile(resources, JSON.stringify(mapBundle));
 		await saveHandler(savedDocument);
 		savedMap.name = 'level_after'; savedMap.placements[0].x = -104.5; savedMap.placements[0].y = -131.5;
@@ -442,10 +443,31 @@ async function run()
 		const fontPalette = ResourceTypes.get('palette').create('font_palette','font_palette');
 		supported.resources.push(fontPalette,ResourceTypes.get('font').create('font','ui_font','font.fnt',{slot:1,atlas:'atlas.png',paletteId:fontPalette.id}),ResourceTypes.get('sound').create('sound','coin','coin.wav'));
 		await fs.promises.writeFile(path.join(workspace,'coin.wav'),require('./soundFixture').wav());
+		await fs.promises.writeFile(path.join(workspace,'font.fnt'),require('./fontFixture').fontFixture());
+		await fs.promises.writeFile(path.join(workspace,'atlas.png'),require('./fontFixture').atlasPng());
 		await fs.promises.writeFile(resources,JSON.stringify(supported));
 		const supportedCalls = calls.length;
 		await ResourceBuilder.build(workspace); assert.strictEqual(calls.length,supportedCalls+1);
 		await ResourceBuilder.build(workspace); assert.strictEqual(calls.length,supportedCalls+1);
+		for(const source of ['font.fnt','atlas.png','coin.wav'])
+		{
+			const filename = path.join(workspace,source), originalSource = await fs.promises.readFile(filename);
+			await fs.promises.utimes(filename,new Date(),new Date());
+			const before = calls.length; await ResourceBuilder.build(workspace); assert.strictEqual(calls.length,before,'A timestamp change alone must not rebuild.');
+			// A changed source must rebuild even though the resource JSON is identical.
+			if(source === 'coin.wav') { const edited=Buffer.from(originalSource);edited[edited.length-1]^=1;await fs.promises.writeFile(filename,edited); }
+			else { await fs.promises.writeFile(filename,Buffer.concat([originalSource,Buffer.from('edited')])); }
+			await ResourceBuilder.build(workspace); assert.strictEqual(calls.length,before+1,source);
+		}
+		const sourceBundle=ResourceBundles.create(); sourceBundle.resources.push(ResourceTypes.get('sprite').create('cache_sprite','cache_sprite','hero.png',{colorMode:'rgb6666'}));
+		await fs.promises.writeFile(resources,JSON.stringify(sourceBundle));await ResourceBuilder.build(workspace);
+		const beforeSourceEdit=calls.length;await fs.promises.writeFile(path.join(workspace,'hero.png'),'changed PNG fixture');
+		await ResourceBuilder.build(workspace);assert.strictEqual(calls.length,beforeSourceEdit+1);
+		beforeResourceClose=()=>fs.promises.writeFile(path.join(workspace,'hero.png'),'edited during compilation');
+		await fs.promises.writeFile(path.join(workspace,'hero.png'),'before build');
+		await assert.rejects(ResourceBuilder.build(workspace),/inputs changed during/);beforeResourceClose=undefined;
+		await ResourceBuilder.build(workspace);
+
 
 		if(process.env.WOWCUBE_RESOURCE_BUILDER)
 		{
@@ -508,6 +530,15 @@ async function run()
 				const scale=frame.fullsize?1:2;assert.strictEqual(bytes.readFloatLE(4),scale*frame.pivot.x-.5);assert.strictEqual(bytes.readFloatLE(8),scale*frame.pivot.y-.5);
 			}
 			assert.strictEqual(assetIds.walk,assetIds[frames[0].name]);assert.strictEqual(assetIds.walk_end,assetIds[frames[1].name]);
+			for(const frame of frames) { frame.colorMode='rgb6666';frame.paletteId=null;frame.blend='alpha';frame.compression='rle'; }
+			await fs.promises.writeFile(resources,JSON.stringify(bundle));await ResourceBuilder.build(workspace);
+			for(const [index,frame] of frames.entries())
+			{
+				const bytes=await fs.promises.readFile(path.join(workspace,'app/art/packed',frame.name+'.raw'));
+				assert.strictEqual(bytes.readUInt16LE(0),0);assert.strictEqual(bytes.readUInt16LE(2),assetIds[frames[1-index].name]);
+				assert.strictEqual(bytes.readUInt32LE(32),4);assert.strictEqual(bytes.readInt16LE(40),42+index);assert.strictEqual(bytes.readInt8(45),index);
+				assert.strictEqual(bytes[44]&0x81,0x80);const scale=frame.fullsize?1:2;assert.strictEqual(bytes.readFloatLE(4),scale*frame.pivot.x-.5);
+			}
 			// Fonts expand into glyph sprites; sounds reach the compiler without extension gates.
 			const {fontFixture, atlasPng} = require('./fontFixture');
 			await fs.promises.writeFile(path.join(workspace,'font.fnt'),fontFixture());

@@ -54,7 +54,7 @@ encoding by default, and offers optional Floyd–Steinberg dithering. Select Col
 Encoding to choose a transparent color using the color picker or #RRGGBB field, with a
 threshold from 0 to 255. The RGB565 preview applies the SDK renderer's quantized-channel
 comparison: red/blue tolerance is the threshold and green tolerance is twice that.
-Plain encoding has no transparency. Switching an existing sprite to RGB565 clears
+Plain and RLE encodings have no transparency. RGB565 offers both alongside Color Key. Switching an existing sprite to RGB565 clears
 its palette reference and leaves the palette available for other sprites.
 
 For a new palette, enter its name and color limit (default 256).
@@ -101,11 +101,17 @@ use FULLSIZE mode: the engine will not draw them, and the editor shows a warning
 All definitions live in one versioned JSON document. Document edits participate in
 VS Code save, undo, redo, and recovery. **SAVE CHANGES** and the normal Save command
 save the bundle. Palette deletion is blocked until dependent sprites are reassigned.
-Palette-mode sprites require a palette; RGB565 sprites do not. Bundles now use
+Palette-mode sprites require a palette; RGB565 and ARGB6666 sprites do not. Bundles now use
 `schemaVersion: 2`; version 1 bundles are not migrated or supported. To start again, move
 the old bundle aside and use Open Resource Studio to create a new one.
-RGB6666, BUMP, DUDV and REFL are hidden model stubs with no selectable controls or
-rendering/export support. BG is available through Show advanced blend options.
+ARGB6666 is available as **ARGB6666 — color + alpha**, using JSON value `rgb6666`.
+It supports Plain and RLE encoding (RLE by default), with **Embedded alpha** as its
+only blend. Existing `compression: null` means RLE. Dithering affects RGB only; source
+alpha is truncated to six bits without dithering. Sprite, map and animation previews
+share the same conversion. Changing color modes clears obsolete palette and Color Key
+settings. BUMP, DUDV and REFL remain hidden, unsupported model stubs. BG is available through Show advanced blend options.
+Runtime Multiply/Add/Subtract/Screen/Hue tint operations are separate from resource
+compositing and are not persisted or automatically applied by this resource model.
 Unknown resource types and additional
 JSON properties are preserved. Resource compilation uses the SDK's `resource-builder` CLI.
 
@@ -173,6 +179,11 @@ Existing native launch entries with both the name and pre-launch task
 Resolving a launch does not rewrite either JSON file. A build manifest with
 `appFolder` is required.
 
+Simulator and device builds automatically reset `CMakeCache.txt` and `CMakeFiles`
+when the cached SDK source directory or build directory location changes. Matching
+caches are retained for incremental builds. This allows SDK upgrades without manually
+clearing the CMake cache.
+
 ### Building resources
 
 Saving `wowcubeapp-resources.json`, from Resource Studio or the text editor, compiles
@@ -198,11 +209,12 @@ The tool generates packed assets, `index.bin`, and the IDs header in the configu
 app folder. Output and warnings appear in **WOWCube SDK** Output.
 
 Resources compile on the first build and whenever the saved resource JSON content differs
-from the last successful resource build. Its SHA-256 hash is stored in VS Code workspace
-state and persists across restarts. Unchanged JSON skips resource compilation; changing
-only a source image or a file timestamp does not trigger it. Projects without a resource
-JSON skip this step. Failed resource generation or JSON edits during generation stop the
-app build and do not update the successful hash.
+from the last successful resource build. The SHA-256 cache also includes the builder
+executable, build manifest, referenced sprite PNGs, font definitions/atlases and sounds.
+External source edits trigger recompilation; timestamp-only changes and unrelated files
+do not. The successful hash persists across restarts. Projects without a resource JSON
+skip this step. Failed generation or changed inputs during compilation stop the app
+build and do not update the successful hash.
 
 ### Maps
 
@@ -627,3 +639,21 @@ Although the extension can be used on Linux, it provides limited functionality a
 
 ### 0.9.0
 * Release candidate for internal testing
+
+
+### Raw-format simulator regression tests
+
+The optional macOS/Linux host test builds real sprite/animation assets with the installed
+resource builder, then exercises the installed SDK's simulator renderer under AddressSanitizer
+and UndefinedBehaviorSanitizer. It checks 1,600 Plain/RLE comparisons across ARGB6666 and
+RGB565, both source frame sizes, 1x/2x rendering, four rotations, clipping, flips and runtime
+transparency. It also checks fully transparent, partial-alpha and opaque ARGB6666 pixels,
+and that RGB565 RLE retains opaque black.
+
+Set `WOWCUBE_SDK_C` to the SDK's versioned `c` directory, `WOWCUBE_ENGINE_TESTS` to the
+engine source checkout's `tests` directory (which provides `oct_test_shim.h`), and
+`WOWCUBE_RESOURCE_BUILDER` to the installed resource-builder executable. Then run
+`npm run test:simulator-formats`. This is a headless renderer test, not a Windows GUI or
+physical-device test. `src/test/rawSimulatorFixture.js <temporary-directory>` also creates
+a gallery app for the interactive simulator, with Plain/RLE pairs, two animation frame
+sizes, different hold times, rotation and an ARGB6666 runtime-transparency cycle.

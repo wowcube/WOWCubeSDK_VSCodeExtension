@@ -621,8 +621,8 @@
 		}
 		pendingName = name;
 		sendChange({action:'create', name, resourceType:dialog.type, source:dialog.source,
-			options:{...dialog, colorMode:dialog.paletteId === '__rgb565__' ? 'rgb565' : 'palette',
-				paletteId:dialog.paletteId === '__rgb565__' ? null : dialog.paletteId, paletteName:dialog.paletteName ?? validation.paletteName(name)}});
+			options:{...dialog, colorMode:dialog.paletteId === '__rgb6666__' ? 'rgb6666' : dialog.paletteId === '__rgb565__' ? 'rgb565' : 'palette',
+				paletteId:['__rgb565__', '__rgb6666__'].includes(dialog.paletteId) ? null : dialog.paletteId, paletteName:dialog.paletteName ?? validation.paletteName(name)}});
 	});
 
 	window.addEventListener('keydown', function (event)

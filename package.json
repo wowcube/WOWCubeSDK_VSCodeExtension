@@ -100,7 +100,9 @@
           },
           "wowsdk.buildTools.paths": {
             "type": "array",
-            "items": { "type": "string" },
+            "items": {
+              "type": "string"
+            },
             "default": [],
             "scope": "machine",
             "description": "Additional directories containing CMake, Ninja, ARM GNU tools or SDL3. Checked before PATH; used only by WOWCube builds."
@@ -293,9 +295,11 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "test:resources": "npm run compile && node src/test/buildPrerequisites.test.js && mocha --ui tdd out/test/suite/resourceBundle.test.js && node src/test/paletteBuilder.test.js && node src/test/resourceStudioProvider.test.js && node src/test/resourceStudioWebview.test.js && node src/test/resourceBuilder.test.js && node src/test/map.test.js && node src/test/sequence.test.js && node src/test/font.test.js && node src/test/sound.test.js",
+    "test:simulator-formats": "npm run compile && node src/test/simulatorRawFormats.test.js",
+    "test:resources": "npm run compile && node src/test/buildPrerequisites.test.js && node src/test/rawFormats.test.js && mocha --ui tdd out/test/suite/resourceBundle.test.js && node src/test/paletteBuilder.test.js && node src/test/resourceStudioProvider.test.js && node src/test/resourceStudioWebview.test.js && node src/test/resourceBuilder.test.js && node src/test/map.test.js && node src/test/sequence.test.js && node src/test/font.test.js && node src/test/sound.test.js",
     "test:simulator-debug": "npm run compile && node src/test/simulatorDebug.test.js",
-    "test:device-deployment": "npm run compile && node src/test/deviceDeployment.test.js"
+    "test:device-deployment": "npm run compile && node src/test/deviceDeployment.test.js",
+    "test:cmake-cache": "npm run compile && node src/test/cmakeBuildCache.test.js"
   },
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",

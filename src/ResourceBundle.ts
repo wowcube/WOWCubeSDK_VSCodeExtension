@@ -33,7 +33,7 @@ export interface SpriteResource extends Resource
 	blend:'opaque' | 'alpha' | 'additive' | 'bg' | 'bump' | 'dudv' | 'refl';
 	fullsize:boolean;
 	dither:boolean;
-	compression:'plain' | 'softkey' | null;
+	compression:'plain' | 'rle' | 'softkey' | null;
 	softkey?:{key:string; threshold:number} | null;
 	number:number;
 	frameRate:number;
@@ -53,8 +53,8 @@ export interface ResourceBundle
 	[key:string]:unknown;
 }
 
-// These modes are preserved for future support but never offered by the editor.
-export const hiddenSpriteModes = {color:['rgb6666'], blend:['bump', 'dudv', 'refl']} as const;
+// Unsupported blend modes are preserved but never offered by the editor.
+export const hiddenSpriteModes = {color:[], blend:['bump', 'dudv', 'refl']} as const;
 
 export interface ResourceType
 {
@@ -146,9 +146,9 @@ ResourceTypes.register({
 	label:'Sprite',
 	getPaletteSource:(resource) => resource.colorMode === 'palette' && typeof resource.source === 'string' ? resource.source : undefined,
 	create:(id, name, source = '', options = {}):SpriteResource => ({
-		id, name, type:'sprite', source, colorMode:options.colorMode === 'rgb565' ? 'rgb565' : 'palette',
-		paletteId:options.colorMode !== 'rgb565' && typeof options.paletteId === 'string' && options.paletteId ? options.paletteId : null,
-		blend:options.colorMode === 'rgb565' ? 'opaque' : 'alpha', fullsize:false, dither:false, compression:options.colorMode === 'rgb565' ? 'plain' : null, softkey:null,
+		id, name, type:'sprite', source, colorMode:options.colorMode === 'rgb6666' ? 'rgb6666' : options.colorMode === 'rgb565' ? 'rgb565' : 'palette',
+		paletteId:!['rgb565', 'rgb6666'].includes(options.colorMode as string) && typeof options.paletteId === 'string' && options.paletteId ? options.paletteId : null,
+		blend:options.colorMode === 'rgb565' ? 'opaque' : 'alpha', fullsize:false, dither:false, compression:options.colorMode === 'rgb6666' ? 'rle' : options.colorMode === 'rgb565' ? 'plain' : null, softkey:null,
 		number:0, frameRate:1, group:null, objectType:null, tags:[],
 		pivot:null, collider:{enabled:false, x:0, y:0, width:0, height:0}
 	}),
@@ -165,7 +165,7 @@ ResourceTypes.register({
 		{
 			errors.push('V-014: Sprite palette must reference an existing palette.');
 		}
-		if(typeof resource.colorMode !== 'string' || !['palette', 'rgb565', ...hiddenSpriteModes.color].includes(resource.colorMode))
+		if(typeof resource.colorMode !== 'string' || !['palette', 'rgb565', 'rgb6666'].includes(resource.colorMode))
 		{
 			errors.push('Unknown sprite color mode.');
 		}
@@ -177,14 +177,15 @@ ResourceTypes.register({
 		{
 			errors.push('V-019: RGB565 sprites require Opaque blend and no palette.');
 		}
-		if(resource.colorMode !== 'rgb565' && resource.dither) { errors.push('Dithering is available only for RGB565.'); }
+		if(resource.colorMode === 'rgb6666' && (resource.paletteId !== null || resource.blend !== 'alpha')) { errors.push('V-019: ARGB6666 requires Embedded alpha blend and no palette.'); }
+		if(resource.colorMode === 'palette' && resource.dither) { errors.push('Dithering is available only for raw-color sprites.'); }
 		for(const key of ['fullsize', 'dither'])
 		{
 			if(typeof resource[key] !== 'boolean') { errors.push(key+' must be a boolean.'); }
 		}
-		if(resource.colorMode === 'rgb565' ? !['plain', 'softkey'].includes(resource.compression as string) : resource.compression !== null)
+		if(resource.colorMode === 'rgb565' ? !['plain', 'rle', 'softkey'].includes(resource.compression as string) : resource.colorMode === 'rgb6666' ? resource.compression !== null && !['plain', 'rle'].includes(resource.compression as string) : resource.compression !== null)
 		{
-			errors.push('V-020: RGB565 requires Plain or Softkey encoding; other color modes must leave compression unset.');
+			errors.push('V-020: RGB565 requires Plain, RLE or Color Key; ARGB6666 requires Plain or RLE (null defaults to RLE); palette encoding must be unset.');
 		}
 		const softkey = resource.softkey as SpriteResource['softkey'];
 		if(resource.compression === 'softkey' && (!softkey || typeof softkey.key !== 'string' || !/^#[0-9a-f]{6}$/i.test(softkey.key) || ResourceValidation.integer(softkey.threshold, 0, 255, 'V-020', 'Softkey threshold')))
@@ -340,7 +341,7 @@ export class ResourceBundles
 
 	public static getBuildErrors(bundle:ResourceBundle):string[]
 	{
-		return [...bundle.resources.filter(resource => resource.type === 'sound').flatMap(resource => [...SoundValidation.nameIssues(resource,bundle.resources), ...SoundValidation.sourceIssues(resource)].map(issue => issue.message)), ...(1 + bundle.resources.filter(resource => ['sprite','palette','map','sound'].includes(resource.type)).length > 5120 ? ['The bundle cannot contain more than 5120 runtime assets.'] : []), ...SpriteSequences.buildErrors(bundle), ...bundle.resources.filter(resource => resource.type === 'palette').map(resource => PaletteCompatibility.issue(resource as PaletteResource)).filter((error):error is string => !!error)];
+		return [...bundle.resources.filter(resource => resource.type === 'sprite' && hiddenSpriteModes.blend.includes(resource.blend as typeof hiddenSpriteModes.blend[number])).map(resource => resource.name+': This blend mode is not supported by the renderer.'), ...bundle.resources.filter(resource => resource.type === 'sound').flatMap(resource => [...SoundValidation.nameIssues(resource,bundle.resources), ...SoundValidation.sourceIssues(resource)].map(issue => issue.message)), ...(1 + bundle.resources.filter(resource => ['sprite','palette','map','sound'].includes(resource.type)).length > 5120 ? ['The bundle cannot contain more than 5120 runtime assets.'] : []), ...SpriteSequences.buildErrors(bundle), ...bundle.resources.filter(resource => resource.type === 'palette').map(resource => PaletteCompatibility.issue(resource as PaletteResource)).filter((error):error is string => !!error)];
 	}
 
 	public static getWarnings(bundle:ResourceBundle):string[]

@@ -107,23 +107,28 @@ source: string
     PNG path relative to the folder containing the JSON file, using forward
     slashes. For example: "characters/hero.png".
 paletteId: string | null
-    ID of the palette resource used by a palettized sprite; null for RGB565.
+    ID of the palette resource used by a palettized sprite; null for RGB565 and ARGB6666.
 colorMode: "palette" | "rgb565" | "rgb6666"
     "palette": indexed color using paletteId.
     "rgb565": direct color without a palette.
-    "rgb6666": reserved, unsupported placeholder.
+    "rgb6666": ARGB6666, direct color with six-bit RGB and embedded six-bit alpha.
 blend: "opaque" | "alpha" | "additive" | "bg" | "bump" | "dudv" | "refl"
     In palette mode, Alpha and Additive use alpha-form palettes; Opaque and BG
     use opaque-form palettes. BG currently behaves as Opaque. Bump, DuDv and Refl are reserved,
     unsupported placeholders. RGB565 allows only Opaque without a palette.
+    ARGB6666 requires "alpha"; no other resource blend is supported.
 fullsize: boolean
     true means 1:1 source-to-runtime pixels; false means doubled runtime size.
     Additive blended sprites cannot use FULLSIZE: they will not be drawn (warning V-032).
     Pivot and collider coordinates remain in source pixels in either case.
 dither: boolean
-    RGB565 dithering flag. Palettized sprites store false.
-compression: "plain" | "softkey" | null
-    RGB565 encoding selection. Palettized sprites store null.
+    RGB-only dithering for RGB565 and ARGB6666. ARGB6666 alpha is never dithered.
+    Palettized sprites store false.
+compression: "plain" | "rle" | "softkey" | null
+    RGB565: "plain", "rle", or "softkey". ARGB6666: "plain" or "rle"; an
+    existing null value means "rle". New ARGB6666 sprites default to "rle".
+    Palettized sprites store null. Plain and RLE decode to identical pixels.
+    Softkey is available only for RGB565; other encodings clear softkey settings.
 softkey: {key: string, threshold: integer} | null
     Color Key settings for "softkey" encoding. key is #RRGGBB; threshold is
     the matching tolerance. This field may be omitted when unused; the editor

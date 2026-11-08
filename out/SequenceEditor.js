@@ -51,13 +51,13 @@ class SequenceEditor {
                 return false;
             }
             const palettes = bundle.resources.filter(resource => resource.type === 'palette');
-            const mode = await vscode.window.showQuickPick([{ label: 'Generate a new shared palette', id: 'new' }, ...palettes.map(palette => ({ label: palette.name, id: palette.id })), { label: 'Plain RGB565', id: 'rgb565' }], { title: 'Animation frame colors', placeHolder: 'Choose a shared palette or RGB565' });
+            const mode = await vscode.window.showQuickPick([{ label: 'Generate a new shared palette', id: 'new' }, ...palettes.map(palette => ({ label: palette.name, id: palette.id })), { label: 'RGB565 — no palette', id: 'rgb565' }, { label: 'ARGB6666 — color + alpha', id: 'rgb6666' }], { title: 'Animation frame colors', placeHolder: 'Choose a shared palette or a raw-color format' });
             if (!mode) {
                 return false;
             }
             const added = SpriteSequence_1.SpriteSequences.createFrames(bundle, name, sizes, +duration / 50 - 1, frames[0]?.sequence.id);
             let palette;
-            if (mode.id !== 'rgb565') {
+            if (!['rgb565', 'rgb6666'].includes(mode.id)) {
                 palette = palettes.find(palette => palette.id === mode.id);
                 if (mode.id === 'new') {
                     palette = await this.createPalette(bundle, added[0].name, [name, name + '_end', ...added.map(frame => frame.name)]);
@@ -69,7 +69,7 @@ class SequenceEditor {
                     throw new Error('Palette no longer exists.');
                 }
             }
-            this.setColors(bundle, [...frames, ...added], palette);
+            this.setColors(bundle, [...frames, ...added], palette, mode.id === 'rgb6666' ? 'rgb6666' : 'rgb565');
             const confirmed = await vscode.window.showQuickPick([{ label: 'Import ' + added.length + ' frames', description: added.map(frame => frame.name).join(', ') }], { title: 'Confirm animation import', placeHolder: 'Frames are imported in natural filename order; each gets a distinct sprite ID' });
             if (!confirmed) {
                 return false;
@@ -114,19 +114,40 @@ class SequenceEditor {
                 frame.frameRate = edit.frameRate;
                 frame.sequence = { ...frame.sequence, name: message.name, index };
             }
-            if (message.paletteId !== undefined) {
+            if (message.paletteId !== undefined || message.colorMode !== undefined) {
+                if (message.colorMode !== undefined && !['palette', 'rgb565', 'rgb6666'].includes(message.colorMode)) {
+                    throw new Error('Unknown animation color mode.');
+                }
+                if (['rgb565', 'rgb6666'].includes(message.colorMode) && message.paletteId !== null && message.paletteId !== undefined) {
+                    throw new Error('Raw-color animation frames cannot reference a palette.');
+                }
                 const palette = bundle.resources.find(resource => resource.id === message.paletteId && resource.type === 'palette');
-                if (message.paletteId !== null && !palette) {
+                if ((message.colorMode === 'palette' || message.paletteId !== null && message.paletteId !== undefined) && !palette) {
                     throw new Error('Palette no longer exists.');
                 }
                 const changed = frames.some(frame => frame.paletteId !== (palette?.id || null));
-                this.setColors(bundle, frames, palette);
+                this.setColors(bundle, frames, palette, message.colorMode === 'rgb6666' ? 'rgb6666' : 'rgb565');
                 const errors = [...ResourceBundle_1.ResourceBundles.validate(bundle), ...SpriteSequence_1.SpriteSequences.aliasErrors(bundle)];
                 if (errors.length) {
                     throw new Error(errors.join('\n'));
                 }
                 if (changed && palette) {
                     await services.palette(palette);
+                }
+            }
+            if (message.compression !== undefined || message.dither !== undefined) {
+                for (const frame of frames) {
+                    if (message.compression !== undefined) {
+                        frame.compression = message.compression;
+                        frame.softkey = message.compression === 'softkey' ? frame.softkey || { key: '#ff00ff', threshold: 0 } : null;
+                    }
+                    if (message.dither !== undefined) {
+                        frame.dither = message.dither;
+                    }
+                }
+                const errors = ResourceBundle_1.ResourceBundles.validate(bundle);
+                if (errors.length) {
+                    throw new Error(errors.join('\n'));
                 }
             }
             return true;
@@ -182,13 +203,13 @@ class SequenceEditor {
         bundle.resources.push(palette);
         return palette;
     }
-    static setColors(bundle, frames, palette) {
+    static setColors(bundle, frames, palette, rawMode = 'rgb565') {
         const opaque = !palette || bundle.resources.some(item => item.type === 'sprite' && item.paletteId === palette.id && ['opaque', 'bg'].includes(item.blend));
         for (const frame of frames) {
             frame.paletteId = palette?.id || null;
-            frame.colorMode = palette ? 'palette' : 'rgb565';
-            frame.blend = opaque ? 'opaque' : frame.blend === 'additive' ? 'additive' : 'alpha';
-            frame.compression = palette ? null : 'plain';
+            frame.colorMode = palette ? 'palette' : rawMode;
+            frame.blend = !palette && rawMode === 'rgb6666' ? 'alpha' : opaque ? 'opaque' : frame.blend === 'additive' ? 'additive' : 'alpha';
+            frame.compression = palette ? null : rawMode === 'rgb6666' ? 'rle' : 'plain';
             frame.softkey = null;
             frame.dither = false;
         }
